@@ -13,8 +13,8 @@ from pathlib import Path
 # Config / .env
 # ─────────────────────────────────────────────
 def load_config():
-    config = {'USER_ID': '', 'ZOTERO_KEY': '', 'GEMINI_KEY': '',
-               'PDF_PATH': '', 'OBS_PATH': ''}
+    config = {'GEMINI_KEY': '', 'PDF_PATH': '', 'OBS_PATH': '',
+               'ZOTERO_DB': ''}
     env_path = Path(__file__).parent / '.env'
     if env_path.exists():
         with open(env_path, encoding='utf-8') as f:
@@ -28,19 +28,17 @@ def load_config():
     return config
 
 CONFIG     = load_config()
-USER_ID    = CONFIG['USER_ID']
-ZOTERO_KEY = CONFIG['ZOTERO_KEY']
 GEMINI_KEY = CONFIG['GEMINI_KEY']
 PDF_PATH   = CONFIG['PDF_PATH']
 OBS_PATH   = CONFIG['OBS_PATH']
+ZOTERO_DB  = CONFIG['ZOTERO_DB']
 
 # ─────────────────────────────────────────────
 # Package check
 # ─────────────────────────────────────────────
 def check_and_import():
     missing = []
-    for pkg, imp in [("pyzotero", "pyzotero"),
-                     ("google-generativeai", "google.generativeai"),
+    for pkg, imp in [("google-generativeai", "google.generativeai"),
                      ("pypdf", "pypdf")]:
         try: __import__(imp)
         except ImportError: missing.append(pkg)
@@ -58,20 +56,127 @@ def normalize_str(text):
     if not text: return ""
     return unicodedata.normalize('NFC', text)
 
-def get_all_collection_ids(zot, root_name):
-    if not root_name: return []
-    try:
-        all_col = zot.collections()
-        root_id = next((c['key'] for c in all_col
-                        if c['data']['name'] == root_name), None)
-        if not root_id: return []
-        ids = [root_id]
-        def find(pid):
-            for c in all_col:
-                if c['data'].get('parentCollection') == pid:
-                    ids.append(c['key']); find(c['key'])
-        find(root_id); return ids
-    except: return []
+def sanitize_yaml(text):
+    """YAML 필드용: 쌍따옴표 이스케이프, 줄바꿈 제거"""
+    if not text: return ""
+    text = unicodedata.normalize('NFC', text)
+    text = text.replace('\r\n', ' ').replace('\n', ' ').replace('\r', ' ')
+    text = text.replace('"', '\\"')
+    return text.strip()
+
+def sanitize_abstract(text):
+    """Original Abstract 블록용: 줄바꿈 → blockquote 유지, 특수문자 방어"""
+    if not text: return "(No abstract available)"
+    text = unicodedata.normalize('NFC', text)
+    # 줄바꿈을 blockquote 연속으로 변환
+    lines = text.replace('\r\n', '\n').replace('\r', '\n').split('\n')
+    # 빈 줄은 blockquote 구분자로
+    result = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped:
+            result.append(f"> {stripped}")
+        else:
+            result.append(">")
+    return '\n'.join(result)
+
+# ── SQLite helpers ──────────────────────────
+def get_zotero_db():
+    """ZOTERO_DB env 또는 기본 경로에서 sqlite3 연결 반환"""
+    import sqlite3
+    db_path = ZOTERO_DB or str(Path.home() / 'Zotero' / 'zotero.sqlite')
+    if not os.path.exists(db_path):
+        raise FileNotFoundError(f"zotero.sqlite not found: {db_path}")
+    # Zotero가 열려있어도 읽기 가능하도록 URI mode + immutable
+    uri = f"file:{db_path}?immutable=1"
+    return sqlite3.connect(uri, uri=True)
+
+def sqlite_get_collections(db):
+    """전체 컬렉션 목록 반환 [{collectionID, key, name, parentCollectionID}]"""
+    cur = db.execute(
+        "SELECT collectionID, key, collectionName, parentCollectionID FROM collections"
+    )
+    return [{'id': r[0], 'key': r[1], 'name': r[2], 'parent': r[3]} for r in cur.fetchall()]
+
+def sqlite_get_collection_ids(db, root_name):
+    """root_name 컬렉션과 하위 컬렉션의 collectionID 리스트 반환"""
+    cols = sqlite_get_collections(db)
+    root = next((c for c in cols if c['name'] == root_name), None)
+    if not root: return []
+    ids = [root['id']]
+    def find(pid):
+        for c in cols:
+            if c['parent'] == pid:
+                ids.append(c['id']); find(c['id'])
+    find(root['id'])
+    return ids
+
+def sqlite_get_items(db, col_ids=None, limit=500):
+    """컬렉션 ID 리스트로 아이템 조회. None이면 전체 라이브러리."""
+    base_types = "('journalArticle','conferencePaper','preprint','report','thesis')"
+    if col_ids:
+        placeholders = ",".join("?" * len(col_ids))
+        query = f"""
+            SELECT DISTINCT i.itemID, i.key, i.dateAdded
+            FROM items i
+            JOIN collectionItems ci ON i.itemID = ci.itemID
+            JOIN itemTypes it ON i.itemTypeID = it.itemTypeID
+            WHERE ci.collectionID IN ({placeholders})
+              AND it.typeName IN {base_types}
+              AND i.itemID NOT IN (SELECT itemID FROM deletedItems)
+            ORDER BY i.dateAdded DESC
+            LIMIT ?
+        """
+        rows = db.execute(query, col_ids + [limit]).fetchall()
+    else:
+        query = f"""
+            SELECT DISTINCT i.itemID, i.key, i.dateAdded
+            FROM items i
+            JOIN itemTypes it ON i.itemTypeID = it.itemTypeID
+            WHERE it.typeName IN {base_types}
+              AND i.itemID NOT IN (SELECT itemID FROM deletedItems)
+            ORDER BY i.dateAdded DESC
+            LIMIT ?
+        """
+        rows = db.execute(query, [limit]).fetchall()
+    return [{'itemID': r[0], 'key': r[1], 'dateAdded': r[2]} for r in rows]
+
+def sqlite_get_item_data(db, item_id):
+    """itemID로 필드값 딕셔너리 반환"""
+    cur = db.execute("""
+        SELECT f.fieldName, iv.value
+        FROM itemData id_
+        JOIN itemDataValues iv ON id_.valueID = iv.valueID
+        JOIN fields f ON id_.fieldID = f.fieldID
+        WHERE id_.itemID = ?
+    """, [item_id])
+    return {r[0]: r[1] for r in cur.fetchall()}
+
+def sqlite_get_creators(db, item_id):
+    """저자 목록 반환 [{lastName, firstName, creatorType}]"""
+    cur = db.execute("""
+        SELECT c.lastName, c.firstName, ct.creatorType
+        FROM itemCreators ic
+        JOIN creators c ON ic.creatorID = c.creatorID
+        JOIN creatorTypes ct ON ic.creatorTypeID = ct.creatorTypeID
+        WHERE ic.itemID = ?
+        ORDER BY ic.orderIndex
+    """, [item_id])
+    return [{'lastName': r[0] or '', 'firstName': r[1] or '', 'type': r[2]} for r in cur.fetchall()]
+
+def sqlite_get_tags(db, item_id):
+    """태그 목록 반환"""
+    cur = db.execute("""
+        SELECT t.name FROM itemTags it
+        JOIN tags t ON it.tagID = t.tagID
+        WHERE it.itemID = ?
+    """, [item_id])
+    return [r[0] for r in cur.fetchall()]
+
+def sqlite_get_collection_names(db):
+    """컬렉션 이름 목록 (정렬)"""
+    cur = db.execute("SELECT collectionName FROM collections ORDER BY collectionName")
+    return [r[0] for r in cur.fetchall()]
 
 def index_pdf_files(root_path):
     out = []
@@ -82,14 +187,14 @@ def index_pdf_files(root_path):
                             'clean_name': normalize_str(f).lower()})
     return out
 
-def find_best_pdf_match(item_data, pdf_index):
+def find_best_pdf_match(fields, creators_raw, pdf_index):
+    """SQLite fields dict + creators 리스트로 PDF 매칭"""
     try:
-        creators = item_data.get('creators', [])
-        if not creators: return None
-        author_last = creators[0].get('lastName', creators[0].get('name', ''))
-        year_m = re.search(r'\d{4}', item_data.get('date', ''))
+        if not creators_raw: return None
+        author_last = creators_raw[0].get('lastName', '') or creators_raw[0].get('firstName', '')
+        year_m = re.search(r'\d{4}', fields.get('date', ''))
         year = year_m.group(0) if year_m else None
-        title = item_data.get('title', '')
+        title = fields.get('title', '')
         if not author_last or not year: return None
         ta = normalize_str(author_last).lower(); ty = str(year)
         stop = {'the','and','for','with','that','this','from','what','study','using','journal'}
@@ -309,6 +414,7 @@ class CollectionPicker(tk.Frame):
         q = self._search_var.get().strip().lower()
         self._filtered = [n for n in self._all_names if q in n.lower()] if q else list(self._all_names)
         self._render_rows()
+        self._canvas.yview_moveto(0)
 
     def load(self, names):
         self._all_names = list(names)
@@ -370,6 +476,10 @@ class CollectionPicker(tk.Frame):
                      text="No collections found." if self._search_var.get()
                           else "Click 'Load' to fetch collections.",
                      font=FONT_SMALL, fg=FG_DIM, bg=BG_CARD, pady=16).pack()
+
+        # scrollregion 강제 갱신
+        self._inner.update_idletasks()
+        self._canvas.configure(scrollregion=self._canvas.bbox("all"))
 
     def _toggle(self, name):
         if name in self._checked:
@@ -561,7 +671,7 @@ class PaperSummarizerApp:
 
         tk.Label(row_d, text="Model:", font=FONT_LABEL,
                  fg=FG_DIM, bg=BG_CARD).pack(side="left")
-        self.model_var = tk.StringVar(value="gemini-2.0-flash")
+        self.model_var = tk.StringVar(value="gemini-2.5-flash")
         self._apply_combo_style()
         ttk.Combobox(row_d, textvariable=self.model_var,
                      values=GEMINI_MODELS, state="readonly",
@@ -683,14 +793,13 @@ class PaperSummarizerApp:
             self.recent_spin.config(state="disabled", fg=FG_DIM)
 
     def _load_collections(self):
-        self._log("Loading Zotero collections…", "info")
+        self._log("Loading collections from local Zotero DB…", "info")
         self._load_btn.config(state="disabled")
         def _fetch():
             try:
-                from pyzotero import zotero as pz
-                zot = pz.Zotero(USER_ID, 'user', ZOTERO_KEY)
-                cols = zot.collections()
-                names = sorted(set(c['data']['name'] for c in cols))
+                db = get_zotero_db()
+                names = sqlite_get_collection_names(db)
+                db.close()
                 self.root.after(0, lambda: self._set_collections(names))
             except Exception as e:
                 self.root.after(0, lambda: self._log(f"Error: {e}", "err"))
@@ -778,15 +887,17 @@ class PaperSummarizerApp:
     def _run_pipeline(self, col_names, pdf_path, obs_path, read_full,
                       limit, model_name, dup_mode, use_wiki, use_recent, recent_days):
         try:
-            from pyzotero import zotero as pz
             import google.generativeai as genai
             from pypdf import PdfReader
 
-            self._log("Connecting to APIs…", "info")
-            zot = pz.Zotero(USER_ID, 'user', ZOTERO_KEY)
+            self._log("Connecting to Gemini API…", "info")
             genai.configure(api_key=GEMINI_KEY)
             model = genai.GenerativeModel(model_name)
-            self._log("✓  APIs connected.", "ok")
+            self._log("✓  Gemini connected.", "ok")
+
+            self._log("Opening local Zotero database…", "info")
+            db = get_zotero_db()
+            self._log("✓  Zotero DB connected.", "ok")
 
             pdf_index = []
             if read_full and pdf_path and os.path.exists(pdf_path):
@@ -797,60 +908,57 @@ class PaperSummarizerApp:
                 self._log("PDF folder not found — abstract mode.", "warn")
                 read_full = False
 
-            self._log("Fetching Zotero items…", "info")
-            raw_items = []
+            self._log("Fetching items from Zotero DB…", "info")
             if not col_names:
-                raw_items = zot.top(limit=limit, itemType='journalArticle')
+                self._log("  Mode: Entire Library", "info")
+                row_items = sqlite_get_items(db, col_ids=None, limit=limit)
             else:
-                seen = set()
+                self._log(f"  Mode: Collections — {col_names}", "info")
+                all_col_ids = []
                 for col_name in col_names:
-                    col_ids = get_all_collection_ids(zot, col_name)
-                    if not col_ids:
-                        self._log(f"  '{col_name}' not found.", "warn"); continue
-                    for c_id in col_ids:
-                        for it in zot.collection_items(c_id, itemType='journalArticle', limit=limit):
-                            if it['key'] not in seen:
-                                seen.add(it['key']); raw_items.append(it)
-                raw_items = sorted(raw_items,
-                                   key=lambda x: x['data'].get('dateAdded',''),
-                                   reverse=True)[:limit]
+                    ids = sqlite_get_collection_ids(db, col_name)
+                    self._log(f"  '{col_name}' → {len(ids)} collection(s)", "info")
+                    all_col_ids.extend(ids)
+                row_items = sqlite_get_items(db, col_ids=all_col_ids, limit=limit)
 
             if use_recent and recent_days:
                 cutoff = datetime.utcnow() - timedelta(days=recent_days)
-                before = len(raw_items)
-                raw_items = [it for it in raw_items
-                             if self._parse_date(it['data'].get('dateAdded','')) >= cutoff]
-                self._log(f"  Recent filter ({recent_days}d): {before}→{len(raw_items)}", "ok")
+                before = len(row_items)
+                row_items = [it for it in row_items
+                             if self._parse_date(it['dateAdded']) >= cutoff]
+                self._log(f"  Recent filter ({recent_days}d): {before}→{len(row_items)}", "ok")
 
-            total = len(raw_items)
+            total = len(row_items)
             self._log(f"✓  {total} items to process.\n" + "─"*46, "ok")
             self.root.after(0, lambda: self._set_progress(0, total))
             if not os.path.exists(obs_path): os.makedirs(obs_path)
             success = skip_count = 0
 
-            for idx, item in enumerate(raw_items, 1):
+            for idx, row in enumerate(row_items, 1):
                 if not self.running: break
-                data        = item['data']
-                title       = data.get('title', 'No Title')
-                abstract    = data.get('abstractNote', '')
-                date        = data.get('date', 'No Date')
-                url         = data.get('url', '')
-                item_key    = item['key']
-                publication = data.get('publicationTitle', 'No Journal')
-                zot_tags    = [t.get('tag','') for t in data.get('tags',[])]
-                date_added  = data.get('dateAdded','')
+                item_id  = row['itemID']
+                item_key = row['key']
+                date_added = row['dateAdded'] or ''
 
-                creators = data.get('creators', [])
+                fields      = sqlite_get_item_data(db, item_id)
+                creators_raw= sqlite_get_creators(db, item_id)
+                zot_tags    = sqlite_get_tags(db, item_id)
+
+                title       = fields.get('title', 'No Title')
+                abstract    = fields.get('abstractNote', '')
+                date        = fields.get('date', 'No Date')
+                url         = fields.get('url', '')
+                publication = fields.get('publicationTitle', 'No Journal')
+
                 all_authors, author_for_file = [], "Unknown"
-                if creators:
-                    for c in creators:
-                        name = (c.get('lastName','') + ", " + c.get('firstName','')
-                                if 'lastName' in c else c.get('name','Unknown'))
-                        all_authors.append(name.strip(", "))
-                    first = creators[0].get('lastName', creators[0].get('name','Unknown'))
-                    if len(creators) == 1:   author_for_file = first
-                    elif len(creators) == 2:
-                        second = creators[1].get('lastName', creators[1].get('name','Unknown'))
+                if creators_raw:
+                    for c in creators_raw:
+                        name = f"{c['lastName']}, {c['firstName']}".strip(", ") if c['lastName'] else c['firstName']
+                        if name: all_authors.append(name)
+                    first = creators_raw[0]['lastName'] or creators_raw[0]['firstName'] or 'Unknown'
+                    if len(creators_raw) == 1:   author_for_file = first
+                    elif len(creators_raw) == 2:
+                        second = creators_raw[1]['lastName'] or creators_raw[1]['firstName'] or 'Unknown'
                         author_for_file = f"{first} and {second}"
                     else: author_for_file = f"{first} et al"
 
@@ -884,7 +992,7 @@ class PaperSummarizerApp:
 
                 has_pdf = False; content_source = "Abstract Only"; final_text = abstract
                 if read_full and pdf_index:
-                    matched = find_best_pdf_match(data, pdf_index)
+                    matched = find_best_pdf_match(fields, creators_raw, pdf_index)
                     if matched:
                         try:
                             reader = PdfReader(matched)
@@ -942,18 +1050,18 @@ Constraint: Focus ONLY on the content related to the paper "{title}".
 
                 authors_yaml = "\n".join(f"  - {a}" for a in all_authors)
                 md_content = f"""---
-title: "{title}"
+title: "{sanitize_yaml(title)}"
 authors:
 {authors_yaml}
 date: {date}
 date_added: {date_added}
-journal: "{publication.title() if publication else 'No Journal'}"
+journal: "{sanitize_yaml(publication.title() if publication else "No Journal")}"
 has_pdf: {str(has_pdf).lower()}
 url: {url}
 zotero_link: {zotero_link}
 ---
 
-# {title}
+# {sanitize_yaml(title)}
 
 ## Bibliographic Info
 - **Authors**: {authors_wl}
@@ -969,7 +1077,7 @@ zotero_link: {zotero_link}
 
 ---
 ## Original Abstract
-> {abstract}
+{sanitize_abstract(abstract)}
 """
                 with open(full_path, 'w', encoding='utf-8') as f:
                     f.write(md_content)
@@ -989,6 +1097,8 @@ zotero_link: {zotero_link}
             self._log(traceback.format_exc(), "err")
             self._set_status("Error.")
         finally:
+            try: db.close()
+            except: pass
             self._finish()
 
     def _parse_date(self, s):

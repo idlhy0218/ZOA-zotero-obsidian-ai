@@ -2,8 +2,7 @@
 
 > Zotero × Gemini AI × Obsidian — Academic paper summarization pipeline
 
-A desktop app that connects Zotero, Google Gemini AI, and Obsidian into a single academic workflow. Automatically fetches journal articles, extracts full PDF text, generates structured AI summaries, and saves Markdown notes with wikilinks for building a personal knowledge network.
-
+A desktop app that connects Zotero, Google Gemini AI, and Obsidian into a single academic workflow. Automatically fetches journal articles from the local Zotero database, extracts full PDF text, generates structured AI summaries, and saves Markdown notes with wikilinks for building a personal knowledge network.
 
 ---
 
@@ -14,6 +13,7 @@ A desktop app that connects Zotero, Google Gemini AI, and Obsidian into a single
 ├── paper_summarizer.py     # Main application (GUI + pipeline)
 ├── Paper Summarizer.bat    # Windows launcher (double-click to run)
 ├── .env                    # API keys and paths (not tracked by Git)
+├── .env.template           # Template for .env setup
 ├── .gitignore              # Excludes .env and cache files
 └── README.md               # This file
 ```
@@ -23,8 +23,8 @@ A desktop app that connects Zotero, Google Gemini AI, and Obsidian into a single
 ## How It Works
 
 ```
-Zotero API
-    ↓  fetch journal articles by collection
+Local Zotero SQLite DB
+    ↓  fetch journal articles by collection (no sync required)
 Local PDF folder
     ↓  match and extract full text (pypdf)
 Google Gemini API
@@ -45,18 +45,17 @@ e.g.  Kim et al_2023_SSM.md
 
 **1. Install dependencies**
 ```bash
-pip install pyzotero google-generativeai pypdf
+pip install google-generativeai pypdf
 ```
 
 **2. Configure `.env`**
 
 Copy `.env.template` to `.env` and fill in your credentials:
 ```
-USER_ID=your_zotero_user_id
-ZOTERO_KEY=your_zotero_api_key
 GEMINI_KEY=your_gemini_api_key
 PDF_PATH=C:\path\to\zotero_pdf_folder
 OBS_PATH=C:\path\to\obsidian\output_folder
+ZOTERO_DB=C:\Users\YourName\Zotero\zotero.sqlite
 ```
 
 **3. Run**
@@ -73,6 +72,7 @@ python paper_summarizer.py
 | Feature | Description |
 |---|---|
 | Collection picker | Real-time search, multi-select, checkbox UI |
+| Local DB access | Reads Zotero SQLite directly — no sync delay, no API key |
 | PDF matching | Rule-based matching by author + year + title keywords |
 | AI summary | Research objective, methodology, key results, keywords |
 | Auto Wikilinks | Authors, journals, tags, and keywords linked as `[[...]]` |
@@ -109,9 +109,7 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 
 | Version | Changes |
 |---|---|
-| v1.0 | Initial build — Zotero fetch, Gemini summary, Obsidian export |
-| v2.0 | Added multi-collection (B2), recent filter (B3), duplicate handling (A1), progress bar (A4), auto wikilinks (C1), `.env` support (D1) |
-| v3.0 | Full UI redesign (Segoe UI, modern flat layout), CollectionPicker with real-time search and checkbox selection, hover effects, path variables moved to `.env` |
+| v1.0 | Initial build — Zotero API fetch, Gemini summary, Obsidian export
 
 ---
 
@@ -119,10 +117,10 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 
 | Package | Purpose |
 |---|---|
-| `pyzotero` | Zotero API client |
 | `google-generativeai` | Gemini API |
 | `pypdf` | PDF text extraction |
 | `tkinter` | GUI (Python standard library) |
+| `sqlite3` | Local Zotero DB access (Python standard library) |
 
 ---
 
