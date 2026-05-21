@@ -246,18 +246,18 @@ TAG_BG      = "#E8E8E8"
 TAG_FG      = "#333333"
 
 # Fonts — Segoe UI (modern Windows system font)
-FONT_H1     = ("Segoe UI", 13, "bold")
-FONT_H2     = ("Segoe UI", 8)
-FONT_SEC    = ("Segoe UI", 9, "bold")
-FONT_LABEL  = ("Segoe UI", 9)
-FONT_SMALL  = ("Segoe UI", 8)
-FONT_ENTRY  = ("Consolas", 9)
-FONT_BTN_P  = ("Segoe UI Semibold", 9)
-FONT_BTN_G  = ("Segoe UI", 9)
-FONT_LOG    = ("Consolas", 8)
-FONT_STATUS = ("Segoe UI", 8)
-FONT_TAG    = ("Segoe UI", 8)
-FONT_MONO   = ("Consolas", 8)
+FONT_H1     = ("Segoe UI", 14, "bold")
+FONT_H2     = ("Segoe UI", 9)
+FONT_SEC    = ("Segoe UI", 10, "bold")
+FONT_LABEL  = ("Segoe UI", 10)
+FONT_SMALL  = ("Segoe UI", 9)
+FONT_ENTRY  = ("Consolas", 10)
+FONT_BTN_P  = ("Segoe UI Semibold", 10)
+FONT_BTN_G  = ("Segoe UI", 10)
+FONT_LOG    = ("Consolas", 9)
+FONT_STATUS = ("Segoe UI", 9)
+FONT_TAG    = ("Segoe UI", 9)
+FONT_MONO   = ("Consolas", 9)
 
 GEMINI_MODELS = [
     "gemini-2.5-flash",
@@ -545,12 +545,12 @@ class PaperSummarizerApp:
         header.pack(fill="x")
         left = tk.Frame(header, bg=FG)
         left.pack(side="left")
-        tk.Label(left, text="Paper Summarizer",
+        tk.Label(left, text="Zotero Obsidian Summarizer",
                  font=("Segoe UI", 15, "bold"),
                  fg=BG_CARD, bg=FG).pack(anchor="w")
-        tk.Label(left, text="Zotero  ×  Gemini AI  ×  Obsidian",
+        tk.Label(left, text="Heeyoung Lee",
                  font=("Segoe UI", 8), fg="#888888", bg=FG).pack(anchor="w")
-        tk.Label(header, text="v3.0",
+        tk.Label(header, text="v1.0",
                  font=FONT_MONO, fg="#555555", bg=FG).pack(side="right", anchor="se")
 
         # ── Scroll canvas
