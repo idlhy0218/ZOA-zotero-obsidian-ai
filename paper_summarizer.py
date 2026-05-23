@@ -1,6 +1,6 @@
 """
-Paper Summarizer Bot — Academic Edition v1.0
-Modern flat design, real-time collection search, checkbox selection
+Paper Summarizer Bot — Academic Edition v1.1
+Clean academic design, improved readability
 """
 
 import tkinter as tk
@@ -13,8 +13,7 @@ from pathlib import Path
 # Config / .env
 # ─────────────────────────────────────────────
 def load_config():
-    config = {'GEMINI_KEY': '', 'PDF_PATH': '', 'OBS_PATH': '',
-               'ZOTERO_DB': ''}
+    config = {'GEMINI_KEY': '', 'PDF_PATH': '', 'OBS_PATH': '', 'ZOTERO_DB': ''}
     env_path = Path(__file__).parent / '.env'
     if env_path.exists():
         with open(env_path, encoding='utf-8') as f:
@@ -38,8 +37,7 @@ ZOTERO_DB  = CONFIG['ZOTERO_DB']
 # ─────────────────────────────────────────────
 def check_and_import():
     missing = []
-    for pkg, imp in [("google-generativeai", "google.generativeai"),
-                     ("pypdf", "pypdf")]:
+    for pkg, imp in [("google-generativeai", "google.generativeai"), ("pypdf", "pypdf")]:
         try: __import__(imp)
         except ImportError: missing.append(pkg)
     return missing
@@ -57,7 +55,6 @@ def normalize_str(text):
     return unicodedata.normalize('NFC', text)
 
 def sanitize_yaml(text):
-    """YAML 필드용: 쌍따옴표 이스케이프, 줄바꿈 제거"""
     if not text: return ""
     text = unicodedata.normalize('NFC', text)
     text = text.replace('\r\n', ' ').replace('\n', ' ').replace('\r', ' ')
@@ -65,12 +62,9 @@ def sanitize_yaml(text):
     return text.strip()
 
 def sanitize_abstract(text):
-    """Original Abstract 블록용: 줄바꿈 → blockquote 유지, 특수문자 방어"""
     if not text: return "(No abstract available)"
     text = unicodedata.normalize('NFC', text)
-    # 줄바꿈을 blockquote 연속으로 변환
     lines = text.replace('\r\n', '\n').replace('\r', '\n').split('\n')
-    # 빈 줄은 blockquote 구분자로
     result = []
     for line in lines:
         stripped = line.strip()
@@ -82,24 +76,20 @@ def sanitize_abstract(text):
 
 # ── SQLite helpers ──────────────────────────
 def get_zotero_db():
-    """ZOTERO_DB env 또는 기본 경로에서 sqlite3 연결 반환"""
     import sqlite3
     db_path = ZOTERO_DB or str(Path.home() / 'Zotero' / 'zotero.sqlite')
     if not os.path.exists(db_path):
         raise FileNotFoundError(f"zotero.sqlite not found: {db_path}")
-    # Zotero가 열려있어도 읽기 가능하도록 URI mode + immutable
     uri = f"file:{db_path}?immutable=1"
     return sqlite3.connect(uri, uri=True)
 
 def sqlite_get_collections(db):
-    """전체 컬렉션 목록 반환 [{collectionID, key, name, parentCollectionID}]"""
     cur = db.execute(
         "SELECT collectionID, key, collectionName, parentCollectionID FROM collections"
     )
     return [{'id': r[0], 'key': r[1], 'name': r[2], 'parent': r[3]} for r in cur.fetchall()]
 
 def sqlite_get_collection_ids(db, root_name):
-    """root_name 컬렉션과 하위 컬렉션의 collectionID 리스트 반환"""
     cols = sqlite_get_collections(db)
     root = next((c for c in cols if c['name'] == root_name), None)
     if not root: return []
@@ -112,7 +102,6 @@ def sqlite_get_collection_ids(db, root_name):
     return ids
 
 def sqlite_get_items(db, col_ids=None, limit=500):
-    """컬렉션 ID 리스트로 아이템 조회. None이면 전체 라이브러리."""
     base_types = "('journalArticle','conferencePaper','preprint','report','thesis')"
     if col_ids:
         placeholders = ",".join("?" * len(col_ids))
@@ -142,7 +131,6 @@ def sqlite_get_items(db, col_ids=None, limit=500):
     return [{'itemID': r[0], 'key': r[1], 'dateAdded': r[2]} for r in rows]
 
 def sqlite_get_item_data(db, item_id):
-    """itemID로 필드값 딕셔너리 반환"""
     cur = db.execute("""
         SELECT f.fieldName, iv.value
         FROM itemData id_
@@ -153,7 +141,6 @@ def sqlite_get_item_data(db, item_id):
     return {r[0]: r[1] for r in cur.fetchall()}
 
 def sqlite_get_creators(db, item_id):
-    """저자 목록 반환 [{lastName, firstName, creatorType}]"""
     cur = db.execute("""
         SELECT c.lastName, c.firstName, ct.creatorType
         FROM itemCreators ic
@@ -165,7 +152,6 @@ def sqlite_get_creators(db, item_id):
     return [{'lastName': r[0] or '', 'firstName': r[1] or '', 'type': r[2]} for r in cur.fetchall()]
 
 def sqlite_get_tags(db, item_id):
-    """태그 목록 반환"""
     cur = db.execute("""
         SELECT t.name FROM itemTags it
         JOIN tags t ON it.tagID = t.tagID
@@ -174,7 +160,6 @@ def sqlite_get_tags(db, item_id):
     return [r[0] for r in cur.fetchall()]
 
 def sqlite_get_collection_names(db):
-    """컬렉션 이름 목록 (정렬)"""
     cur = db.execute("SELECT collectionName FROM collections ORDER BY collectionName")
     return [r[0] for r in cur.fetchall()]
 
@@ -188,7 +173,6 @@ def index_pdf_files(root_path):
     return out
 
 def find_best_pdf_match(fields, creators_raw, pdf_index):
-    """SQLite fields dict + creators 리스트로 PDF 매칭"""
     try:
         if not creators_raw: return None
         author_last = creators_raw[0].get('lastName', '') or creators_raw[0].get('firstName', '')
@@ -223,41 +207,45 @@ def apply_wikilinks_to_summary(summary_text, keywords):
     return summary_text
 
 # ─────────────────────────────────────────────
-# Design tokens — modern flat monochrome
+# Design tokens — clean academic
 # ─────────────────────────────────────────────
-BG          = "#F5F5F5"
-BG_CARD     = "#FFFFFF"
-BG_INPUT    = "#FFFFFF"
-BG_HOVER    = "#ECECEC"
-BG_SELECTED = "#1A1A1A"
-FG          = "#1A1A1A"
-FG_MID      = "#555555"
-FG_DIM      = "#999999"
-FG_LIGHT    = "#BBBBBB"
-BORDER      = "#E0E0E0"
-BORDER_MID  = "#CCCCCC"
-ACCENT      = "#1A1A1A"
-ACCENT_H    = "#333333"
-CHECK_ON    = "#1A1A1A"
-CHECK_OFF   = "#DDDDDD"
-LOG_BG      = "#111111"
-LOG_FG      = "#BBBBBB"
-TAG_BG      = "#E8E8E8"
-TAG_FG      = "#333333"
+BG           = "#F4F3F1"       # warm off-white page
+BG_CARD      = "#FFFFFF"
+BG_INPUT     = "#FAFAF9"
+BG_HOVER     = "#F0EFED"
+BG_SEL       = "#1C1C1C"       # selected row fill
+FG           = "#1C1C1C"
+FG_MID       = "#555550"
+FG_DIM       = "#888882"
+FG_LIGHT     = "#BABAB4"
+BORDER       = "#E2E1DE"
+BORDER_MID   = "#C8C7C3"
+ACCENT       = "#1C1C1C"
+ACCENT_H     = "#383838"
+LOG_BG       = "#F8F8F7"
+LOG_FG       = "#555550"
+LOG_OK       = "#1C1C1C"
+LOG_SKIP     = "#BABAB4"
+LOG_WARN     = "#888882"
+TAG_BG       = "#EFEFED"
+TAG_FG       = "#444440"
 
-# Fonts — Segoe UI (modern Windows system font)
-FONT_H1     = ("Segoe UI", 14, "bold")
-FONT_H2     = ("Segoe UI", 9)
-FONT_SEC    = ("Segoe UI", 10, "bold")
-FONT_LABEL  = ("Segoe UI", 10)
-FONT_SMALL  = ("Segoe UI", 9)
-FONT_ENTRY  = ("Consolas", 10)
-FONT_BTN_P  = ("Segoe UI Semibold", 10)
-FONT_BTN_G  = ("Segoe UI", 10)
-FONT_LOG    = ("Consolas", 9)
-FONT_STATUS = ("Segoe UI", 9)
-FONT_TAG    = ("Segoe UI", 9)
-FONT_MONO   = ("Consolas", 9)
+# Fonts — larger, readable
+FONT_H1      = ("Segoe UI",     16, "bold")
+FONT_APPNAME = ("Segoe UI",     15, "bold")
+FONT_SUBNAME = ("Segoe UI",      9)
+FONT_VER     = ("Consolas",      9)
+FONT_SEC     = ("Segoe UI",      9, "bold")   # section labels
+FONT_LABEL   = ("Segoe UI",     12)
+FONT_LABEL_B = ("Segoe UI",     12, "bold")
+FONT_SMALL   = ("Segoe UI",     11)
+FONT_ENTRY   = ("Consolas",     12)
+FONT_BTN_P   = ("Segoe UI",     12, "bold")
+FONT_BTN_G   = ("Segoe UI",     12)
+FONT_LOG     = ("Consolas",     11)
+FONT_STATUS  = ("Segoe UI",     11)
+FONT_TAG     = ("Segoe UI",     11)
+FONT_MONO    = ("Consolas",     11)
 
 GEMINI_MODELS = [
     "gemini-2.5-flash",
@@ -282,7 +270,7 @@ def make_entry(parent, textvariable, width=46, placeholder=""):
 def make_btn_primary(parent, text, command):
     btn = tk.Button(parent, text=text, command=command,
                     bg=ACCENT, fg=BG_CARD, relief="flat",
-                    font=FONT_BTN_P, padx=16, pady=7,
+                    font=FONT_BTN_P, padx=18, pady=8,
                     cursor="hand2", bd=0,
                     activebackground=ACCENT_H, activeforeground=BG_CARD)
     btn.bind("<Enter>", lambda e: btn.config(bg=ACCENT_H))
@@ -292,35 +280,39 @@ def make_btn_primary(parent, text, command):
 def make_btn_ghost(parent, text, command):
     btn = tk.Button(parent, text=text, command=command,
                     bg=BG_CARD, fg=FG_MID, relief="flat",
-                    font=FONT_BTN_G, padx=12, pady=7,
-                    cursor="hand2", bd=0,
+                    font=FONT_BTN_G, padx=14, pady=8,
+                    cursor="hand2", bd=1,
                     activebackground=BG_HOVER, activeforeground=FG,
-                    highlightthickness=1, highlightbackground=BORDER_MID)
+                    highlightthickness=0)
     btn.bind("<Enter>", lambda e: btn.config(bg=BG_HOVER, fg=FG))
     btn.bind("<Leave>", lambda e: btn.config(bg=BG_CARD, fg=FG_MID))
     return btn
 
-def make_sep(parent, pady=(12, 12)):
-    tk.Frame(parent, bg=BORDER, height=1).pack(fill="x", pady=pady)
-
-def make_section(parent, label):
+def make_section_label(parent, text):
+    """Minimal uppercase section label, no horizontal rule."""
     row = tk.Frame(parent, bg=BG)
-    row.pack(fill="x", pady=(20, 8))
-    tk.Label(row, text=label.upper(), font=("Segoe UI", 8, "bold"),
+    row.pack(fill="x", pady=(22, 7))
+    tk.Label(row, text=text.upper(), font=FONT_SEC,
              fg=FG_DIM, bg=BG).pack(side="left")
-    tk.Frame(row, bg=BORDER, height=1).pack(
-        side="left", fill="x", expand=True, padx=(10, 0), pady=6)
 
 def card(parent, **kw):
     return tk.Frame(parent, bg=BG_CARD,
-                    highlightthickness=1, highlightbackground=BORDER,
-                    padx=16, pady=12, **kw)
+                    bd=1, relief="solid",
+                    highlightthickness=0,
+                    padx=18, pady=14, **kw)
+
+def field_label(parent, text):
+    tk.Label(parent, text=text, font=FONT_SMALL,
+             fg=FG_DIM, bg=BG_CARD).pack(anchor="w", pady=(0, 4))
+
+def thin_divider(parent, pady=(12, 12)):
+    tk.Frame(parent, bg=BORDER, height=1).pack(fill="x", pady=pady)
 
 # ─────────────────────────────────────────────
 # Collection Picker Widget
 # ─────────────────────────────────────────────
 class CollectionPicker(tk.Frame):
-    ROW_H = 30
+    ROW_H = 34
 
     def __init__(self, parent, **kw):
         super().__init__(parent, bg=BG_CARD, **kw)
@@ -332,27 +324,27 @@ class CollectionPicker(tk.Frame):
 
     def _build(self):
         # ── Search bar
-        search_wrap = tk.Frame(self, bg=BG_CARD,
+        search_wrap = tk.Frame(self, bg=BG_INPUT,
                                highlightthickness=1, highlightbackground=BORDER)
-        search_wrap.pack(fill="x", pady=(0, 6))
+        search_wrap.pack(fill="x", pady=(0, 8))
 
-        tk.Label(search_wrap, text="⌕", font=("Segoe UI", 11),
-                 bg=BG_CARD, fg=FG_DIM).pack(side="left", padx=(8, 4))
+        tk.Label(search_wrap, text="⌕", font=("Segoe UI", 13),
+                 bg=BG_INPUT, fg=FG_DIM).pack(side="left", padx=(10, 4))
 
         self._search_var = tk.StringVar()
         self._search_var.trace_add("write", self._on_search)
         search_entry = tk.Entry(search_wrap, textvariable=self._search_var,
-                                bg=BG_CARD, fg=FG, relief="flat",
+                                bg=BG_INPUT, fg=FG, relief="flat",
                                 font=FONT_ENTRY, insertbackground=FG,
                                 highlightthickness=0)
-        search_entry.pack(side="left", fill="x", expand=True, ipady=6)
+        search_entry.pack(side="left", fill="x", expand=True, ipady=7)
 
-        self._clear_btn = tk.Label(search_wrap, text="✕", font=("Segoe UI", 9),
-                                   bg=BG_CARD, fg=FG_DIM, cursor="hand2", padx=8)
+        self._clear_btn = tk.Label(search_wrap, text="✕", font=("Segoe UI", 10),
+                                   bg=BG_INPUT, fg=FG_DIM, cursor="hand2", padx=10)
         self._clear_btn.pack(side="right")
         self._clear_btn.bind("<Button-1>", lambda e: self._search_var.set(""))
 
-        # ── List area (Canvas + Scrollbar)
+        # ── List area
         list_outer = tk.Frame(self, bg=BG_CARD,
                               highlightthickness=1, highlightbackground=BORDER)
         list_outer.pack(fill="both", expand=True)
@@ -369,27 +361,24 @@ class CollectionPicker(tk.Frame):
         self._vsb.config(command=self._canvas.yview)
 
         self._inner = tk.Frame(self._canvas, bg=BG_CARD)
-        self._win   = self._canvas.create_window((0, 0), window=self._inner,
-                                                  anchor="nw")
+        self._win   = self._canvas.create_window((0, 0), window=self._inner, anchor="nw")
 
         self._inner.bind("<Configure>", self._on_inner_configure)
         self._canvas.bind("<Configure>",
                           lambda e: self._canvas.itemconfig(self._win, width=e.width))
 
-        # Mouse wheel — bind to canvas AND inner frame
         for widget in (self._canvas, self._inner):
             widget.bind("<MouseWheel>", self._on_mousewheel)
 
         # ── Selected tags bar
-        tags_outer = tk.Frame(self, bg=BG, pady=6)
+        tags_outer = tk.Frame(self, bg=BG, pady=7)
         tags_outer.pack(fill="x")
         tk.Label(tags_outer, text="Selected:", font=FONT_SMALL,
-                 fg=FG_DIM, bg=BG).pack(side="left", padx=(2, 6))
+                 fg=FG_DIM, bg=BG).pack(side="left", padx=(2, 8))
         self._tags_frame = tk.Frame(tags_outer, bg=BG)
         self._tags_frame.pack(side="left", fill="x", expand=True)
-        self._no_sel_lbl = tk.Label(self._tags_frame, text="None",
-                                    font=FONT_SMALL, fg=FG_LIGHT, bg=BG)
-        self._no_sel_lbl.pack(side="left")
+        tk.Label(self._tags_frame, text="None",
+                 font=FONT_SMALL, fg=FG_LIGHT, bg=BG).pack(side="left")
 
         self._count_lbl = tk.Label(tags_outer, text="",
                                    font=FONT_MONO, fg=FG_DIM, bg=BG)
@@ -397,7 +386,6 @@ class CollectionPicker(tk.Frame):
 
     def _on_inner_configure(self, e):
         self._canvas.configure(scrollregion=self._canvas.bbox("all"))
-        # Sync mousewheel to dynamically added rows
         for w in self._inner.winfo_children():
             if not hasattr(w, '_mw_bound'):
                 w.bind("<MouseWheel>", self._on_mousewheel)
@@ -409,8 +397,7 @@ class CollectionPicker(tk.Frame):
         self._canvas.yview_scroll(-1 * (event.delta // 120), "units")
 
     def _on_search(self, *_):
-        if not self._all_names:
-            return
+        if not self._all_names: return
         q = self._search_var.get().strip().lower()
         self._filtered = [n for n in self._all_names if q in n.lower()] if q else list(self._all_names)
         self._render_rows()
@@ -431,15 +418,17 @@ class CollectionPicker(tk.Frame):
 
         for name in self._filtered:
             checked = name in self._checked
-            row = tk.Frame(self._inner, bg=BG_CARD, cursor="hand2")
+            row = tk.Frame(self._inner,
+                           bg=BG_SEL if checked else BG_CARD,
+                           cursor="hand2")
             row.pack(fill="x")
 
-            # Hover effect
             def _enter(e, r=row, n=name):
-                r.config(bg=BG_HOVER)
-                for c in r.winfo_children(): c.config(bg=BG_HOVER)
+                if n not in self._checked:
+                    r.config(bg=BG_HOVER)
+                    for c in r.winfo_children(): c.config(bg=BG_HOVER)
             def _leave(e, r=row, n=name):
-                col = BG_SELECTED if n in self._checked else BG_CARD
+                col = BG_SEL if n in self._checked else BG_CARD
                 r.config(bg=col)
                 for c in r.winfo_children(): c.config(bg=col)
 
@@ -448,44 +437,36 @@ class CollectionPicker(tk.Frame):
             row.bind("<Button-1>", lambda e, n=name: self._toggle(n))
             row.bind("<MouseWheel>", self._on_mousewheel)
 
-            # Checkbox indicator
-            chk_color = CHECK_ON if checked else CHECK_OFF
-            chk = tk.Label(row, text="  ", width=2,
-                           bg=chk_color, relief="flat")
-            chk.pack(side="left", fill="y", ipadx=3)
-            chk.bind("<Button-1>", lambda e, n=name: self._toggle(n))
-            chk.bind("<MouseWheel>", self._on_mousewheel)
+            # Left accent bar (3px)
+            accent = tk.Frame(row, width=3,
+                              bg=ACCENT if checked else BORDER)
+            accent.pack(side="left", fill="y")
+            accent.bind("<Button-1>", lambda e, n=name: self._toggle(n))
 
-            # Name label
+            lbl_fg = BG_CARD if checked else FG
+            lbl_bg = BG_SEL  if checked else BG_CARD
             lbl = tk.Label(row, text=f"  {name}", font=FONT_LABEL,
-                           fg=FG if not checked else BG_CARD,
-                           bg=BG_SELECTED if checked else BG_CARD,
-                           anchor="w", pady=6)
+                           fg=lbl_fg, bg=lbl_bg,
+                           anchor="w", pady=8)
             lbl.pack(side="left", fill="both", expand=True)
             lbl.bind("<Button-1>", lambda e, n=name: self._toggle(n))
             lbl.bind("<MouseWheel>", self._on_mousewheel)
 
-            # Thin separator
             tk.Frame(self._inner, bg=BORDER, height=1).pack(fill="x")
+            self._row_frames.append((name, row, lbl))
 
-            self._row_frames.append((name, row, chk, lbl))
-
-        # Empty state
         if not self._filtered:
             tk.Label(self._inner,
                      text="No collections found." if self._search_var.get()
                           else "Click 'Load' to fetch collections.",
-                     font=FONT_SMALL, fg=FG_DIM, bg=BG_CARD, pady=16).pack()
+                     font=FONT_SMALL, fg=FG_DIM, bg=BG_CARD, pady=18).pack()
 
-        # scrollregion 강제 갱신
         self._inner.update_idletasks()
         self._canvas.configure(scrollregion=self._canvas.bbox("all"))
 
     def _toggle(self, name):
-        if name in self._checked:
-            self._checked.discard(name)
-        else:
-            self._checked.add(name)
+        if name in self._checked: self._checked.discard(name)
+        else: self._checked.add(name)
         self._render_rows()
         self._refresh_tags()
 
@@ -501,13 +482,14 @@ class CollectionPicker(tk.Frame):
 
         for name in sorted(self._checked):
             tag_f = tk.Frame(self._tags_frame, bg=TAG_BG,
-                             highlightthickness=1, highlightbackground=BORDER_MID)
-            tag_f.pack(side="left", padx=(0, 4), pady=1)
-            short = name if len(name) <= 20 else name[:18] + "…"
+                             bd=1, relief="solid",
+                             highlightthickness=0)
+            tag_f.pack(side="left", padx=(0, 5), pady=1)
+            short = name if len(name) <= 22 else name[:20] + "…"
             tk.Label(tag_f, text=short, font=FONT_TAG,
-                     fg=TAG_FG, bg=TAG_BG, padx=6, pady=2).pack(side="left")
+                     fg=TAG_FG, bg=TAG_BG, padx=7, pady=3).pack(side="left")
             x_btn = tk.Label(tag_f, text="×", font=FONT_TAG,
-                             fg=FG_DIM, bg=TAG_BG, cursor="hand2", padx=4)
+                             fg=FG_DIM, bg=TAG_BG, cursor="hand2", padx=5)
             x_btn.pack(side="left")
             x_btn.bind("<Button-1>", lambda e, n=name: self._toggle(n))
 
@@ -518,8 +500,7 @@ class CollectionPicker(tk.Frame):
         return list(self._checked)
 
     def set_disabled(self, disabled):
-        state = "disabled" if disabled else "normal"
-        self._canvas.config(state=state)
+        self._canvas.config(state="disabled" if disabled else "normal")
         self._search_var.set("")
 
 
@@ -530,10 +511,10 @@ class PaperSummarizerApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Paper Summarizer")
-        self.root.geometry("780x880")
+        self.root.geometry("820x920")
         self.root.resizable(True, True)
         self.root.configure(bg=BG)
-        self.root.minsize(700, 720)
+        self.root.minsize(720, 760)
         self.running = False
         self._build_ui()
         self._check_deps()
@@ -541,17 +522,23 @@ class PaperSummarizerApp:
 
     def _build_ui(self):
         # ── Header
-        header = tk.Frame(self.root, bg=FG, pady=20, padx=32)
+        header = tk.Frame(self.root, bg=BG_CARD,
+                          bd=0, highlightthickness=1,
+                          highlightbackground=BORDER)
         header.pack(fill="x")
-        left = tk.Frame(header, bg=FG)
+
+        inner_h = tk.Frame(header, bg=BG_CARD, pady=18, padx=32)
+        inner_h.pack(fill="x")
+
+        left = tk.Frame(inner_h, bg=BG_CARD)
         left.pack(side="left")
         tk.Label(left, text="Zotero Obsidian Summarizer",
-                 font=("Segoe UI", 15, "bold"),
-                 fg=BG_CARD, bg=FG).pack(anchor="w")
+                 font=FONT_APPNAME, fg=FG, bg=BG_CARD).pack(anchor="w")
         tk.Label(left, text="Heeyoung Lee",
-                 font=("Segoe UI", 8), fg="#888888", bg=FG).pack(anchor="w")
-        tk.Label(header, text="v1.0",
-                 font=FONT_MONO, fg="#555555", bg=FG).pack(side="right", anchor="se")
+                 font=FONT_SUBNAME, fg=FG_DIM, bg=BG_CARD).pack(anchor="w", pady=(2, 0))
+
+        tk.Label(inner_h, text="v1.0",
+                 font=FONT_VER, fg=FG_LIGHT, bg=BG_CARD).pack(side="right", anchor="se")
 
         # ── Scroll canvas
         outer = tk.Frame(self.root, bg=BG)
@@ -567,7 +554,7 @@ class PaperSummarizerApp:
         self._canvas.pack(side="left", fill="both", expand=True)
         self._main_vsb.config(command=self._canvas.yview)
 
-        self.main = tk.Frame(self._canvas, bg=BG, padx=28, pady=20)
+        self.main = tk.Frame(self._canvas, bg=BG, padx=30, pady=22)
         self._wid = self._canvas.create_window((0, 0), window=self.main, anchor="nw")
 
         def _resize(e):
@@ -580,63 +567,58 @@ class PaperSummarizerApp:
 
         M = self.main
 
-        # ── 01  Zotero Collections
-        make_section(M, "01  Zotero Collections")
+        # ─── 01  Collections ──────────────────
+        make_section_label(M, "01  Zotero Collections")
         c1 = card(M); c1.pack(fill="x")
 
-        top = tk.Frame(c1, bg=BG_CARD); top.pack(fill="x", pady=(0, 10))
+        top = tk.Frame(c1, bg=BG_CARD); top.pack(fill="x", pady=(0, 12))
         self._load_btn = make_btn_primary(top, "Load Collections", self._load_collections)
-        self._load_btn.pack(side="left", padx=(0, 10))
+        self._load_btn.pack(side="left", padx=(0, 14))
 
         self.all_var = tk.BooleanVar()
-        chk_all = tk.Checkbutton(top, text="Entire Library",
-                                 variable=self.all_var, command=self._toggle_all,
-                                 bg=BG_CARD, fg=FG_MID, selectcolor=BG_CARD,
-                                 activebackground=BG_CARD, font=FONT_LABEL,
-                                 relief="flat", bd=0)
-        chk_all.pack(side="right")
+        tk.Checkbutton(top, text="Entire Library",
+                       variable=self.all_var, command=self._toggle_all,
+                       bg=BG_CARD, fg=FG_MID, selectcolor=BG_CARD,
+                       activebackground=BG_CARD, font=FONT_LABEL,
+                       relief="flat", bd=0).pack(side="right")
 
-        self._picker = CollectionPicker(c1, height=200)
+        self._picker = CollectionPicker(c1, height=210)
         self._picker.pack(fill="x")
 
-        # ── 02  Paths
-        make_section(M, "02  File Paths")
+        # ─── 02  Paths ────────────────────────
+        make_section_label(M, "02  File Paths")
         c2 = card(M); c2.pack(fill="x")
 
-        tk.Label(c2, text="PDF Folder", font=FONT_SMALL,
-                 fg=FG_DIM, bg=BG_CARD).pack(anchor="w", pady=(0, 3))
+        field_label(c2, "PDF Folder")
         self.pdf_path_var = tk.StringVar(value=PDF_PATH)
         self._path_row(c2, self.pdf_path_var)
-
-        tk.Frame(c2, bg=BORDER, height=1).pack(fill="x", pady=10)
-
-        tk.Label(c2, text="Obsidian Vault", font=FONT_SMALL,
-                 fg=FG_DIM, bg=BG_CARD).pack(anchor="w", pady=(0, 3))
+        thin_divider(c2, (12, 12))
+        field_label(c2, "Obsidian Vault")
         self.obs_path_var = tk.StringVar(value=OBS_PATH)
         self._path_row(c2, self.obs_path_var)
 
-        # ── 03  Options
-        make_section(M, "03  Options")
+        # ─── 03  Options ──────────────────────
+        make_section_label(M, "03  Options")
         c3 = card(M); c3.pack(fill="x")
 
-        # Row A — toggles
-        row_a = tk.Frame(c3, bg=BG_CARD); row_a.pack(fill="x", pady=(0, 10))
+        # Toggle row
+        tog_row = tk.Frame(c3, bg=BG_CARD); tog_row.pack(fill="x", pady=(0, 12))
         self.full_pdf_var = tk.BooleanVar(value=False)
-        self._toggle_chk(row_a, "Read full PDF", self.full_pdf_var)
+        self._toggle_chk(tog_row, "Read full PDF", self.full_pdf_var)
         self.wikilink_var = tk.BooleanVar(value=False)
-        self._toggle_chk(row_a, "Auto Wikilinks", self.wikilink_var, pad_left=24)
+        self._toggle_chk(tog_row, "Auto Wikilinks", self.wikilink_var, pad_left=28)
 
-        tk.Frame(c3, bg=BORDER, height=1).pack(fill="x", pady=(0, 10))
+        thin_divider(c3, (0, 12))
 
-        # Row B — recent filter
-        row_b = tk.Frame(c3, bg=BG_CARD); row_b.pack(fill="x", pady=(0, 10))
+        # Recent filter row
+        rec_row = tk.Frame(c3, bg=BG_CARD); rec_row.pack(fill="x", pady=(0, 12))
         self.recent_var = tk.BooleanVar(value=False)
-        self._toggle_chk(row_b, "Recent papers only", self.recent_var,
+        self._toggle_chk(rec_row, "Recent papers only", self.recent_var,
                          command=self._toggle_recent)
-        tk.Label(row_b, text="Days:", font=FONT_LABEL,
-                 fg=FG_DIM, bg=BG_CARD).pack(side="left", padx=(16, 4))
+        tk.Label(rec_row, text="Days:", font=FONT_LABEL,
+                 fg=FG_DIM, bg=BG_CARD).pack(side="left", padx=(20, 6))
         self.recent_days_var = tk.StringVar(value="7")
-        self.recent_spin = tk.Spinbox(row_b, from_=1, to=365,
+        self.recent_spin = tk.Spinbox(rec_row, from_=1, to=365,
                                       textvariable=self.recent_days_var,
                                       width=4, font=FONT_ENTRY,
                                       bg=BG_INPUT, fg=FG_DIM, relief="flat",
@@ -646,42 +628,42 @@ class PaperSummarizerApp:
                                       state="disabled")
         self.recent_spin.pack(side="left")
 
-        tk.Frame(c3, bg=BORDER, height=1).pack(fill="x", pady=(0, 10))
+        thin_divider(c3, (0, 12))
 
-        # Row C — duplicate + limits
-        row_c = tk.Frame(c3, bg=BG_CARD); row_c.pack(fill="x", pady=(0, 10))
-        tk.Label(row_c, text="Duplicate:", font=FONT_LABEL,
-                 fg=FG_DIM, bg=BG_CARD).pack(side="left", padx=(0, 8))
+        # Duplicate + limit row
+        dup_row = tk.Frame(c3, bg=BG_CARD); dup_row.pack(fill="x", pady=(0, 10))
+        tk.Label(dup_row, text="Duplicate:", font=FONT_LABEL,
+                 fg=FG_DIM, bg=BG_CARD).pack(side="left", padx=(0, 10))
         self.dup_var = tk.StringVar(value="skip")
-        for lbl, val in [("Skip","skip"),("Overwrite","overwrite"),("Update if newer","update")]:
-            tk.Radiobutton(row_c, text=lbl, variable=self.dup_var, value=val,
+        for lbl, val in [("Skip", "skip"), ("Overwrite", "overwrite"), ("Update if newer", "update")]:
+            tk.Radiobutton(dup_row, text=lbl, variable=self.dup_var, value=val,
                            bg=BG_CARD, fg=FG_MID, selectcolor=BG_CARD,
                            activebackground=BG_CARD, font=FONT_LABEL,
-                           relief="flat", bd=0).pack(side="left", padx=(0, 8))
+                           relief="flat", bd=0).pack(side="left", padx=(0, 10))
 
-        row_d = tk.Frame(c3, bg=BG_CARD); row_d.pack(fill="x")
-        tk.Label(row_d, text="Max papers:", font=FONT_LABEL,
+        lim_row = tk.Frame(c3, bg=BG_CARD); lim_row.pack(fill="x")
+        tk.Label(lim_row, text="Max papers:", font=FONT_LABEL,
                  fg=FG_DIM, bg=BG_CARD).pack(side="left")
         self.limit_var = tk.StringVar(value="500")
-        tk.Spinbox(row_d, from_=1, to=2000, textvariable=self.limit_var,
+        tk.Spinbox(lim_row, from_=1, to=2000, textvariable=self.limit_var,
                    width=5, font=FONT_ENTRY, bg=BG_INPUT, fg=FG,
                    relief="flat", highlightthickness=1,
                    highlightbackground=BORDER, bd=0,
-                   buttonbackground=BG).pack(side="left", padx=(6, 24))
+                   buttonbackground=BG).pack(side="left", padx=(6, 28))
 
-        tk.Label(row_d, text="Model:", font=FONT_LABEL,
+        tk.Label(lim_row, text="Model:", font=FONT_LABEL,
                  fg=FG_DIM, bg=BG_CARD).pack(side="left")
         self.model_var = tk.StringVar(value="gemini-2.5-flash")
         self._apply_combo_style()
-        ttk.Combobox(row_d, textvariable=self.model_var,
+        ttk.Combobox(lim_row, textvariable=self.model_var,
                      values=GEMINI_MODELS, state="readonly",
-                     font=FONT_ENTRY, width=28).pack(side="left", padx=(6, 0))
+                     font=FONT_ENTRY, width=26).pack(side="left", padx=(6, 0))
 
-        # ── 04  Progress
-        make_section(M, "04  Progress")
+        # ─── 04  Progress ─────────────────────
+        make_section_label(M, "04  Progress")
         c4 = card(M); c4.pack(fill="x")
 
-        prog_top = tk.Frame(c4, bg=BG_CARD); prog_top.pack(fill="x", pady=(0, 6))
+        prog_top = tk.Frame(c4, bg=BG_CARD); prog_top.pack(fill="x", pady=(0, 8))
         self.prog_label = tk.Label(prog_top, text="Ready",
                                    font=FONT_STATUS, fg=FG_DIM, bg=BG_CARD)
         self.prog_label.pack(side="left")
@@ -691,16 +673,16 @@ class PaperSummarizerApp:
 
         sty = ttk.Style()
         sty.theme_use("default")
-        sty.configure("Flat.Horizontal.TProgressbar",
-                       troughcolor=BG, background=ACCENT,
+        sty.configure("Slim.Horizontal.TProgressbar",
+                       troughcolor=BORDER, background=ACCENT,
                        bordercolor=BORDER, lightcolor=ACCENT,
-                       darkcolor=ACCENT, thickness=4)
-        self.progress = ttk.Progressbar(c4, style="Flat.Horizontal.TProgressbar",
+                       darkcolor=ACCENT, thickness=3)
+        self.progress = ttk.Progressbar(c4, style="Slim.Horizontal.TProgressbar",
                                         orient="horizontal", mode="determinate")
         self.progress.pack(fill="x")
 
-        # ── Run / Stop row
-        make_sep(M, (16, 12))
+        # ─── Run / Stop ───────────────────────
+        tk.Frame(M, bg=BORDER, height=1).pack(fill="x", pady=(20, 14))
         btn_row = tk.Frame(M, bg=BG); btn_row.pack(fill="x")
         self.run_btn = make_btn_primary(btn_row, "▶  Run", self._start_run)
         self.run_btn.pack(side="left", padx=(0, 10))
@@ -711,43 +693,46 @@ class PaperSummarizerApp:
         tk.Label(btn_row, textvariable=self.status_var,
                  font=FONT_STATUS, fg=FG_DIM, bg=BG).pack(side="left")
 
-        # ── 05  Log
-        make_section(M, "05  Execution Log")
+        # ─── 05  Log ──────────────────────────
+        make_section_label(M, "05  Execution Log")
         log_wrap = tk.Frame(M, bg=LOG_BG,
-                            highlightthickness=1, highlightbackground="#222222")
+                            bd=1, relief="solid",
+                            highlightthickness=0)
         log_wrap.pack(fill="both", expand=True, pady=(0, 28))
 
         vsb_log = tk.Scrollbar(log_wrap, bg=LOG_BG,
-                               troughcolor="#1A1A1A", bd=0, width=6)
+                               troughcolor=LOG_BG, bd=0, width=7)
         vsb_log.pack(side="right", fill="y")
 
-        self.log_box = tk.Text(log_wrap, height=13, font=FONT_LOG,
-                               bg=LOG_BG, fg=LOG_FG, insertbackground=LOG_FG,
-                               wrap="word", relief="flat", padx=16, pady=12,
-                               yscrollcommand=vsb_log.set, state="disabled")
+        self.log_box = tk.Text(log_wrap, height=14, font=FONT_LOG,
+                               bg=LOG_BG, fg=LOG_FG,
+                               insertbackground=LOG_FG,
+                               wrap="word", relief="flat",
+                               padx=18, pady=14,
+                               yscrollcommand=vsb_log.set,
+                               state="disabled")
         self.log_box.pack(side="left", fill="both", expand=True)
         vsb_log.config(command=self.log_box.yview)
 
-        self.log_box.tag_config("ok",   foreground="#666666")
-        self.log_box.tag_config("info", foreground="#BBBBBB")
-        self.log_box.tag_config("warn", foreground="#777777")
-        self.log_box.tag_config("err",  foreground="#999999")
-        self.log_box.tag_config("done", foreground="#EEEEEE")
-        self.log_box.tag_config("skip", foreground="#3A3A3A")
+        self.log_box.tag_config("ok",   foreground=LOG_OK)
+        self.log_box.tag_config("info", foreground=LOG_FG)
+        self.log_box.tag_config("warn", foreground=LOG_WARN)
+        self.log_box.tag_config("err",  foreground="#B85450")
+        self.log_box.tag_config("done", foreground=LOG_OK,
+                                font=("Consolas", 11, "bold"))
+        self.log_box.tag_config("skip", foreground=LOG_SKIP)
 
         self._log("Paper Summarizer initialized.", "ok")
-        self._log("Load Zotero collections and configure paths to begin.", "warn")
+        self._log("Load Zotero collections and configure paths to begin.", "info")
 
     # ── Helpers ──────────────────────────────
     def _on_root_scroll(self, event):
-        # Let CollectionPicker's canvas handle scroll when hovered
         w = event.widget
         try:
-            # Walk up widget tree to check if inside picker
             cur = w
             while cur:
                 if cur is self._picker._canvas or cur is self._picker._inner:
-                    return   # Let picker handle it
+                    return
                 cur = cur.master
         except: pass
         self._canvas.yview_scroll(-1 * (event.delta // 120), "units")
@@ -757,14 +742,12 @@ class PaperSummarizerApp:
         tk.Checkbutton(parent, text=text, variable=var,
                        bg=BG_CARD, fg=FG_MID, selectcolor=BG_CARD,
                        activebackground=BG_CARD, font=FONT_LABEL,
-                       relief="flat", bd=0, **kw).pack(
-                       side="left", padx=(pad_left, 0))
+                       relief="flat", bd=0, **kw).pack(side="left", padx=(pad_left, 0))
 
     def _path_row(self, parent, var):
         row = tk.Frame(parent, bg=BG_CARD); row.pack(fill="x")
-        make_entry(row, var, width=54).pack(side="left", padx=(0, 8), ipady=5)
-        make_btn_ghost(row, "Browse…",
-                       lambda: self._browse(var)).pack(side="left")
+        make_entry(row, var, width=54).pack(side="left", padx=(0, 10), ipady=6)
+        make_btn_ghost(row, "Browse…", lambda: self._browse(var)).pack(side="left")
 
     def _apply_combo_style(self):
         s = ttk.Style()
@@ -772,7 +755,7 @@ class PaperSummarizerApp:
                     fieldbackground=BG_INPUT, background=BG_INPUT,
                     foreground=FG, selectbackground=BG_INPUT,
                     selectforeground=FG, bordercolor=BORDER,
-                    arrowcolor=FG, relief="flat", padding=4)
+                    arrowcolor=FG, relief="flat", padding=5)
         s.map("TCombobox",
               fieldbackground=[("readonly", BG_INPUT)],
               selectbackground=[("readonly", BG_INPUT)],
@@ -783,8 +766,7 @@ class PaperSummarizerApp:
         if p: var.set(p)
 
     def _toggle_all(self):
-        disabled = self.all_var.get()
-        self._picker.set_disabled(disabled)
+        self._picker.set_disabled(self.all_var.get())
 
     def _toggle_recent(self):
         if self.recent_var.get():
@@ -821,7 +803,7 @@ class PaperSummarizerApp:
     def _check_deps(self):
         missing = check_and_import()
         if missing:
-            self._log("Missing: " + ", ".join(missing), "err")
+            self._log("Missing packages: " + ", ".join(missing), "err")
             self._log("Run:  pip install " + " ".join(missing), "err")
 
     def _log(self, msg, tag="info"):
@@ -926,23 +908,23 @@ class PaperSummarizerApp:
                 before = len(row_items)
                 row_items = [it for it in row_items
                              if self._parse_date(it['dateAdded']) >= cutoff]
-                self._log(f"  Recent filter ({recent_days}d): {before}→{len(row_items)}", "ok")
+                self._log(f"  Recent filter ({recent_days}d): {before} → {len(row_items)}", "ok")
 
             total = len(row_items)
-            self._log(f"✓  {total} items to process.\n" + "─"*46, "ok")
+            self._log(f"✓  {total} items to process.\n" + "─" * 50, "ok")
             self.root.after(0, lambda: self._set_progress(0, total))
             if not os.path.exists(obs_path): os.makedirs(obs_path)
             success = skip_count = 0
 
             for idx, row in enumerate(row_items, 1):
                 if not self.running: break
-                item_id  = row['itemID']
-                item_key = row['key']
+                item_id   = row['itemID']
+                item_key  = row['key']
                 date_added = row['dateAdded'] or ''
 
-                fields      = sqlite_get_item_data(db, item_id)
-                creators_raw= sqlite_get_creators(db, item_id)
-                zot_tags    = sqlite_get_tags(db, item_id)
+                fields       = sqlite_get_item_data(db, item_id)
+                creators_raw = sqlite_get_creators(db, item_id)
+                zot_tags     = sqlite_get_tags(db, item_id)
 
                 title       = fields.get('title', 'No Title')
                 abstract    = fields.get('abstractNote', '')
@@ -956,11 +938,13 @@ class PaperSummarizerApp:
                         name = f"{c['lastName']}, {c['firstName']}".strip(", ") if c['lastName'] else c['firstName']
                         if name: all_authors.append(name)
                     first = creators_raw[0]['lastName'] or creators_raw[0]['firstName'] or 'Unknown'
-                    if len(creators_raw) == 1:   author_for_file = first
+                    if len(creators_raw) == 1:
+                        author_for_file = first
                     elif len(creators_raw) == 2:
                         second = creators_raw[1]['lastName'] or creators_raw[1]['firstName'] or 'Unknown'
                         author_for_file = f"{first} and {second}"
-                    else: author_for_file = f"{first} et al"
+                    else:
+                        author_for_file = f"{first} et al"
 
                 year_m = re.search(r'\d{4}', date)
                 year   = year_m.group(0) if year_m else 'NoYear'
@@ -1055,7 +1039,7 @@ authors:
 {authors_yaml}
 date: {date}
 date_added: {date_added}
-journal: "{sanitize_yaml(publication.title() if publication else "No Journal")}"
+journal: "{sanitize_yaml(publication.title() if publication else 'No Journal')}"
 has_pdf: {str(has_pdf).lower()}
 url: {url}
 zotero_link: {zotero_link}
@@ -1086,7 +1070,7 @@ zotero_link: {zotero_link}
                 self.root.after(0, lambda i=idx: self._set_progress(i, total))
                 time.sleep(1)
 
-            self._log("\n" + "─"*46, "ok")
+            self._log("\n" + "─" * 50, "ok")
             self._log(f"Done.  {success} saved  |  {skip_count} skipped.", "done")
             self._set_status(f"Done — {success} processed, {skip_count} skipped.")
             self.root.after(0, lambda: self._set_progress(total, total))
@@ -1109,6 +1093,7 @@ zotero_link: {zotero_link}
         self.running = False
         self.root.after(0, lambda: self.run_btn.config(state="normal"))
         self.root.after(0, lambda: self.stop_btn.config(state="disabled", fg=FG_LIGHT))
+
 
 if __name__ == "__main__":
     root = tk.Tk()
