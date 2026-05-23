@@ -232,9 +232,9 @@ TAG_FG       = "#444440"
 # Fonts — larger, readable
 FONT_H1      = ("Segoe UI",     16, "bold")
 FONT_APPNAME = ("Segoe UI",     15, "bold")
-FONT_SUBNAME = ("Segoe UI",      9)
-FONT_VER     = ("Consolas",      9)
-FONT_SEC     = ("Segoe UI",      9, "bold")   # section labels
+FONT_SUBNAME = ("Segoe UI",      10)
+FONT_VER     = ("Consolas",      10)
+FONT_SEC     = ("Segoe UI",      10, "bold")   # section labels
 FONT_LABEL   = ("Segoe UI",     12)
 FONT_LABEL_B = ("Segoe UI",     12, "bold")
 FONT_SMALL   = ("Segoe UI",     11)
