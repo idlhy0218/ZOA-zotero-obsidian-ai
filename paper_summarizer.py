@@ -1,6 +1,5 @@
 """
-Paper Summarizer Bot — Academic Edition v1.1
-Clean academic design, improved readability
+Paper Summarizer Bot — v1.0
 """
 
 import tkinter as tk
