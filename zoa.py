@@ -1670,7 +1670,24 @@ class SetupWizard(tk.Toplevel):
 # Entry point
 # ─────────────────────────────────────────────
 if __name__ == "__main__":
+    # Force taskbar icon to display correctly on Windows (overrides default Python shell grouping)
+    try:
+        import ctypes
+        myappid = 'heeyounglee.zoa.1.0'
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    except:
+        pass
+
     root = tk.Tk()
+    
+    # Set default window and taskbar icon bitmap
+    try:
+        icon_path = get_app_dir() / "app_icon.ico"
+        if icon_path.exists():
+            root.iconbitmap(default=str(icon_path))
+    except:
+        pass
+
     root.withdraw()          # hide main window during setup
 
     cfg = load_config()
