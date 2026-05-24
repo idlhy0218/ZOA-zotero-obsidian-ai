@@ -4,6 +4,7 @@
 
 # Developer-only documentation
 README_DEV.md
+RULES.md
 
 # ── Build artifacts ───────────────────────
 # PyInstaller output
