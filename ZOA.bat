@@ -2,11 +2,11 @@
 cd /d "%~dp0"
 
 :: Try running with 'python' from PATH
-python goz.py 2>nul
+python zoa.py 2>nul
 if %errorlevel% equ 0 goto :end
 
 :: Fallback: try 'py' launcher (Windows Python Launcher)
-py goz.py 2>nul
+py zoa.py 2>nul
 if %errorlevel% equ 0 goto :end
 
 :: Neither worked

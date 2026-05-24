@@ -1,4 +1,4 @@
-name: Build GOZ
+name: Build ZOA
 
 on:
   push:
@@ -22,13 +22,13 @@ jobs:
         run: pip install pyinstaller google-generativeai pypdf pillow
 
       - name: Build Windows exe
-        run: pyinstaller --clean --onefile --windowed --name "GOZ" --icon="app_icon.ico" goz.py
+        run: pyinstaller --clean --onefile --windowed --name "ZOA" --icon="app_icon.ico" zoa.py
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GOZ-Windows
-          path: dist/GOZ.exe
+          name: ZOA-Windows
+          path: dist/ZOA.exe
 
   build-macos:
     runs-on: macos-latest
@@ -43,16 +43,16 @@ jobs:
         run: pip install pyinstaller google-generativeai pypdf pillow
 
       - name: Build macOS app
-        run: pyinstaller --clean --windowed --name "GOZ" goz.py
+        run: pyinstaller --clean --windowed --name "ZOA" zoa.py
 
       - name: Zip macOS app
-        run: cd dist && zip -r GOZ-macOS.zip GOZ.app
+        run: cd dist && zip -r ZOA-macOS.zip ZOA.app
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GOZ-macOS
-          path: dist/GOZ-macOS.zip
+          name: ZOA-macOS
+          path: dist/ZOA-macOS.zip
 
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')   # 태그 push 시에만 실행, 수동 실행 시 건너뜀
@@ -64,16 +64,16 @@ jobs:
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
-          name: GOZ-Windows
+          name: ZOA-Windows
 
       - name: Download macOS artifact
         uses: actions/download-artifact@v4
         with:
-          name: GOZ-macOS
+          name: ZOA-macOS
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            GOZ.exe
-            GOZ-macOS.zip
+            ZOA.exe
+            ZOA-macOS.zip

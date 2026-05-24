@@ -1,5 +1,5 @@
 """
-GOZ (Gemini-Obsidian-Zotero) — v1.1
+ZOA (Zotero-Obsidian-AI Summary) — v1.1
 """
 
 import tkinter as tk
@@ -21,7 +21,17 @@ def get_app_dir() -> Path:
 # Config / .env
 # ─────────────────────────────────────────────
 def load_config():
-    config = {'GEMINI_KEY': '', 'PDF_PATH': '', 'OBS_PATH': '', 'ZOTERO_DB': ''}
+    config = {
+        'GEMINI_KEY': '',
+        'CLAUDE_KEY': '',
+        'OPENAI_KEY': '',
+        'DEEPSEEK_KEY': '',
+        'API_PROVIDER': 'gemini',
+        'PDF_PATH': '',
+        'OBS_PATH': '',
+        'ZOTERO_DB': '',
+        'MODEL_NAME': 'gemini-2.5-flash'
+    }
     env_path = get_app_dir() / '.env'
     if env_path.exists():
         with open(env_path, encoding='utf-8') as f:
@@ -38,35 +48,142 @@ def save_config(cfg: dict):
     """Write the given config dict to .env next to the exe/script."""
     env_path = get_app_dir() / '.env'
     lines = [
-        "# GOZ (Gemini-Obsidian-Zotero) — Configuration (auto-generated)",
+        "# ZOA (Zotero-Obsidian-AI Summary) — Configuration (auto-generated)",
         "# Do NOT share this file or commit it to version control.\n",
         f"GEMINI_KEY={cfg.get('GEMINI_KEY', '')}",
+        f"CLAUDE_KEY={cfg.get('CLAUDE_KEY', '')}",
+        f"OPENAI_KEY={cfg.get('OPENAI_KEY', '')}",
+        f"DEEPSEEK_KEY={cfg.get('DEEPSEEK_KEY', '')}",
+        f"API_PROVIDER={cfg.get('API_PROVIDER', 'gemini')}",
         f"PDF_PATH={cfg.get('PDF_PATH', '')}",
         f"OBS_PATH={cfg.get('OBS_PATH', '')}",
         f"ZOTERO_DB={cfg.get('ZOTERO_DB', '')}",
+        f"MODEL_NAME={cfg.get('MODEL_NAME', 'gemini-2.5-flash')}",
     ]
     with open(env_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines) + '\n')
 
 def config_is_complete(cfg: dict) -> bool:
-    """Return True only if the minimum required keys are present."""
-    return bool(cfg.get('GEMINI_KEY', '').strip())
+    """Return True only if at least one API key is present."""
+    return bool(
+        cfg.get('GEMINI_KEY', '').strip() or
+        cfg.get('CLAUDE_KEY', '').strip() or
+        cfg.get('OPENAI_KEY', '').strip() or
+        cfg.get('DEEPSEEK_KEY', '').strip()
+    )
 
-CONFIG     = load_config()
-GEMINI_KEY = CONFIG['GEMINI_KEY']
-PDF_PATH   = CONFIG['PDF_PATH']
-OBS_PATH   = CONFIG['OBS_PATH']
-ZOTERO_DB  = CONFIG['ZOTERO_DB']
+CONFIG       = load_config()
+GEMINI_KEY   = CONFIG.get('GEMINI_KEY', '')
+CLAUDE_KEY   = CONFIG.get('CLAUDE_KEY', '')
+OPENAI_KEY   = CONFIG.get('OPENAI_KEY', '')
+DEEPSEEK_KEY = CONFIG.get('DEEPSEEK_KEY', '')
+API_PROVIDER = CONFIG.get('API_PROVIDER', 'gemini')
+PDF_PATH     = CONFIG.get('PDF_PATH', '')
+OBS_PATH     = CONFIG.get('OBS_PATH', '')
+ZOTERO_DB    = CONFIG.get('ZOTERO_DB', '')
+MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-2.5-flash')
+
+PROVIDER_MODELS = {
+    "Google Gemini": [
+        "gemini-2.5-flash",
+        "gemini-2.5-pro",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro"
+    ],
+    "Anthropic Claude": [
+        "claude-opus-4-7",
+        "claude-sonnet-4-6",
+        "claude-haiku-4-5-20251001"
+    ],
+    "OpenAI": [
+        "gpt-5.5",
+        "gpt-5",
+        "gpt-4.1",
+        "gpt-4o",
+        "gpt-4o-mini"
+    ],
+    "DeepSeek": [
+        "deepseek-chat",
+        "deepseek-reasoner"
+    ]
+}
+
+PROVIDER_KEYS = {
+    "Google Gemini": "GEMINI_KEY",
+    "Anthropic Claude": "CLAUDE_KEY",
+    "OpenAI": "OPENAI_KEY",
+    "DeepSeek": "DEEPSEEK_KEY"
+}
 
 # ─────────────────────────────────────────────
 # Package check
 # ─────────────────────────────────────────────
 def check_and_import():
     missing = []
-    for pkg, imp in [("google-generativeai", "google.generativeai"), ("pypdf", "pypdf")]:
+    # Core requirement for PDF extraction
+    for pkg, imp in [("pypdf", "pypdf")]:
         try: __import__(imp)
         except ImportError: missing.append(pkg)
     return missing
+
+# ─────────────────────────────────────────────
+# REST API Client Helpers (Pure Python)
+# ─────────────────────────────────────────────
+def call_claude_api(api_key, model, prompt):
+    import urllib.request
+    import json
+    
+    url = "https://api.anthropic.com/v1/messages"
+    headers = {
+        "x-api-key": api_key,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+    }
+    data = {
+        "model": model,
+        "max_tokens": 4000,
+        "messages": [
+            {"role": "user", "content": prompt}
+        ]
+    }
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(data).encode("utf-8"),
+        headers=headers,
+        method="POST"
+    )
+    with urllib.request.urlopen(req, timeout=60) as response:
+        res_data = json.loads(response.read().decode("utf-8"))
+        if "content" in res_data and len(res_data["content"]) > 0:
+            return res_data["content"][0]["text"]
+        raise ValueError(f"Unexpected response payload: {res_data}")
+
+def call_openai_compatible_api(url, api_key, model, prompt):
+    import urllib.request
+    import json
+    
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "model": model,
+        "messages": [
+            {"role": "user", "content": prompt}
+        ]
+    }
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(data).encode("utf-8"),
+        headers=headers,
+        method="POST"
+    )
+    with urllib.request.urlopen(req, timeout=60) as response:
+        res_data = json.loads(response.read().decode("utf-8"))
+        if "choices" in res_data and len(res_data["choices"]) > 0:
+            return res_data["choices"][0]["message"]["content"]
+        raise ValueError(f"Unexpected response payload: {res_data}")
 
 # ─────────────────────────────────────────────
 # Utilities
@@ -272,14 +389,6 @@ FONT_LOG     = ("Consolas",     11)
 FONT_STATUS  = ("Segoe UI",     11)
 FONT_TAG     = ("Segoe UI",     11)
 FONT_MONO    = ("Consolas",     11)
-
-GEMINI_MODELS = [
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
-    "gemini-2.0-pro-exp",
-]
 
 # ─────────────────────────────────────────────
 # Widget helpers
@@ -533,10 +642,10 @@ class CollectionPicker(tk.Frame):
 # ─────────────────────────────────────────────
 # Main App
 # ─────────────────────────────────────────────
-class GOZApp:
+class ZOAApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("GOZ (Gemini-Obsidian-Zotero)")
+        self.root.title("ZOA (Zotero-Obsidian-AI Summary)")
         self.root.geometry("820x920")
         self.root.resizable(True, True)
         self.root.configure(bg=BG)
@@ -558,7 +667,7 @@ class GOZApp:
 
         left = tk.Frame(inner_h, bg=BG_CARD)
         left.pack(side="left")
-        tk.Label(left, text="GOZ (Gemini-Obsidian-Zotero)",
+        tk.Label(left, text="ZOA (Zotero-Obsidian-AI Summary)",
                  font=FONT_APPNAME, fg=FG, bg=BG_CARD).pack(anchor="w")
         tk.Label(left, text="Heeyoung Lee",
                  font=FONT_SUBNAME, fg=FG_DIM, bg=BG_CARD).pack(anchor="w", pady=(2, 0))
@@ -675,15 +784,38 @@ class GOZApp:
                    width=5, font=FONT_ENTRY, bg=BG_INPUT, fg=FG,
                    relief="flat", highlightthickness=1,
                    highlightbackground=BORDER, bd=0,
-                   buttonbackground=BG).pack(side="left", padx=(6, 28))
+                   buttonbackground=BG).pack(side="left", padx=(6, 20))
+
+        # Multi-provider API Comboboxes
+        tk.Label(lim_row, text="Provider:", font=FONT_LABEL,
+                 fg=FG_DIM, bg=BG_CARD).pack(side="left")
+        
+        self.provider_map = {
+            "Google Gemini": "gemini",
+            "Anthropic Claude": "claude",
+            "OpenAI": "openai",
+            "DeepSeek": "deepseek"
+        }
+        self.provider_rev_map = {v: k for k, v in self.provider_map.items()}
+
+        default_provider_name = self.provider_rev_map.get(API_PROVIDER, "Google Gemini")
+        self.provider_var = tk.StringVar(value=default_provider_name)
+        
+        self._apply_combo_style()
+        self.provider_cb = ttk.Combobox(lim_row, textvariable=self.provider_var,
+                                        values=list(PROVIDER_MODELS.keys()), state="readonly",
+                                        font=FONT_ENTRY, width=15)
+        self.provider_cb.pack(side="left", padx=(6, 20))
+        self.provider_cb.bind("<<ComboboxSelected>>", self._on_provider_changed)
 
         tk.Label(lim_row, text="Model:", font=FONT_LABEL,
                  fg=FG_DIM, bg=BG_CARD).pack(side="left")
-        self.model_var = tk.StringVar(value="gemini-2.5-flash")
-        self._apply_combo_style()
-        ttk.Combobox(lim_row, textvariable=self.model_var,
-                     values=GEMINI_MODELS, state="readonly",
-                     font=FONT_ENTRY, width=26).pack(side="left", padx=(6, 0))
+        self.model_var = tk.StringVar(value=MODEL_NAME)
+        self.model_cb = ttk.Combobox(lim_row, textvariable=self.model_var,
+                                     values=PROVIDER_MODELS[default_provider_name], state="readonly",
+                                     font=FONT_ENTRY, width=22)
+        self.model_cb.pack(side="left", padx=(6, 0))
+        self.model_cb.bind("<<ComboboxSelected>>", self._on_model_changed)
 
         # ─── 04  Progress ─────────────────────
         make_section_label(M, "04  Progress")
@@ -748,7 +880,7 @@ class GOZApp:
                                 font=("Consolas", 11, "bold"))
         self.log_box.tag_config("skip", foreground=LOG_SKIP)
 
-        self._log("GOZ initialized.", "ok")
+        self._log("ZOA initialized.", "ok")
         self._log("Load Zotero collections and configure paths to begin.", "info")
 
     # ── Helpers ──────────────────────────────
@@ -799,6 +931,24 @@ class GOZApp:
             self.recent_spin.config(state="normal", fg=FG)
         else:
             self.recent_spin.config(state="disabled", fg=FG_DIM)
+
+    def _on_provider_changed(self, event=None):
+        prov_name = self.provider_var.get()
+        models = PROVIDER_MODELS[prov_name]
+        self.model_cb.config(values=models)
+        if models:
+            self.model_cb.set(models[0])
+            self.model_var.set(models[0])
+        # Auto-save immediately
+        _cfg = load_config()
+        _cfg['API_PROVIDER'] = self.provider_map[prov_name]
+        _cfg['MODEL_NAME'] = self.model_var.get()
+        save_config(_cfg)
+
+    def _on_model_changed(self, event=None):
+        _cfg = load_config()
+        _cfg['MODEL_NAME'] = self.model_var.get()
+        save_config(_cfg)
 
     def _load_collections(self):
         self._log("Loading collections from local Zotero DB…", "info")
@@ -857,14 +1007,20 @@ class GOZApp:
             return
         pdf_path    = self.pdf_path_var.get().strip()
         obs_path    = self.obs_path_var.get().strip()
-        # Auto-save paths to .env so they persist on next launch
+        prov_name   = self.provider_var.get()
+        prov_val    = self.provider_map[prov_name]
+        model_name  = self.model_var.get()
+        
+        # Auto-save paths and selections to .env
         _cfg = load_config()
         _cfg['PDF_PATH'] = pdf_path
         _cfg['OBS_PATH'] = obs_path
+        _cfg['API_PROVIDER'] = prov_val
+        _cfg['MODEL_NAME'] = model_name
         save_config(_cfg)
+        
         read_full   = self.full_pdf_var.get()
         limit       = int(self.limit_var.get())
-        model_name  = self.model_var.get()
         dup_mode    = self.dup_var.get()
         use_wiki    = self.wikilink_var.get()
         use_recent  = self.recent_var.get()
@@ -888,7 +1044,7 @@ class GOZApp:
         threading.Thread(
             target=self._run_pipeline,
             args=(col_names, pdf_path, obs_path, read_full,
-                  limit, model_name, dup_mode, use_wiki,
+                  limit, prov_name, model_name, dup_mode, use_wiki,
                   use_recent, recent_days),
             daemon=True).start()
 
@@ -898,15 +1054,26 @@ class GOZApp:
         self._log("Stop requested.", "warn")
 
     def _run_pipeline(self, col_names, pdf_path, obs_path, read_full,
-                      limit, model_name, dup_mode, use_wiki, use_recent, recent_days):
+                      limit, prov_name, active_model, dup_mode, use_wiki, use_recent, recent_days):
         try:
-            import google.generativeai as genai
-            from pypdf import PdfReader
+            _cfg = load_config()
+            active_provider = _cfg.get('API_PROVIDER', 'gemini')
+            key_field = PROVIDER_KEYS.get(prov_name, 'GEMINI_KEY')
+            active_key = _cfg.get(key_field, '')
 
-            self._log("Connecting to Gemini API…", "info")
-            genai.configure(api_key=GEMINI_KEY)
-            model = genai.GenerativeModel(model_name)
-            self._log("✓  Gemini connected.", "ok")
+            if not active_key:
+                self._log(f"Error: API Key for {prov_name} is missing in your .env configuration.", "err")
+                self._finish()
+                return
+
+            self._log(f"Connecting to {prov_name} API…", "info")
+            if active_provider == 'gemini':
+                import google.generativeai as genai
+                genai.configure(api_key=active_key)
+                model = genai.GenerativeModel(active_model)
+                self._log(f"✓  {prov_name} (using {active_model}) connected.", "ok")
+            else:
+                self._log(f"✓  {prov_name} (using {active_model}) initialized.", "ok")
 
             self._log("Opening local Zotero database…", "info")
             db = get_zotero_db()
@@ -1010,6 +1177,7 @@ class GOZApp:
                     matched = find_best_pdf_match(fields, creators_raw, pdf_index)
                     if matched:
                         try:
+                            from pypdf import PdfReader
                             reader = PdfReader(matched)
                             extracted = "".join(p.extract_text() or "" for p in reader.pages[:30])
                             if len(extracted) > 500:
@@ -1045,12 +1213,32 @@ Constraint: Focus ONLY on the content related to the paper "{title}".
    - Capitalize first letters.
 """
                 try:
-                    summary_text = model.generate_content(prompt).text
+                    if active_provider == 'gemini':
+                        summary_text = model.generate_content(prompt).text
+                    elif active_provider == 'claude':
+                        summary_text = call_claude_api(active_key, active_model, prompt)
+                    elif active_provider == 'openai':
+                        url = "https://api.openai.com/v1/chat/completions"
+                        summary_text = call_openai_compatible_api(url, active_key, active_model, prompt)
+                    elif active_provider == 'deepseek':
+                        url = "https://api.deepseek.com/v1/chat/completions"
+                        summary_text = call_openai_compatible_api(url, active_key, active_model, prompt)
                 except Exception as e:
-                    self._log("       ⚠  Retrying in 5s…", "warn")
+                    self._log(f"       ⚠  Error: {e}. Retrying in 5s…", "warn")
                     time.sleep(5)
-                    try:    summary_text = model.generate_content(prompt).text
-                    except Exception as e2: summary_text = f"Summary Failed: {e2}"
+                    try:
+                        if active_provider == 'gemini':
+                            summary_text = model.generate_content(prompt).text
+                        elif active_provider == 'claude':
+                            summary_text = call_claude_api(active_key, active_model, prompt)
+                        elif active_provider == 'openai':
+                            url = "https://api.openai.com/v1/chat/completions"
+                            summary_text = call_openai_compatible_api(url, active_key, active_model, prompt)
+                        elif active_provider == 'deepseek':
+                            url = "https://api.deepseek.com/v1/chat/completions"
+                            summary_text = call_openai_compatible_api(url, active_key, active_model, prompt)
+                    except Exception as e2:
+                        summary_text = f"Summary Failed: {e2}"
 
                 if use_wiki:
                     kws          = extract_keywords_from_summary(summary_text)
@@ -1130,19 +1318,21 @@ zotero_link: {zotero_link}
 # First-run Setup Wizard
 # ─────────────────────────────────────────────
 class SetupWizard(tk.Toplevel):
-    """Modal setup wizard shown on first launch (no .env or missing GEMINI_KEY)."""
+    """Modal setup wizard shown on first launch (no .env or missing API keys)."""
 
     STEPS = [
         {
-            "title": "Gemini API Key",
+            "title": "API Keys",
             "icon": "🔑",
-            "desc": ("GOZ uses Google Gemini AI to generate summaries.\n"
-                     "Get your free API key at aistudio.google.com → Get API key."),
-            "field": "GEMINI_KEY",
-            "label": "Gemini API Key",
-            "placeholder": "AIza…",
-            "browse": False,
-            "required": True,
+            "desc": ("Enter the API keys for the services you want to use.\n"
+                     "You need at least one key configured to run the application."),
+            "type": "keys",
+        },
+        {
+            "title": "Default Provider",
+            "icon": "🤖",
+            "desc": "Select which AI provider you want to use by default.",
+            "type": "provider",
         },
         {
             "title": "Obsidian Vault Folder",
@@ -1158,7 +1348,7 @@ class SetupWizard(tk.Toplevel):
         {
             "title": "Zotero Database",
             "icon": "📚",
-            "desc": ("GOZ reads your local Zotero database directly — "
+            "desc": ("ZOA reads your local Zotero database directly — "
                      "no sync needed.\nLeave blank to use the default Zotero location."),
             "field": "ZOTERO_DB",
             "label": "Zotero DB Path  (zotero.sqlite)",
@@ -1181,21 +1371,32 @@ class SetupWizard(tk.Toplevel):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.title("Setup — GOZ (Gemini-Obsidian-Zotero)")
-        self.geometry("560x480")
+        self.title("Setup — ZOA (Zotero-Obsidian-AI Summary)")
+        self.geometry("560x520")
         self.resizable(False, False)
         self.configure(bg=BG)
         self.grab_set()                 # modal
         self.protocol("WM_DELETE_WINDOW", self._on_close)
 
         self._step   = 0
-        self._values = {s["field"]: tk.StringVar() for s in self.STEPS}
+        self._values = {
+            "GEMINI_KEY": tk.StringVar(),
+            "CLAUDE_KEY": tk.StringVar(),
+            "OPENAI_KEY": tk.StringVar(),
+            "DEEPSEEK_KEY": tk.StringVar(),
+            "OBS_PATH": tk.StringVar(),
+            "ZOTERO_DB": tk.StringVar(),
+            "PDF_PATH": tk.StringVar(),
+        }
+        self._provider_var = tk.StringVar(value="gemini")
         self._ok     = False            # did the user finish setup?
 
         # pre-fill with existing config
         cfg = load_config()
-        for s in self.STEPS:
-            self._values[s["field"]].set(cfg.get(s["field"], ""))
+        for field in self._values:
+            self._values[field].set(cfg.get(field, ""))
+        if cfg.get("API_PROVIDER"):
+            self._provider_var.set(cfg["API_PROVIDER"])
 
         # auto-detect Zotero DB
         default_db = Path.home() / 'Zotero' / 'zotero.sqlite'
@@ -1207,8 +1408,8 @@ class SetupWizard(tk.Toplevel):
         self.update_idletasks()
         # Center on screen
         x = (self.winfo_screenwidth()  - 560) // 2
-        y = (self.winfo_screenheight() - 480) // 2
-        self.geometry(f"560x480+{x}+{y}")
+        y = (self.winfo_screenheight() - 520) // 2
+        self.geometry(f"560x520+{x}+{y}")
 
     # ── Layout skeleton ──────────────────────
     def _build(self):
@@ -1230,7 +1431,7 @@ class SetupWizard(tk.Toplevel):
         tk.Frame(self, bg=BORDER, height=1).pack(fill="x")
 
         # Content area
-        self._content = tk.Frame(self, bg=BG, padx=44, pady=28)
+        self._content = tk.Frame(self, bg=BG, padx=44, pady=24)
         self._content.pack(fill="both", expand=True)
 
         # Bottom bar
@@ -1264,70 +1465,134 @@ class SetupWizard(tk.Toplevel):
         s = self.STEPS[self._step]
         is_last = self._step == len(self.STEPS) - 1
 
-        # Icon + title
-        tk.Label(self._content, text=s["icon"],
-                 font=("Segoe UI", 32), bg=BG).pack(anchor="w")
-        tk.Label(self._content, text=s["title"],
-                 font=FONT_H1, fg=FG, bg=BG).pack(anchor="w", pady=(4, 0))
+        if s.get("type") == "keys":
+            # Icon + title
+            tk.Label(self._content, text=s["icon"], font=("Segoe UI", 32), bg=BG).pack(anchor="w")
+            tk.Label(self._content, text=s["title"], font=FONT_H1, fg=FG, bg=BG).pack(anchor="w", pady=(4, 0))
+            tk.Label(self._content, text=f"Step {self._step + 1} of {len(self.STEPS)}",
+                     font=FONT_SMALL, fg=FG_DIM, bg=BG).pack(anchor="w", pady=(2, 10))
+            tk.Label(self._content, text=s["desc"], font=FONT_LABEL, fg=FG_MID, bg=BG,
+                     justify="left", wraplength=460).pack(anchor="w", pady=(0, 10))
 
-        # Step counter
-        tk.Label(self._content,
-                 text=f"Step {self._step + 1} of {len(self.STEPS)}",
-                 font=FONT_SMALL, fg=FG_DIM, bg=BG).pack(anchor="w", pady=(2, 10))
+            keys_frame = tk.Frame(self._content, bg=BG)
+            keys_frame.pack(fill="x")
 
-        # Description
-        tk.Label(self._content, text=s["desc"],
-                 font=FONT_LABEL, fg=FG_MID, bg=BG,
-                 justify="left", wraplength=460).pack(anchor="w", pady=(0, 18))
+            key_fields = [
+                ("GEMINI_KEY", "Gemini Key:"),
+                ("CLAUDE_KEY", "Claude Key:"),
+                ("OPENAI_KEY", "OpenAI Key:"),
+                ("DEEPSEEK_KEY", "DeepSeek Key:"),
+            ]
 
-        # Input field
-        field_row = tk.Frame(self._content, bg=BG)
-        field_row.pack(fill="x")
+            self._key_entries = {}
+            for field, label in key_fields:
+                row = tk.Frame(keys_frame, bg=BG)
+                row.pack(fill="x", pady=6)
+                
+                lbl = tk.Label(row, text=label, font=FONT_LABEL_B, fg=FG_DIM, bg=BG, width=13, anchor="w")
+                lbl.pack(side="left")
+                
+                var = self._values[field]
+                entry = tk.Entry(row, textvariable=var, font=FONT_ENTRY, bg=BG_INPUT, fg=FG,
+                                 relief="flat", show="*", insertbackground=FG,
+                                 highlightthickness=1, highlightbackground=BORDER, highlightcolor=ACCENT)
+                entry.pack(side="left", fill="x", expand=True, ipady=5)
+                self._key_entries[field] = entry
 
-        tk.Label(field_row, text=s["label"],
-                 font=FONT_SEC, fg=FG_DIM, bg=BG).pack(anchor="w", pady=(0, 6))
+            # Option to toggle show/hide keys
+            self._showing_keys = False
+            self.toggle_lbl = tk.Label(keys_frame, text="Show keys", font=FONT_SMALL, fg=FG_DIM, bg=BG, cursor="hand2")
+            self.toggle_lbl.pack(anchor="w", pady=(8, 0))
+            self.toggle_lbl.bind("<Button-1>", self._toggle_all_keys)
 
-        entry_row = tk.Frame(field_row, bg=BG)
-        entry_row.pack(fill="x")
+            self._next_btn.config(text="Next →")
+            self._back_btn.config(state="disabled")
+            self._skip_btn.config(state="disabled")
 
-        var = self._values[s["field"]]
-        show = "*" if s["field"] == "GEMINI_KEY" else ""
-        entry = tk.Entry(entry_row, textvariable=var,
-                         font=FONT_ENTRY, bg=BG_INPUT, fg=FG,
-                         relief="flat", show=show,
-                         insertbackground=FG,
-                         highlightthickness=1,
-                         highlightbackground=BORDER,
-                         highlightcolor=ACCENT)
-        entry.pack(side="left", fill="x", expand=True, ipady=7)
-        entry.focus_set()
+        elif s.get("type") == "provider":
+            # Icon + title
+            tk.Label(self._content, text=s["icon"], font=("Segoe UI", 32), bg=BG).pack(anchor="w")
+            tk.Label(self._content, text=s["title"], font=FONT_H1, fg=FG, bg=BG).pack(anchor="w", pady=(4, 0))
+            tk.Label(self._content, text=f"Step {self._step + 1} of {len(self.STEPS)}",
+                     font=FONT_SMALL, fg=FG_DIM, bg=BG).pack(anchor="w", pady=(2, 10))
+            tk.Label(self._content, text=s["desc"], font=FONT_LABEL, fg=FG_MID, bg=BG,
+                     justify="left", wraplength=460).pack(anchor="w", pady=(0, 18))
 
-        if s["browse"]:
-            make_btn_ghost(entry_row, "Browse…",
-                           lambda f=s["field"]: self._browse(f)
-                           ).pack(side="left", padx=(8, 0))
+            prov_frame = tk.Frame(self._content, bg=BG)
+            prov_frame.pack(fill="x", pady=10)
 
-        # Gemini key: show/hide toggle
-        if s["field"] == "GEMINI_KEY":
-            self._key_entry = entry
-            self._showing_key = False
-            toggle = tk.Label(field_row, text="Show key",
-                              font=FONT_SMALL, fg=FG_DIM, bg=BG,
-                              cursor="hand2")
-            toggle.pack(anchor="w", pady=(4, 0))
-            toggle.bind("<Button-1>", lambda e, t=toggle, en=entry: self._toggle_key(t, en))
+            providers = [
+                ("gemini", "Google Gemini"),
+                ("claude", "Anthropic Claude"),
+                ("openai", "OpenAI"),
+                ("deepseek", "DeepSeek")
+            ]
 
-        # Next button label
-        self._next_btn.config(text="Finish & Save ✓" if is_last else "Next →")
-        self._back_btn.config(state="normal" if self._step > 0 else "disabled")
+            for val, name in providers:
+                rb = tk.Radiobutton(prov_frame, text=name, variable=self._provider_var, value=val,
+                                    bg=BG, fg=FG_MID, selectcolor=BG, activebackground=BG,
+                                    font=FONT_LABEL, relief="flat", bd=0)
+                rb.pack(anchor="w", pady=5)
 
-        # Skip not shown for required steps
-        self._skip_btn.config(state="disabled" if s["required"] else "normal")
+            self._next_btn.config(text="Next →")
+            self._back_btn.config(state="normal")
+            self._skip_btn.config(state="disabled")
 
-    def _toggle_key(self, label, entry):
-        self._showing_key = not self._showing_key
-        entry.config(show="" if self._showing_key else "*")
-        label.config(text="Hide key" if self._showing_key else "Show key")
+        else:
+            # Icon + title
+            tk.Label(self._content, text=s["icon"],
+                     font=("Segoe UI", 32), bg=BG).pack(anchor="w")
+            tk.Label(self._content, text=s["title"],
+                     font=FONT_H1, fg=FG, bg=BG).pack(anchor="w", pady=(4, 0))
+
+            # Step counter
+            tk.Label(self._content,
+                     text=f"Step {self._step + 1} of {len(self.STEPS)}",
+                     font=FONT_SMALL, fg=FG_DIM, bg=BG).pack(anchor="w", pady=(2, 10))
+
+            # Description
+            tk.Label(self._content, text=s["desc"],
+                     font=FONT_LABEL, fg=FG_MID, bg=BG,
+                     justify="left", wraplength=460).pack(anchor="w", pady=(0, 18))
+
+            # Input field
+            field_row = tk.Frame(self._content, bg=BG)
+            field_row.pack(fill="x")
+
+            tk.Label(field_row, text=s["label"],
+                     font=FONT_SEC, fg=FG_DIM, bg=BG).pack(anchor="w", pady=(0, 6))
+
+            entry_row = tk.Frame(field_row, bg=BG)
+            entry_row.pack(fill="x")
+
+            var = self._values[s["field"]]
+            entry = tk.Entry(entry_row, textvariable=var,
+                             font=FONT_ENTRY, bg=BG_INPUT, fg=FG,
+                             relief="flat", insertbackground=FG,
+                             highlightthickness=1,
+                             highlightbackground=BORDER,
+                             highlightcolor=ACCENT)
+            entry.pack(side="left", fill="x", expand=True, ipady=7)
+            entry.focus_set()
+
+            if s["browse"]:
+                make_btn_ghost(entry_row, "Browse…",
+                               lambda f=s["field"]: self._browse(f)
+                               ).pack(side="left", padx=(8, 0))
+
+            # Next button label
+            self._next_btn.config(text="Finish & Save ✓" if is_last else "Next →")
+            self._back_btn.config(state="normal" if self._step > 0 else "disabled")
+
+            # Skip not shown for required steps
+            self._skip_btn.config(state="disabled" if s.get("required") else "normal")
+
+    def _toggle_all_keys(self, event):
+        self._showing_keys = not self._showing_keys
+        show = "" if self._showing_keys else "*"
+        for entry in self._key_entries.values():
+            entry.config(show=show)
+        self.toggle_lbl.config(text="Hide keys" if self._showing_keys else "Show keys")
 
     def _browse(self, field):
         cur = self._values[field].get()
@@ -1338,11 +1603,23 @@ class SetupWizard(tk.Toplevel):
     # ── Navigation ───────────────────────────
     def _next_step(self):
         s = self.STEPS[self._step]
-        if s["required"] and not self._values[s["field"]].get().strip():
+        if s.get("type") == "keys":
+            # Must have at least one key to continue!
+            gem = self._values["GEMINI_KEY"].get().strip()
+            cld = self._values["CLAUDE_KEY"].get().strip()
+            opn = self._values["OPENAI_KEY"].get().strip()
+            dps = self._values["DEEPSEEK_KEY"].get().strip()
+            if not (gem or cld or opn or dps):
+                messagebox.showwarning("Required",
+                    "At least one API Key must be provided to continue.",
+                    parent=self)
+                return
+        elif s.get("required") and not self._values[s["field"]].get().strip():
             messagebox.showwarning("Required",
                 f"{s['title']} is required to continue.",
                 parent=self)
             return
+            
         if self._step < len(self.STEPS) - 1:
             self._step += 1
             self._render_step()
@@ -1350,7 +1627,7 @@ class SetupWizard(tk.Toplevel):
             self._finish()
 
     def _skip_step(self):
-        if self.STEPS[self._step]["required"]:
+        if self.STEPS[self._step].get("required"):
             return
         if self._step < len(self.STEPS) - 1:
             self._step += 1
@@ -1364,8 +1641,18 @@ class SetupWizard(tk.Toplevel):
             self._render_step()
 
     def _finish(self):
-        cfg = {s["field"]: self._values[s["field"]].get().strip()
-               for s in self.STEPS}
+        cfg = {field: self._values[field].get().strip() for field in self._values}
+        cfg["API_PROVIDER"] = self._provider_var.get()
+        
+        # Default model name based on chosen default provider
+        default_models = {
+            "gemini": "gemini-2.5-flash",
+            "claude": "claude-sonnet-4-6",
+            "openai": "gpt-4o-mini",
+            "deepseek": "deepseek-chat"
+        }
+        cfg["MODEL_NAME"] = default_models.get(cfg["API_PROVIDER"], "gemini-2.5-flash")
+        
         save_config(cfg)
         self._ok = True
         self.grab_release()
@@ -1392,12 +1679,17 @@ if __name__ == "__main__":
         wizard = SetupWizard(root)
         root.wait_window(wizard)
         # Reload config after wizard saves .env
-        cfg        = load_config()
-        GEMINI_KEY = cfg['GEMINI_KEY']
-        PDF_PATH   = cfg['PDF_PATH']
-        OBS_PATH   = cfg['OBS_PATH']
-        ZOTERO_DB  = cfg['ZOTERO_DB']
+        cfg          = load_config()
+        GEMINI_KEY   = cfg.get('GEMINI_KEY', '')
+        CLAUDE_KEY   = cfg.get('CLAUDE_KEY', '')
+        OPENAI_KEY   = cfg.get('OPENAI_KEY', '')
+        DEEPSEEK_KEY = cfg.get('DEEPSEEK_KEY', '')
+        API_PROVIDER = cfg.get('API_PROVIDER', 'gemini')
+        PDF_PATH     = cfg.get('PDF_PATH', '')
+        OBS_PATH     = cfg.get('OBS_PATH', '')
+        ZOTERO_DB    = cfg.get('ZOTERO_DB', '')
+        MODEL_NAME   = cfg.get('MODEL_NAME', 'gemini-2.5-flash')
 
     root.deiconify()         # show main window
-    GOZApp(root)
+    ZOAApp(root)
     root.mainloop()
