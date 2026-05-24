@@ -2,7 +2,8 @@ name: Build GOZ
 
 on:
   push:
-    tags: ["v*"]   # v1.0, v1.1 같은 태그를 push할 때 자동 실행
+    tags: ["v*"]       # v1.0, v1.1 같은 태그를 push할 때 자동 실행
+  workflow_dispatch:   # GitHub Actions 탭에서 수동으로 실행 가능
 
 jobs:
   build-windows:
