@@ -1,0 +1,74 @@
+name: Build GOZ
+
+on:
+  push:
+    tags: ["v*"]   # v1.0, v1.1 같은 태그를 push할 때 자동 실행
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pyinstaller google-generativeai pypdf pillow
+
+      - name: Build Windows exe
+        run: pyinstaller --clean --onefile --windowed --name "GOZ" --icon="app_icon.ico" goz.py
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GOZ-Windows
+          path: dist/GOZ.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pyinstaller google-generativeai pypdf pillow
+
+      - name: Build macOS app
+        run: pyinstaller --clean --windowed --name "GOZ" goz.py
+
+      - name: Zip macOS app
+        run: cd dist && zip -r GOZ-macOS.zip GOZ.app
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GOZ-macOS
+          path: dist/GOZ-macOS.zip
+
+  release:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: GOZ-Windows
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: GOZ-macOS
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            GOZ.exe
+            GOZ-macOS.zip

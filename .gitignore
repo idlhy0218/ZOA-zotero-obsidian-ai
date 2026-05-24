@@ -2,10 +2,6 @@
 # API keys and credentials — never upload
 .env
 
-# Source code — distributed as exe only
-goz.py
-GOZ.bat
-
 # ── Build artifacts ───────────────────────
 # PyInstaller output
 build/
