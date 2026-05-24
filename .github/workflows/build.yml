@@ -22,7 +22,7 @@ jobs:
         run: pip install pyinstaller google-generativeai pypdf pillow
 
       - name: Build Windows exe
-        run: pyinstaller --clean --onefile --windowed --name "ZOA" --icon="app_icon.ico" zoa.py
+        run: pyinstaller --clean --onefile --windowed --name "ZOA" --icon="app_icon.ico" --add-data "app_icon.ico;." zoa.py
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -43,7 +43,7 @@ jobs:
         run: pip install pyinstaller google-generativeai pypdf pillow
 
       - name: Build macOS app
-        run: pyinstaller --clean --windowed --name "ZOA" zoa.py
+        run: pyinstaller --clean --windowed --name "ZOA" --add-data "app_icon.ico:." zoa.py
 
       - name: Zip macOS app
         run: cd dist && zip -r ZOA-macOS.zip ZOA.app

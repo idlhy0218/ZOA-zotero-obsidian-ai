@@ -9,13 +9,19 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 # ─────────────────────────────────────────────
-# App directory — PyInstaller compatible
+# App directory & Resource Path — PyInstaller compatible
 # ─────────────────────────────────────────────
 def get_app_dir() -> Path:
     """Return the folder that contains the exe (or script when developing)."""
     if getattr(sys, 'frozen', False):   # running as PyInstaller bundle
         return Path(sys.executable).parent
     return Path(__file__).parent
+
+def get_resource_path(relative_path: str) -> Path:
+    """Return the absolute path to a resource, compatible with PyInstaller's --onefile mode."""
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        return Path(sys._MEIPASS) / relative_path
+    return Path(__file__).parent / relative_path
 
 # ─────────────────────────────────────────────
 # Config / .env
@@ -1682,7 +1688,7 @@ if __name__ == "__main__":
     
     # Set default window and taskbar icon bitmap
     try:
-        icon_path = get_app_dir() / "app_icon.ico"
+        icon_path = get_resource_path("app_icon.ico")
         if icon_path.exists():
             root.iconbitmap(default=str(icon_path))
     except:
