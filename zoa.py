@@ -1690,7 +1690,17 @@ if __name__ == "__main__":
     try:
         icon_path = get_resource_path("app_icon.ico")
         if icon_path.exists():
-            root.iconbitmap(default=str(icon_path))
+            # Use PIL to load high-resolution image to prevent pixelation/blurriness in the taskbar
+            try:
+                from PIL import Image, ImageTk
+                img = Image.open(icon_path)
+                photo = ImageTk.PhotoImage(img)
+                root.iconphoto(True, photo)
+                # Keep a reference to prevent garbage collection
+                root._icon_image = photo
+            except Exception:
+                # Fallback to standard iconbitmap if PIL loading fails
+                root.iconbitmap(default=str(icon_path))
     except:
         pass
 

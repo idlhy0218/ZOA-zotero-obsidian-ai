@@ -20,6 +20,10 @@ ZOA를 사용하려면 아래의 도구들이 설치되어 있어야 합니다.
 
 ## 설치 및 실행
 
+### 📥 최신 버전 다운로드
+* **[ZOA 최신 정식 버전 다운로드 (GitHub Releases)](https://github.com/idlhy0218/zotero-obsidian-summarizer/releases)**
+* 운영체제에 맞는 최신 정식 빌드 파일(Windows: `ZOA.exe`, macOS: `ZOA-macOS.zip`)을 위 링크에서 손쉽게 내려받으실 수 있습니다.
+
 ### 1. 전용 폴더 생성 및 실행 파일 배치
 다운로드한 ZOA 실행 파일(Windows: `ZOA.exe`, macOS: `ZOA-macOS.zip`)을 별도의 빈 폴더(예: `문서/ZOA/`)에 넣어줍니다.
 * 최초 실행 시 설정 파일인 `.env`가 해당 폴더에 자동 생성되므로, 바탕화면이나 다운로드 폴더에 그대로 두지 마시고 반드시 전용 폴더를 생성하여 사용해 주십시오.
@@ -116,5 +120,5 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 ## 버그 제보 및 기능 건의 (Support)
 
 ZOA 앱을 사용하시던 중 버그가 발생하거나 기능 개선이 필요하다면 아래의 이슈 링크를 통해 제보해 주십시오.
-* **[에러 및 피드백 제보하기 (GitHub Issues)](https://github.com/idlhy0218/GOZ-gemini-obsidian-zotero/issues)**
+* **[에러 및 피드백 제보하기 (GitHub Issues)](https://github.com/idlhy0218/zotero-obsidian-summarizer/issues)**
 * 제보 시 에러가 발생한 화면 스크린샷과 앱 하단 **Execution Log**의 텍스트 내용을 함께 기재해 주시면 더욱 신속한 오류 해결이 가능합니다.
