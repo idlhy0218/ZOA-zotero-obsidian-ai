@@ -90,14 +90,6 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 
 ## 📝 버전 기록 (Version History)
 
-* **v1.1 (GOZ)**
-  * 앱 이름을 **GOZ (Gemini-Obsidian-Zotero)**로 정식 변경
-  * 신규 책 & AI 별빛 테마 아이콘 적용
-  * 프로그램 설정 마법사 탑재 및 포터블 세팅 지원
 * **v1.0 (Initial)**
   * Zotero 로컬 DB 연동 및 Gemini API 기반 PDF 텍스트 요약 구현
   * 옵시디언 마크다운 추출기 빌드
-
----
-
-> 💡 **개발자용 안내**: 코드를 직접 수정하거나 새 버전을 빌드하고 싶으신 분들은 [README_DEV.md](README_DEV.md) 문서를 참고해 주세요.
