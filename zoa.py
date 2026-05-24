@@ -1427,17 +1427,16 @@ class SetupWizard(tk.Toplevel):
             d.pack(side="left", padx=4)
             self._dots.append(d)
 
-        # Divider
-        tk.Frame(self, bg=BORDER, height=1).pack(fill="x")
+        # Bottom bar (packed first at the bottom to remain visible)
+        bottom_border = tk.Frame(self, bg=BORDER, height=1)
+        bottom_border.pack(side="bottom", fill="x")
+        
+        nav = tk.Frame(self, bg=BG_CARD, padx=36, pady=16)
+        nav.pack(side="bottom", fill="x")
 
-        # Content area
+        # Content area (packed next to fill the remaining space in the middle)
         self._content = tk.Frame(self, bg=BG, padx=44, pady=24)
         self._content.pack(fill="both", expand=True)
-
-        # Bottom bar
-        tk.Frame(self, bg=BORDER, height=1).pack(fill="x")
-        nav = tk.Frame(self, bg=BG_CARD, padx=36, pady=16)
-        nav.pack(fill="x")
 
         self._back_btn = make_btn_ghost(nav, "← Back", self._prev_step)
         self._back_btn.pack(side="left")
