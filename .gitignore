@@ -2,6 +2,9 @@
 # API keys and credentials — never upload
 .env
 
+# Developer-only documentation
+README_DEV.md
+
 # ── Build artifacts ───────────────────────
 # PyInstaller output
 build/
