@@ -58,53 +58,50 @@ ZOTERO_DB=C:\Users\...\Zotero\zotero.sqlite
 
 ```powershell
 python goz.py
-# 또는
-py goz.py
-```
-
-로컬 테스트가 완료되면 커밋합니다.
-
-```powershell
-git add goz.py
-git commit -m "변경 내용 간단히 설명"
-git push origin main
 ```
 
 ---
 
-## 3단계. 배포 — GitHub Actions 자동 빌드
+## 3단계. GitHub Desktop으로 push
 
-코드를 main에 push하는 것만으로는 빌드가 실행되지 않습니다.  
-**배포는 버전 태그를 push할 때** 자동으로 시작됩니다.
-
-### 정식 릴리즈 (GOZ.exe + GOZ-macOS.zip 자동 생성)
-
-```powershell
-git tag v1.2
-git push origin v1.2
-```
-
-태그를 push하면 GitHub Actions가 자동으로:
-1. Windows VM과 Mac VM을 동시에 실행
-2. 각각 `GOZ.exe`, `GOZ-macOS.zip` 빌드
-3. GitHub Release 페이지에 두 파일 첨부
-
-결과 확인: `저장소 페이지 → Releases`
-
-### 테스트 빌드 (릴리즈 없이 빌드만 확인)
-
-태그 없이 빌드 결과물만 확인하고 싶을 때는 GitHub Actions 탭에서 수동으로 실행합니다.
-
-1. 저장소 페이지 → **Actions 탭**
-2. 왼쪽 목록에서 **Build GOZ** 클릭
-3. **Run workflow** 버튼 클릭 → **Run workflow** 실행
-4. 빌드 완료 후 해당 실행 항목 클릭 → 하단 **Artifacts**에서 파일 다운로드
-
-수동 실행 시에는 Release 페이지에 올라가지 않으며, 빌드 결과물은 90일 후 자동 삭제됩니다.
+1. GitHub Desktop 열기
+2. 왼쪽에 변경된 파일 확인
+3. 하단 Summary에 커밋 메시지 입력 → **Commit to main**
+4. 상단 **Push origin** 클릭
 
 ---
 
-## 4단계. 빌드 실패 시 확인 방법
+## 4단계. 배포 — GitHub 웹에서 Release 생성
+
+push만 해서는 빌드가 실행되지 않습니다. Release를 만들어야 Actions가 자동으로 시작됩니다.
+
+1. GitHub 저장소 페이지 오른쪽 **Releases** 클릭
+2. **Draft a new release** 클릭
+3. **Choose a tag** 클릭 → 새 버전 입력 (예: `v1.2`) → **Create new tag** 클릭
+   - ⚠️ 태그는 반드시 `v`로 시작해야 합니다 (`v1.2` O, `1.2` X)
+4. Release 제목, 변경사항 간단히 작성
+5. **Publish release** 클릭
+
+Publish 버튼을 누르는 순간 GitHub Actions가 자동으로 감지해서 빌드를 시작합니다.  
+**Actions 탭에 직접 들어가서 실행할 필요 없습니다.**
+
+5~10분 후 `GOZ.exe`와 `GOZ-macOS.zip`이 Release에 자동으로 첨부됩니다.
+
+---
+
+## 5단계. 빌드 진행 확인
+
+GitHub 저장소 페이지 → **Actions 탭**
+
+| 상태 | 의미 |
+|------|------|
+| 🟡 노란 원 | 빌드 진행 중 |
+| ✅ 초록 체크 | 빌드 성공, Release에 파일 첨부 완료 |
+| ❌ 빨간 X | 빌드 실패 — 클릭해서 에러 로그 확인 |
+
+---
+
+## 빌드 실패 시 확인 방법
 
 Actions 탭 → 실패한 항목 클릭 → 빨간 단계 클릭 → 에러 메시지 확인
 
@@ -113,8 +110,20 @@ Actions 탭 → 실패한 항목 클릭 → 빨간 단계 클릭 → 에러 메�
 | 오류 | 원인 | 해결 |
 |------|------|------|
 | `ModuleNotFoundError` | `pip install` 목록에 패키지 누락 | `build.yml`의 Install dependencies 단계에 패키지 추가 |
-| `GitHub Releases requires a tag` | 수동 실행인데 release job이 실행됨 | 현재 워크플로우는 이미 수동 실행 시 release를 건너뜀 |
 | Mac 빌드 실패 | Tkinter 관련 오류 | `macos-latest` → `macos-13`으로 변경 시도 |
+
+---
+
+## (선택) 테스트 빌드 — 릴리즈 없이 빌드만 확인
+
+Release를 만들기 전에 빌드가 잘 되는지 먼저 확인하고 싶을 때:
+
+1. GitHub 저장소 → **Actions 탭**
+2. 왼쪽 목록에서 **Build GOZ** 클릭
+3. **Run workflow** 버튼 클릭 → **Run workflow** 실행
+
+빌드 완료 후 해당 실행 항목 클릭 → 하단 **Artifacts**에서 파일 다운로드 가능합니다.  
+이 방법으로는 Release 페이지에 파일이 올라가지 않으며, Artifact는 90일 후 자동 삭제됩니다.
 
 ---
 
@@ -126,12 +135,12 @@ GitHub Actions 없이 내 컴퓨터에서 직접 `.exe`를 빌드할 수 있습�
 pyinstaller --clean --onefile --windowed --name "GOZ" --icon="app_icon.ico" goz.py
 ```
 
-빌드 후 `dist/GOZ.exe`만 남기고 `build/`, `GOZ.spec`은 삭제해도 됩니다.
-
 > 내 컴퓨터 PyInstaller 경로가 다른 경우:
 > ```powershell
 > & "C:\Users\User\AppData\Local\Python\pythoncore-3.14-64\Scripts\pyinstaller.exe" --clean --onefile --windowed --name "GOZ" --icon="app_icon.ico" goz.py
 > ```
+
+빌드 후 `dist/GOZ.exe`만 남기고 `build/`, `GOZ.spec`은 삭제해도 됩니다.
 
 ---
 
