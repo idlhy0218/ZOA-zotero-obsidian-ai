@@ -3,8 +3,8 @@
 .env
 
 # Source code — distributed as exe only
-paper_summarizer.py
-Paper Summarizer.bat
+goz.py
+GOZ.bat
 
 # ── Build artifacts ───────────────────────
 # PyInstaller output

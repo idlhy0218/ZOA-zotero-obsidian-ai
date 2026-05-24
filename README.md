@@ -1,131 +1,98 @@
-# Zotero Obsidian Summarizer
+# 🚀 GOZ (Gemini-Obsidian-Zotero)
 
-> Zotero × Gemini AI × Obsidian — Academic paper summarization pipeline
-
-Automatically fetches journal articles from your local Zotero library, extracts full PDF text, generates structured AI summaries, and saves Markdown notes with wikilinks to your Obsidian vault.
-
----
-
-## Download
-
-**[⬇ Download PaperSummarizer.exe](../../releases/latest)**
-
-> Windows only. No Python installation required.
+> **Zotero × Gemini AI × Obsidian 연동 학술 논문 자동 요약 파이프라인**  
+> 로컬 Zotero 라이브러리에서 논문을 가져와 PDF 본문을 추출하고, Google Gemini AI를 통해 핵심 요약 노트를 생성한 뒤, 옵시디언(Obsidian) 보관소에 위키링크(`[[...]]`)를 포함한 마크다운 문서로 자동 저장해 주는 편리한 윈도우용 프로그램입니다.
 
 ---
 
-## Quick Start (3 steps)
+## 📥 다운로드 및 실행 (Download)
 
-**1. Download** `PaperSummarizer.exe` from the [Releases page](../../releases/latest)
+**[⬇️ 최신 버전 GOZ.exe 다운로드 받기](../../releases/latest)**
 
-**2. Get a free Gemini API key**
-→ Go to [aistudio.google.com](https://aistudio.google.com/app/apikey) and click **Get API key**
-
-**3. Run the exe**
-→ A setup wizard will guide you through entering your API key and folder paths.
-→ Settings are saved locally and never uploaded anywhere.
-
-That's it. The app opens automatically after setup.
+* ⚠️ **Windows 전용** 프로그램입니다.
+* 별도의 Python 설치나 번거로운 개발 환경 세팅 없이 **`GOZ.exe` 파일 하나만 실행**하면 즉시 작동합니다.
 
 ---
 
-## How It Works
+## ⚡ 3단계 빠른 시작 (Quick Start)
 
-```
-Local Zotero SQLite DB
-    ↓  fetch journal articles by collection (no sync required)
-Local PDF folder
-    ↓  match and extract full text (pypdf)
-Google Gemini API
-    ↓  generate structured summary
-Obsidian Vault
-    ↓  save as .md with YAML frontmatter + wikilinks
-```
+1. **프로그램 다운로드 및 이동**
+   * 위의 다운로드 링크에서 `GOZ.exe`를 다운로드하여 원하는 폴더(예: 문서, 바탕화면 등)에 넣습니다.
 
-Each output note follows this naming convention:
-```
-{Author}_{Year}_{JournalAcronym}.md
-e.g.  Kim et al_2023_SSM.md
-```
+2. **무료 Gemini API Key 발급**
+   * [Google AI Studio](https://aistudio.google.com/app/apikey)에 접속하여 로그인한 뒤, **Get API key** 버튼을 눌러 무료 API 키를 발급받고 복사합니다.
+
+3. **앱 실행 및 설정 마법사 진행**
+   * `GOZ.exe`를 더블클릭하여 실행합니다.
+   * 첫 실행 시 나타나는 **설정 마법사(Setup Wizard)**에 따라 API 키와 폴더 경로들을 입력하면 세팅 완료!
+   * *모든 설정 정보는 인터넷에 업로드되지 않고, 실행 파일이 있는 폴더에 `.env` 파일로 오직 내 컴퓨터에만 안전하게 저장됩니다.*
 
 ---
 
-## Features
+## 🛠️ 주요 기능 (Features)
 
-| Feature | Description |
+| 기능 | 설명 |
 |---|---|
-| Setup wizard | First-run guided setup — no config files to edit manually |
-| Collection picker | Real-time search, multi-select, checkbox UI |
-| Local DB access | Reads Zotero SQLite directly — no sync delay, no Zotero API key |
-| PDF matching | Rule-based matching by author + year + title keywords |
-| AI summary | Research objective, methodology, key results, keywords |
-| Auto Wikilinks | Authors, journals, tags, and keywords linked as `[[...]]` |
-| Duplicate handling | Skip / Overwrite / Update if newer |
-| Recent filter | Process only papers added within N days |
-| Progress bar | Live progress tracking with count display |
+| **설정 마법사 제공** | 처음 실행할 때 API 키와 폴더 경로를 GUI 창으로 쉽게 입력 가능 (메모장 편집 불필요) |
+| **Zotero 컬렉션 선택** | 내 로컬 Zotero의 폴더 구조(Collection)를 실시간 검색하고 체크박스로 다중 선택 가능 |
+| **로컬 DB 직접 조회** | 온라인 싱크 대기 없이 로컬 SQLite DB를 직접 읽어 즉각적으로 논문 정보 조회 |
+| **지능형 PDF 매칭** | 저자, 발행 연도, 제목 키워드를 조합하여 내 컴퓨터에 저장된 논문 PDF 본문을 자동 매칭 |
+| **Gemini AI 요약** | 논문 전체 본문을 기반으로 연구 목적, 방법론, 핵심 결과, 주요 기여점 등을 정밀 분석 요약 |
+| **자동 위키링크 연결** | 요약 노트 내의 저자, 학술지, 태그, 키워드를 `[[위키링크]]` 형태로 변환해 옵시디언 지식 그래프 구축 |
+| **중복 처리 및 필터링** | 이미 요약된 논문 건너뛰기/덮어쓰기 기능 및 '최근 N일 이내에 추가된 논문만 처리' 필터 제공 |
+| **실시간 진행률 표시** | 실시간 상태 로그 및 진행바(Progress Bar)를 통해 요약 진행 상황을 직관적으로 확인 |
 
 ---
 
-## Output Note Structure
+## 📂 저장되는 요약 노트 구조 (Markdown)
+
+옵시디언으로 내보내지는 마크다운 노트는 아래와 같이 옵시디언의 기능을 100% 활용할 수 있는 깔끔한 템플릿 구조를 따릅니다.
 
 ```markdown
 ---
-title: "..."
+title: "논문 제목"
 authors:
   - Last, First
-date: 2023
-journal: "..."
+date: 2026
+journal: "학술지명"
 has_pdf: true
 zotero_link: zotero://select/items/0_XXXXXXXX
 ---
 
-# Title
+# 논문 제목 (Title)
 
-## Bibliographic Info
-## AI Summary (Full PDF Content)
-## Original Abstract
+## 📌 서지 정보 (Bibliographic Info)
+* **저자:** [[Last, First]]
+* **학술지:** [[학술지명]]
+* **발행연도:** [[2026년]]
+* **Zotero 링크:** [Zotero에서 열기](zotero://select/items/0_XXXXXXXX)
+
+## 🤖 Gemini AI 핵심 요약 (Summary)
+> (Gemini AI가 PDF 전체 텍스트를 기반으로 작성한 상세 연구 목적, 방법론, 핵심 결과, 한계점 및 향후 연구 방향이 정돈되어 기록됩니다.)
+
+## 📝 원문 초록 (Abstract)
+> (Zotero에 등록되어 있는 영문/국문 원문 초록이 그대로 보존됩니다.)
 ```
 
 ---
 
-## Running from Source
+## 🔒 개인정보 및 보안 (Security & Privacy)
 
-If you prefer to run the Python script directly:
-
-```bash
-# 1. Install dependencies
-pip install google-generativeai pypdf
-
-# 2. Run
-python paper_summarizer.py
-```
-
-The setup wizard will run on first launch and create a `.env` file automatically.
+* **안전한 로컬 저장**: 사용자의 Gemini API Key와 설정 경로 등 민감한 정보는 외부 서버에 절대 전송되지 않고, 실행 파일 옆에 `.env` 파일로 **로컬에만 암호화/저장**됩니다.
+* **직접 매칭**: 논문 텍스트는 오직 사용자의 Google Gemini API를 통한 요약 분석 목적으로만 전송되며 그 외의 목적으로는 어디에도 공유되거나 수집되지 않습니다.
 
 ---
 
-## Privacy & Security
+## 📝 버전 기록 (Version History)
 
-- Your API key and folder paths are stored **only in a local `.env` file** next to the exe
-- No data is uploaded except paper text sent to the Gemini API for summarization
-- The `.env` file is excluded from this repository via `.gitignore`
-
----
-
-## Dependencies
-
-| Package | Purpose |
-|---|---|
-| `google-generativeai` | Gemini API |
-| `pypdf` | PDF text extraction |
-| `tkinter` | GUI (Python standard library) |
-| `sqlite3` | Local Zotero DB access (Python standard library) |
+* **v1.1 (GOZ)**
+  * 앱 이름을 **GOZ (Gemini-Obsidian-Zotero)**로 정식 변경
+  * 신규 책 & AI 별빛 테마 아이콘 적용
+  * 프로그램 설정 마법사 탑재 및 포터블 세팅 지원
+* **v1.0 (Initial)**
+  * Zotero 로컬 DB 연동 및 Gemini API 기반 PDF 텍스트 요약 구현
+  * 옵시디언 마크다운 추출기 빌드
 
 ---
 
-## Version History
-
-| Version | Changes |
-|---|---|
-| v1.1 | First-run setup wizard, PyInstaller exe support, portable config |
-| v1.0 | Initial build — Zotero DB fetch, Gemini summary, Obsidian export |
+> 💡 **개발자용 안내**: 코드를 직접 수정하거나 Python 스크립트로 실행하고 싶으신 개발자분들은 프로젝트 폴더 내의 [README_DEV.md](file:///c:/Users/User/OneDrive/Github%20Desktop/zotero-obsidian-summarizer/README_DEV.md) 문서를 참고해 주세요.
