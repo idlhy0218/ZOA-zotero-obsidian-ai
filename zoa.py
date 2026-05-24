@@ -85,11 +85,12 @@ MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-2.5-flash')
 
 PROVIDER_MODELS = {
     "Google Gemini": [
+        "gemini-3.5-flash",
+        "gemini-3.1-pro",
+        "gemini-3.0-flash",
         "gemini-2.5-flash",
         "gemini-2.5-pro",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro"
+        "gemini-2.0-flash"
     ],
     "Anthropic Claude": [
         "claude-opus-4-7",
@@ -1259,7 +1260,6 @@ authors:
 date: {date}
 date_added: {date_added}
 journal: "{sanitize_yaml(publication.title() if publication else 'No Journal')}"
-has_pdf: {str(has_pdf).lower()}
 url: {url}
 zotero_link: {zotero_link}
 ---
