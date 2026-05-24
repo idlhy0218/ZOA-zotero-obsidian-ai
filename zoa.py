@@ -1372,7 +1372,7 @@ class SetupWizard(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.title("Setup — ZOA (Zotero-Obsidian-AI Summary)")
-        self.geometry("560x520")
+        self.geometry("560x580")
         self.resizable(False, False)
         self.configure(bg=BG)
         self.grab_set()                 # modal
@@ -1408,8 +1408,8 @@ class SetupWizard(tk.Toplevel):
         self.update_idletasks()
         # Center on screen
         x = (self.winfo_screenwidth()  - 560) // 2
-        y = (self.winfo_screenheight() - 520) // 2
-        self.geometry(f"560x520+{x}+{y}")
+        y = (self.winfo_screenheight() - 580) // 2
+        self.geometry(f"560x580+{x}+{y}")
 
     # ── Layout skeleton ──────────────────────
     def _build(self):
