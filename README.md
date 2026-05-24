@@ -1,22 +1,31 @@
-# zotero-obsidian-summarizer
+# Zotero Obsidian Summarizer
 
 > Zotero × Gemini AI × Obsidian — Academic paper summarization pipeline
 
-A desktop app that connects Zotero, Google Gemini AI, and Obsidian into a single academic workflow. Automatically fetches journal articles from the local Zotero database, extracts full PDF text, generates structured AI summaries, and saves Markdown notes with wikilinks for building a personal knowledge network.
+Automatically fetches journal articles from your local Zotero library, extracts full PDF text, generates structured AI summaries, and saves Markdown notes with wikilinks to your Obsidian vault.
 
 ---
 
-## File Structure
+## Download
 
-```
-📁 project root
-├── paper_summarizer.py     # Main application (GUI + pipeline)
-├── Paper Summarizer.bat    # Windows launcher (double-click to run)
-├── .env                    # API keys and paths (not tracked by Git)
-├── .env.template           # Template for .env setup
-├── .gitignore              # Excludes .env and cache files
-└── README.md               # This file
-```
+**[⬇ Download PaperSummarizer.exe](../../releases/latest)**
+
+> Windows only. No Python installation required.
+
+---
+
+## Quick Start (3 steps)
+
+**1. Download** `PaperSummarizer.exe` from the [Releases page](../../releases/latest)
+
+**2. Get a free Gemini API key**
+→ Go to [aistudio.google.com](https://aistudio.google.com/app/apikey) and click **Get API key**
+
+**3. Run the exe**
+→ A setup wizard will guide you through entering your API key and folder paths.
+→ Settings are saved locally and never uploaded anywhere.
+
+That's it. The app opens automatically after setup.
 
 ---
 
@@ -41,45 +50,19 @@ e.g.  Kim et al_2023_SSM.md
 
 ---
 
-## Setup
-
-**1. Install dependencies**
-```bash
-pip install google-generativeai pypdf
-```
-
-**2. Configure `.env`**
-
-Copy `.env.template` to `.env` and fill in your credentials:
-```
-GEMINI_KEY=your_gemini_api_key
-PDF_PATH=C:\path\to\zotero_pdf_folder
-OBS_PATH=C:\path\to\obsidian\output_folder
-ZOTERO_DB=C:\Users\YourName\Zotero\zotero.sqlite
-```
-
-**3. Run**
-
-Double-click `Paper Summarizer.bat`, or run directly:
-```bash
-python paper_summarizer.py
-```
-
----
-
 ## Features
 
 | Feature | Description |
 |---|---|
+| Setup wizard | First-run guided setup — no config files to edit manually |
 | Collection picker | Real-time search, multi-select, checkbox UI |
-| Local DB access | Reads Zotero SQLite directly — no sync delay, no API key |
+| Local DB access | Reads Zotero SQLite directly — no sync delay, no Zotero API key |
 | PDF matching | Rule-based matching by author + year + title keywords |
 | AI summary | Research objective, methodology, key results, keywords |
 | Auto Wikilinks | Authors, journals, tags, and keywords linked as `[[...]]` |
 | Duplicate handling | Skip / Overwrite / Update if newer |
 | Recent filter | Process only papers added within N days |
 | Progress bar | Live progress tracking with count display |
-| `.env` config | All credentials and paths stored outside source code |
 
 ---
 
@@ -105,11 +88,27 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 
 ---
 
-## Development History
+## Running from Source
 
-| Version | Changes |
-|---|---|
-| v1.0 | Initial build — Zotero API fetch, Gemini summary, Obsidian export
+If you prefer to run the Python script directly:
+
+```bash
+# 1. Install dependencies
+pip install google-generativeai pypdf
+
+# 2. Run
+python paper_summarizer.py
+```
+
+The setup wizard will run on first launch and create a `.env` file automatically.
+
+---
+
+## Privacy & Security
+
+- Your API key and folder paths are stored **only in a local `.env` file** next to the exe
+- No data is uploaded except paper text sent to the Gemini API for summarization
+- The `.env` file is excluded from this repository via `.gitignore`
 
 ---
 
@@ -124,8 +123,9 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 
 ---
 
-## Security Notes
+## Version History
 
-- `.env` is excluded from Git via `.gitignore`
-- `paper_summarizer.py` contains no credentials or personal paths
-- Do not rename `.env.template` directly — copy it to `.env`
+| Version | Changes |
+|---|---|
+| v1.1 | First-run setup wizard, PyInstaller exe support, portable config |
+| v1.0 | Initial build — Zotero DB fetch, Gemini summary, Obsidian export |

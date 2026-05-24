@@ -1,11 +1,25 @@
-# API keys — never upload
+# ── Security ─────────────────────────────
+# API keys and credentials — never upload
 .env
 
-# Python cache
+# Source code — distributed as exe only
+paper_summarizer.py
+Paper Summarizer.bat
+
+# ── Build artifacts ───────────────────────
+# PyInstaller output
+build/
+dist/
+*.spec
+C:\pyi_build_tmp\
+
+# ── Python cache ──────────────────────────
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
 
-# OS
+# ── OS ────────────────────────────────────
 .DS_Store
 Thumbs.db
+desktop.ini
