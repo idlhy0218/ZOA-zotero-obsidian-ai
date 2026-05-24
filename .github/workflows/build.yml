@@ -55,7 +55,7 @@ jobs:
           path: dist/GOZ-macOS.zip
 
   release:
-    if: startsWith(github.ref, 'refs/tags/')   # 태그 push 시에만 실행, 수동 실행 시 건너뜀
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')   # 태그 push 시에만 실행, 수동 실행 시 건너뜀
     needs: [build-windows, build-macos]
     runs-on: ubuntu-latest
     permissions:

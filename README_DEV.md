@@ -1,92 +1,146 @@
-# 🛠️ GOZ (Gemini-Obsidian-Zotero) — 개발자 가이드 (Developer Guide)
+# 🛠️ GOZ (Gemini-Obsidian-Zotero) — 개발자 가이드
 
-이 문서는 **GOZ** 프로그램의 소스 코드를 실행, 수정하거나 새로운 `.exe` 실행 파일로 직접 빌드하려는 개발자를 위한 안내서입니다.
-
----
-
-## 📂 프로젝트 구조 (Project Structure)
-
-프로젝트 루트 폴더에는 다음과 같은 핵심 파일들이 존재합니다.
-
-```
-zotero-obsidian-summarizer/
-├── goz.py            # 핵심 Python 소스 코드 (Tkinter GUI 및 비즈니스 로직)
-├── GOZ.bat           # [Git 제외] 로컬 소스 코드를 즉시 실행하기 위한 배치 파일
-├── app_icon.ico      # 실행 파일 빌드에 사용되는 테마 아이콘 (책 + AI 별빛)
-├── README.md         # 배포용 일반 사용자 설명서
-├── README_DEV.md     # 본 개발자 문서
-├── .env.template     # 로컬 개발 환경용 설정값 템플릿
-├── .gitignore        # 소스 코드 유출 및 API 키 업로드 방지를 위한 제외 설정
-└── dist/
-    └── GOZ.exe       # [Git 제외] 최종 배포용 윈도우 실행 파일
-```
-
-> ⚠️ **보안 참고사항**: 본 프로젝트를 퍼블릭 깃허브(GitHub) 등에 배포할 때 소스 코드 보안을 유지하기 위해 핵심 코드인 `goz.py`, 로컬 구동용 배치 파일인 `GOZ.bat`, 설정 파일인 `.env` 등은 `.gitignore`에 등록되어 Git 추적에서 제외되어 있습니다.
+이 문서는 GOZ 소스 코드를 수정하고 새 버전으로 배포하는 전체 과정을 설명합니다.
 
 ---
 
-## 💻 개발 환경 구축 (Prerequisites)
+## 📂 프로젝트 구조
 
-이 프로그램은 Python 환경에서 실행됩니다. 개발 및 코드를 직접 수정해 보려면 아래 패키지 설치가 필요합니다.
-
-### 1. 의존성 라이브러리 설치 (Dependencies)
-Python이 설치된 환경의 터미널(PowerShell 등)에서 아래 명령어를 실행하여 필수 의존성 패키지를 설치합니다.
-
-```bash
-pip install google-generativeai pypdf pillow
+```
+GOZ-gemini-obsidian-zotero/
+├── goz.py                          # 핵심 소스 코드 (GUI + 비즈니스 로직)
+├── GOZ.bat                         # 로컬 실행용 배치 파일 (더블클릭으로 goz.py 실행)
+├── app_icon.ico                    # Windows 빌드용 아이콘
+├── .env.template                   # 설정 파일 템플릿 (실제 .env는 .gitignore로 제외됨)
+├── .gitignore                      # .env, dist/, build/ 등 제외
+├── README.md                       # 일반 사용자용 설명서
+├── README_DEV.md                   # 본 개발자 문서
+└── .github/
+    └── workflows/
+        └── build.yml               # GitHub Actions 자동 빌드 워크플로우
 ```
 
-* **`google-generativeai`**: Google Gemini AI 모델 연동용 API 라이브러리
-* **`pypdf`**: PDF 본문 텍스트 추출용 라이브러리
-* **`pillow`**: 아이콘 파일(`.ico`) 변환 및 이미지 처리용 라이브러리
-* **`sqlite3`, `tkinter`**: 파이썬 표준 라이브러리 (별도 설치 불필요)
+> `.env` 파일은 API 키가 포함되므로 절대 커밋하지 않습니다.  
+> `dist/`, `build/` 폴더는 빌드 결과물로, GitHub Actions가 자동 생성하므로 커밋 불필요합니다.
 
 ---
 
-## 🚀 로컬 소스 코드 실행하기 (Run from Source)
+## 1단계. 개발 환경 세팅 (최초 1회)
 
-코드 수정 사항을 빌드 없이 실시간으로 테스트하고 싶다면 아래 방법으로 소스 코드를 즉시 실행할 수 있습니다.
+### Python 패키지 설치
 
-### 방법 A. 배치 파일로 실행 (간편함)
-프로젝트 폴더 내의 **`GOZ.bat`** 파일을 더블클릭합니다.
-* 내부적으로 내 PC 환경에 설치된 Python 실행기(`python` 또는 `py` 런처)를 감지하여 자동으로 `goz.py`를 실행해 줍니다.
-
-### 방법 B. 명령어로 실행
-PowerShell 또는 CMD 창에서 프로젝트 폴더로 이동한 뒤 아래 명령어를 직접 실행합니다.
 ```powershell
-py goz.py
-# 또는
+pip install google-generativeai pypdf pillow pyinstaller
+```
+
+### .env 파일 생성
+
+`.env.template`을 복사해서 `.env`로 저장한 뒤, 자신의 경로와 API 키를 입력합니다.
+
+```
+GEMINI_KEY=여기에_API_키_입력
+PDF_PATH=C:\Users\...\Zotero\storage
+OBS_PATH=C:\Users\...\Obsidian Vault\Papers
+ZOTERO_DB=C:\Users\...\Zotero\zotero.sqlite
+```
+
+---
+
+## 2단계. 코드 수정 후 로컬 테스트
+
+`goz.py`를 수정한 뒤, 빌드 없이 바로 실행해서 테스트합니다.
+
+**방법 A — 배치 파일로 실행 (간편)**
+
+`GOZ.bat` 더블클릭
+
+**방법 B — 터미널로 실행**
+
+```powershell
 python goz.py
+# 또는
+py goz.py
+```
+
+로컬 테스트가 완료되면 커밋합니다.
+
+```powershell
+git add goz.py
+git commit -m "변경 내용 간단히 설명"
+git push origin main
 ```
 
 ---
 
-## 📦 실행 파일(.exe) 빌드 가이드 (Build Executable)
+## 3단계. 배포 — GitHub Actions 자동 빌드
 
-소스를 수정한 뒤, 다른 사람들이 단일 파일로 손쉽게 쓸 수 있도록 **`GOZ.exe`** 파일로 최종 패키징하는 방법입니다.
+코드를 main에 push하는 것만으로는 빌드가 실행되지 않습니다.  
+**배포는 버전 태그를 push할 때** 자동으로 시작됩니다.
 
-실행 파일 패키징에는 **`PyInstaller`** 라이브러리가 사용됩니다. 
+### 정식 릴리즈 (GOZ.exe + GOZ-macOS.zip 자동 생성)
 
-### 1. 빌드 도구 설치
-```bash
-pip install pyinstaller
-```
-
-### 2. 빌드 명령어 실행 (캐시 초기화 포함)
-윈도우 탐색기 캐시 및 PyInstaller 내부 빌드 캐시 간섭을 방지하기 위해 반드시 **`--clean`** 옵션을 적용하여 아래 명령어를 실행해 주세요.
-
-#### 💡 내 컴퓨터에서의 빌드 명령어 (Python core 경로 명시)
 ```powershell
-& "C:\Users\User\AppData\Local\Python\pythoncore-3.14-64\Scripts\pyinstaller.exe" --clean --onefile --windowed --name "GOZ" --icon="app_icon.ico" goz.py
+git tag v1.2
+git push origin v1.2
 ```
 
-#### 🌐 일반적인 환경에서의 빌드 명령어 (환경변수 PATH 등록 기준)
+태그를 push하면 GitHub Actions가 자동으로:
+1. Windows VM과 Mac VM을 동시에 실행
+2. 각각 `GOZ.exe`, `GOZ-macOS.zip` 빌드
+3. GitHub Release 페이지에 두 파일 첨부
+
+결과 확인: `저장소 페이지 → Releases`
+
+### 테스트 빌드 (릴리즈 없이 빌드만 확인)
+
+태그 없이 빌드 결과물만 확인하고 싶을 때는 GitHub Actions 탭에서 수동으로 실행합니다.
+
+1. 저장소 페이지 → **Actions 탭**
+2. 왼쪽 목록에서 **Build GOZ** 클릭
+3. **Run workflow** 버튼 클릭 → **Run workflow** 실행
+4. 빌드 완료 후 해당 실행 항목 클릭 → 하단 **Artifacts**에서 파일 다운로드
+
+수동 실행 시에는 Release 페이지에 올라가지 않으며, 빌드 결과물은 90일 후 자동 삭제됩니다.
+
+---
+
+## 4단계. 빌드 실패 시 확인 방법
+
+Actions 탭 → 실패한 항목 클릭 → 빨간 단계 클릭 → 에러 메시지 확인
+
+자주 발생하는 오류:
+
+| 오류 | 원인 | 해결 |
+|------|------|------|
+| `ModuleNotFoundError` | `pip install` 목록에 패키지 누락 | `build.yml`의 Install dependencies 단계에 패키지 추가 |
+| `GitHub Releases requires a tag` | 수동 실행인데 release job이 실행됨 | 현재 워크플로우는 이미 수동 실행 시 release를 건너뜀 |
+| Mac 빌드 실패 | Tkinter 관련 오류 | `macos-latest` → `macos-13`으로 변경 시도 |
+
+---
+
+## (선택) 로컬에서 직접 빌드
+
+GitHub Actions 없이 내 컴퓨터에서 직접 `.exe`를 빌드할 수 있습니다.
+
 ```powershell
 pyinstaller --clean --onefile --windowed --name "GOZ" --icon="app_icon.ico" goz.py
 ```
 
-### 3. 빌드 완료 후 청소
-빌드가 성공적으로 완료되면 폴더 내에 생겨난 임시 작업물들을 지워 깨끗한 상태로 복원해 줍니다.
-* **임시 폴더 삭제**: `build` 폴더를 통째로 삭제합니다.
-* **설정 파일 삭제**: `GOZ.spec` 파일을 삭제합니다.
-* **결과물 확인**: 오직 **`dist/GOZ.exe`** 파일만 남겨두시면 됩니다.
+빌드 후 `dist/GOZ.exe`만 남기고 `build/`, `GOZ.spec`은 삭제해도 됩니다.
+
+> 내 컴퓨터 PyInstaller 경로가 다른 경우:
+> ```powershell
+> & "C:\Users\User\AppData\Local\Python\pythoncore-3.14-64\Scripts\pyinstaller.exe" --clean --onefile --windowed --name "GOZ" --icon="app_icon.ico" goz.py
+> ```
+
+---
+
+## 의존 패키지 요약
+
+| 패키지 | 용도 |
+|--------|------|
+| `google-generativeai` | Gemini API 연동 |
+| `pypdf` | PDF 텍스트 추출 |
+| `pillow` | 아이콘 처리 (빌드 시 필요) |
+| `pyinstaller` | 실행 파일 패키징 (빌드 시 필요) |
+| `sqlite3`, `tkinter` | Python 기본 내장 (별도 설치 불필요) |

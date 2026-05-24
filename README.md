@@ -7,10 +7,15 @@
 
 ## 📥 다운로드 및 실행 (Download)
 
-**[⬇️ 최신 버전 GOZ.exe 다운로드 받기](../../releases/latest)**
+**[⬇️ 최신 버전 다운로드 받기](../../releases/latest)**
 
-* ⚠️ **Windows 전용** 프로그램입니다.
-* 별도의 Python 설치나 번거로운 개발 환경 세팅 없이 **`GOZ.exe` 파일 하나만 실행**하면 즉시 작동합니다.
+| 운영체제 | 파일 | 비고 |
+|----------|------|------|
+| Windows | `GOZ.exe` | 더블클릭으로 즉시 실행 |
+| macOS | `GOZ-macOS.zip` | 압축 해제 후 `GOZ.app` 실행 |
+
+* 별도의 Python 설치나 개발 환경 세팅 없이 파일 하나만으로 즉시 작동합니다.
+* macOS에서 처음 실행 시 "개발자를 확인할 수 없음" 경고가 뜰 수 있습니다. 이 경우 `GOZ.app`을 **우클릭 → 열기**로 실행하면 됩니다.
 
 ---
 
@@ -95,4 +100,4 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 
 ---
 
-> 💡 **개발자용 안내**: 코드를 직접 수정하거나 Python 스크립트로 실행하고 싶으신 개발자분들은 프로젝트 폴더 내의 [README_DEV.md](file:///c:/Users/User/OneDrive/Github%20Desktop/zotero-obsidian-summarizer/README_DEV.md) 문서를 참고해 주세요.
+> 💡 **개발자용 안내**: 코드를 직접 수정하거나 새 버전을 빌드하고 싶으신 분들은 [README_DEV.md](README_DEV.md) 문서를 참고해 주세요.
