@@ -89,11 +89,14 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 
 # 논문 제목 (Title)
 
-## 📌 서지 정보 (Bibliographic Info)
-* **저자:** [[Last, First]]
-* **학술지:** [[학술지명]]
-* **발행연도:** [[2026년]]
-* **Zotero 링크:** [Zotero에서 열기](zotero://select/items/0_XXXXXXXX)
+## Bibliographic Info
+- **Authors**: Last, First
+- **Journal**: 학술지명
+- **Date**: 2026
+- **Zotero Link**: [Open in Zotero](zotero://select/items/0_XXXXXXXX)
+- **PDF Status**: PDF Found
+- **Zotero Tags**: 태그1, 태그2
+- **URL**: https://...
 
 ## 🤖 AI 핵심 요약 (Summary)
 > (선택한 AI가 PDF 전체 텍스트 또는 초록을 기반으로 작성한 상세 연구 목적, 방법론, 핵심 결과, 한계점 및 향후 연구 방향이 정돈되어 기록됩니다.)
