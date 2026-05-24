@@ -112,11 +112,6 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 **Q. Zotmoov가 반드시 필요한가요?**  
 아닙니다. Zotmoov 없이도 ZOA는 정상 작동합니다. 다만 Zotmoov를 사용하면 Zotero에 추가한 논문 PDF가 지정한 폴더에 자동으로 정리되기 때문에, ZOA가 PDF를 찾는 성공률이 크게 높아집니다. Zotmoov가 없거나 PDF를 찾지 못한 경우에는 Zotero에 등록된 초록(Abstract)을 기반으로 요약이 생성됩니다.
 
-**Q. 어떤 AI 모델이 논문 분석에 가장 유리한가요?**  
-* **DeepSeek (deepseek-reasoner)**: DeepSeek-R1 추론 모델이 탑재되어 복잡한 통계 기법과 수식이 많은 이공계 논문을 깊이 있게 분석하고 생각 단계를 도출하는 데 탁월한 효과가 있습니다.
-* **Claude (claude-opus-4-7, claude-sonnet-4-6)**: 학술적인 서술어와 문맥의 풍부함을 살리는 정밀하고 부드러운 요약 품질을 보여줍니다.
-* **OpenAI (gpt-5.5, gpt-5)**: 요점 지향적이고 체계적인 고성능 구조화 요약을 제공합니다.
-
 **Q. API 사용 비용이 발생하나요?**  
 각 인공지능 제공업체 정책에 따라 무료 한도 제공 혹은 사용량 비례 과금이 발생할 수 있습니다. 각 서비스 공식 홈페이지에서 정확한 API 요금제 및 크레딧 제공 정책을 확인하시는 것을 추천해 드립니다.
 
@@ -139,3 +134,11 @@ zotero_link: zotero://select/items/0_XXXXXXXX
   * Google Gemini, Anthropic Claude, OpenAI, DeepSeek 4대 인공지능 엔진 종합 지원
   * 제공사 변경 시 적용 가능한 최신 모델로 동적 콤보박스 전환 연동
   * 파이썬 표준 라이브러리(urllib) 기반 REST 클라이언트 적용으로 패키징 최적화 및 경량화 성공
+
+---
+
+## 🐛 버그 제보 및 기능 건의 (Support)
+
+ZOA 앱을 사용하시던 중 버그가 발생하거나 기능 개선이 필요하다면 아래의 이슈 링크를 통해 제보해 주세요.
+* **[에러 및 피드백 제보하기 (GitHub Issues)](https://github.com/idlhy0218/GOZ-gemini-obsidian-zotero/issues)**
+* *제보 시 에러가 발생한 화면 스크린샷과 앱 하단 **Execution Log**의 내용을 함께 적어주시면 더욱 빠른 해결이 가능합니다!*
