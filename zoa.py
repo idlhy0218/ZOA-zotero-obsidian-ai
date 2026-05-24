@@ -1,5 +1,5 @@
 """
-ZOA (Zotero-Obsidian-AI Summary) — v1.1
+ZOA (Zotero-Obsidian-AI Summary) — v1.0
 """
 
 import tkinter as tk
