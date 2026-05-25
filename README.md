@@ -1,7 +1,5 @@
 
 
-https://github.com/user-attachments/assets/d8d2f761-7880-4146-8e64-fcbda8daa3ff
-
 # ZOA (Zotero-Obsidian-AI Summary)
 
 An automated academic paper summarization pipeline that integrates Zotero, Obsidian, and multiple AI providers (Gemini, Claude, OpenAI, DeepSeek). ZOA reads your local Zotero library, extracts PDF content, generates structured AI summaries, and saves them as Markdown notes directly into your Obsidian vault.
@@ -10,6 +8,7 @@ An automated academic paper summarization pipeline that integrates Zotero, Obsid
 
 ---
 Uploading instruction1.mp4…
+https://github.com/user-attachments/assets/d8d2f761-7880-4146-8e64-fcbda8daa3ff
 ---
 
 ## Requirements
