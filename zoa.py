@@ -983,9 +983,16 @@ class ZOAApp:
         # Toggle row
         tog_row = tk.Frame(c3, bg=BG_CARD); tog_row.pack(fill="x", pady=(0, 12))
         self.full_pdf_var = tk.BooleanVar(value=False)
-        self._toggle_chk(tog_row, "Read full PDF", self.full_pdf_var)
+        self.full_pdf_chk = ModernCheckbutton(tog_row, text="Read full PDF", variable=self.full_pdf_var,
+                                              bg=BG_CARD, fg=FG_MID, font=FONT_LABEL)
+        self.full_pdf_chk.pack(side="left")
+        
+        pdf_info_icon = CircledExclamation(tog_row, BG_CARD)
+        pdf_info_icon.pack(side="left", padx=(5, 0))
+        ToolTip(pdf_info_icon, "If no matching PDF file is found or text extraction fails,\nZOA will automatically fall back to summarizing the Zotero abstract.")
+        
         self.wikilink_var = tk.BooleanVar(value=False)
-        self._toggle_chk(tog_row, "Auto Wikilinks", self.wikilink_var, pad_left=28)
+        self._toggle_chk(tog_row, "Auto Wikilinks", self.wikilink_var, pad_left=20)
 
         thin_divider(c3, (0, 12))
 
