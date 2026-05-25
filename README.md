@@ -8,7 +8,7 @@ An automated academic paper summarization pipeline that integrates Zotero, Obsid
 
 ---
 
-https://github.com/user-attachments/assets/da7de93b-2f8a-4740-ad8b-83ee452dfc8c
+https://github.com/user-attachments/assets/ba92afdc-8fcd-4e8a-a1cc-d8e83f8473ff
 
 ---
 
