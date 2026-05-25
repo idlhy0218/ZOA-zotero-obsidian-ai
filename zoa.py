@@ -413,11 +413,9 @@ and strictly grounded in the provided text.
 Summarize the provided {content_source} of the research paper titled: "{title}".
 
 ## Critical Constraints
-- Base your summary ONLY on the provided text below. Do not infer, extrapolate, \
-or supplement with outside knowledge.
-- If information for a section is not present in the text, write: \
-"Not reported in the provided text."
-- Use clear academic English. Be concise: each section should be 2–4 sentences maximum.
+- Base your summary on the provided text. Synthesize the context logically to provide a useful summary even if some specific details are not explicitly spelled out.
+- If specific details (like precise sample sizes or statistical models) are not mentioned, summarize the conceptual goals, qualitative approaches, or overall trends instead. Avoid generic "not reported" statements unless the text provides absolutely zero context.
+- Use clear academic English. Be concise: each section should be 1–3 sentences maximum.
 
 ## Output Format (Markdown)
 
