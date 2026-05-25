@@ -1,5 +1,5 @@
 """
-ZOA (Zotero-Obsidian-AI Summary) — v1.0
+ZOA (Zotero-Obsidian-AI Summary) — v1.0-beta
 
 Copyright (c) 2026 Heeyoung Lee. All rights reserved.
 Licensed under the MIT License. See LICENSE file in the project root for details.
@@ -728,7 +728,7 @@ class ZOAApp:
         left.pack(side="left")
         tk.Label(left, text="ZOA (Zotero-Obsidian-AI Summary)",
                  font=FONT_APPNAME, fg=FG, bg=BG_CARD).pack(anchor="w")
-        tk.Label(left, text="v1.0  |  Copyright (c) 2026 Heeyoung Lee",
+        tk.Label(left, text="v1.0-beta  |  Copyright (c) 2026 Heeyoung Lee",
                  font=FONT_SUBNAME, fg=FG_DIM, bg=BG_CARD).pack(anchor="w", pady=(2, 0))
 
         tk.Label(inner_h, text="MIT License",
@@ -1764,7 +1764,7 @@ if __name__ == "__main__":
     # Force taskbar icon to display correctly on Windows (overrides default Python shell grouping)
     try:
         import ctypes
-        myappid = 'heeyounglee.zoa.1.0'
+        myappid = 'heeyounglee.zoa.1.0.beta'
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     except:
         pass

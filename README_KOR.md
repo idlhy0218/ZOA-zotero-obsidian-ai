@@ -130,7 +130,7 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 
 ## 버전 기록 (Version History)
 
-* **v1.0 (ZOA 정식 릴리즈)**
+* **v1.0-beta (ZOA 초기 베타 릴리즈)**
   * 기존 GOZ 파이프라인 전면 개편 및 다중 API 연동 구조 구현
   * Google Gemini, Anthropic Claude, OpenAI, DeepSeek 4대 인공지능 엔진 종합 지원
   * 제공사 변경 시 적용 가능한 최신 모델로 동적 콤보박스 전환 연동

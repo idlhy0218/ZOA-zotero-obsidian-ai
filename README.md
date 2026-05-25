@@ -129,7 +129,7 @@ Leave the field blank in the Setup Wizard. If Zotero is installed in its default
 
 ## Version History
 
-* **v1.0 (Initial Release)**
+* **v1.0-beta (Initial Beta Release)**
   * Full rewrite of the GOZ pipeline with multi-provider API architecture
   * Support for Google Gemini, Anthropic Claude, OpenAI, and DeepSeek
   * Dynamic model combobox that updates when switching providers
