@@ -227,6 +227,31 @@ def sanitize_abstract(text):
             result.append(">")
     return '\n'.join(result)
 
+def clean_date(raw_date: str) -> str:
+    if not raw_date: return "No Date"
+    raw_date = raw_date.strip()
+    
+    # 1. Check YYYY-MM-DD
+    m3 = re.search(r'(\d{4})[-/](\d{2})[-/](\d{2})', raw_date)
+    if m3:
+        year, month, day = m3.groups()
+        if day == '00' or day == '0':
+            return f"{year}-{month}"
+        return f"{year}-{month}-{day}"
+        
+    # 2. Check YYYY-MM
+    m2 = re.search(r'(\d{4})[-/](\d{2})', raw_date)
+    if m2:
+        year, month = m2.groups()
+        return f"{year}-{month}"
+        
+    # 3. Check YYYY
+    m1 = re.search(r'\d{4}', raw_date)
+    if m1:
+        return m1.group(0)
+        
+    return raw_date
+
 # ── SQLite helpers ──────────────────────────
 def get_zotero_db():
     import sqlite3
@@ -1419,7 +1444,7 @@ class ZOAApp:
                 title       = fields.get('title', 'No Title')
                 raw_abstract = fields.get('abstractNote')
                 abstract    = str(raw_abstract).strip() if raw_abstract is not None else ''
-                date        = fields.get('date', 'No Date')
+                date        = clean_date(fields.get('date', 'No Date'))
                 url         = fields.get('url', '')
                 publication = fields.get('publicationTitle', 'No Journal')
 
