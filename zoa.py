@@ -477,6 +477,12 @@ class ToolTip:
         if tw:
             tw.destroy()
 
+class CircledExclamation(tk.Canvas):
+    def __init__(self, parent, bg_card):
+        super().__init__(parent, width=16, height=16, bg=bg_card, highlightthickness=0, cursor="hand2")
+        self.create_oval(2, 2, 14, 14, outline="#BABAB4", width=1.5)
+        self.create_text(8, 8, text="!", font=("Segoe UI", 9, "bold"), fill="#888882")
+
 def field_label_with_tooltip(parent, text, tooltip_text):
     row = tk.Frame(parent, bg=BG_CARD)
     row.pack(anchor="w", pady=(0, 4))
@@ -485,9 +491,8 @@ def field_label_with_tooltip(parent, text, tooltip_text):
                    fg=FG_DIM, bg=BG_CARD)
     lbl.pack(side="left")
     
-    info_icon = tk.Label(row, text=" !", font=("Segoe UI", 9, "bold"),
-                         fg=FG_LIGHT, bg=BG_CARD, cursor="hand2")
-    info_icon.pack(side="left", padx=(4, 0))
+    info_icon = CircledExclamation(row, BG_CARD)
+    info_icon.pack(side="left", padx=(5, 0))
     
     ToolTip(info_icon, tooltip_text)
 
