@@ -1,6 +1,6 @@
 
 
-Uploading instruction1.mp4…
+https://github.com/user-attachments/assets/d8d2f761-7880-4146-8e64-fcbda8daa3ff
 
 # ZOA (Zotero-Obsidian-AI Summary)
 
@@ -9,9 +9,7 @@ An automated academic paper summarization pipeline that integrates Zotero, Obsid
 > 한국어 설명서: [README_KOR.md](README_KOR.md)
 
 ---
-
-<video src="image/instruction1.mp4" controls width="100%"></video>
-
+Uploading instruction1.mp4…
 ---
 
 ## Requirements
