@@ -1,0 +1,11 @@
+# Exclude development files, design assets, and repository configs from Release ZIP (GitHub Source Code archives)
+.github/ export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
+.env export-ignore
+.env.template export-ignore
+README_DEV.md export-ignore
+RULES.md export-ignore
+image/ export-ignore
+dist/ export-ignore
+__pycache__/ export-ignore
