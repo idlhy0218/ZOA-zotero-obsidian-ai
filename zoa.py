@@ -360,28 +360,30 @@ def apply_wikilinks_to_summary(summary_text, keywords):
     return summary_text
 
 # ─────────────────────────────────────────────
-# Design tokens — clean academic
+# Design tokens — ZOA Academic Signature
 # ─────────────────────────────────────────────
 BG           = "#F4F3F1"       # warm off-white page
 BG_CARD      = "#FFFFFF"
 BG_INPUT     = "#FAFAF9"
 BG_HOVER     = "#F0EFED"
-BG_SEL       = "#1C1C1C"       # selected row fill
+BG_SEL       = "#615478"       # Deep Violet Gray (selected row fill)
 FG           = "#1C1C1C"
 FG_MID       = "#555550"
 FG_DIM       = "#888882"
 FG_LIGHT     = "#BABAB4"
 BORDER       = "#E2E1DE"
 BORDER_MID   = "#C8C7C3"
-ACCENT       = "#1C1C1C"
-ACCENT_H     = "#383838"
+ACCENT       = "#615478"       # Deep Violet Gray (primary accent)
+ACCENT_H     = "#504464"       # Darker Deep Violet Gray (hover)
+ACCENT_POINT = "#a40808"       # Academic Crimson Red (run button)
+ACCENT_POINT_H = "#840606"     # Darker Academic Crimson Red (hover)
 LOG_BG       = "#F8F8F7"
 LOG_FG       = "#555550"
-LOG_OK       = "#1C1C1C"
+LOG_OK       = "#615478"       # Deep Violet for success logs
 LOG_SKIP     = "#BABAB4"
 LOG_WARN     = "#888882"
-TAG_BG       = "#EFEFED"
-TAG_FG       = "#444440"
+TAG_BG       = "#ECE9F2"       # Light violet gray for tag backgrounds
+TAG_FG       = "#504464"       # Deep Violet for tag text
 
 # Fonts — larger, readable
 FONT_H1      = ("Segoe UI",     16, "bold")
@@ -412,14 +414,16 @@ def make_entry(parent, textvariable, width=46, placeholder=""):
                  highlightcolor=ACCENT)
     return e
 
-def make_btn_primary(parent, text, command):
+def make_btn_primary(parent, text, command, bg_color=None, hover_color=None):
+    bg = bg_color or ACCENT
+    hov = hover_color or ACCENT_H
     btn = tk.Button(parent, text=text, command=command,
-                    bg=ACCENT, fg=BG_CARD, relief="flat",
+                    bg=bg, fg=BG_CARD, relief="flat",
                     font=FONT_BTN_P, padx=18, pady=8,
                     cursor="hand2", bd=0,
-                    activebackground=ACCENT_H, activeforeground=BG_CARD)
-    btn.bind("<Enter>", lambda e: btn.config(bg=ACCENT_H))
-    btn.bind("<Leave>", lambda e: btn.config(bg=ACCENT))
+                    activebackground=hov, activeforeground=BG_CARD)
+    btn.bind("<Enter>", lambda e: btn.config(bg=hov))
+    btn.bind("<Leave>", lambda e: btn.config(bg=bg))
     return btn
 
 def make_btn_ghost(parent, text, command):
@@ -483,8 +487,8 @@ class ToolTip:
 class CircledExclamation(tk.Canvas):
     def __init__(self, parent, bg_card):
         super().__init__(parent, width=16, height=16, bg=bg_card, highlightthickness=0, cursor="hand2")
-        self.create_oval(2, 2, 14, 14, outline="#BABAB4", width=1.5)
-        self.create_text(8, 8, text="!", font=("Segoe UI", 9, "bold"), fill="#888882")
+        self.create_oval(2, 2, 14, 14, outline=BORDER_MID, width=1.5)
+        self.create_text(8, 8, text="!", font=("Segoe UI", 9, "bold"), fill=ACCENT_POINT)
 
 def field_label_with_tooltip(parent, text, tooltip_text):
     row = tk.Frame(parent, bg=BG_CARD)
@@ -913,7 +917,7 @@ class ZOAApp:
         # ─── Run / Stop ───────────────────────
         tk.Frame(M, bg=BORDER, height=1).pack(fill="x", pady=(20, 14))
         btn_row = tk.Frame(M, bg=BG); btn_row.pack(fill="x")
-        self.run_btn = make_btn_primary(btn_row, "▶  Run", self._start_run)
+        self.run_btn = make_btn_primary(btn_row, "▶  Run", self._start_run, bg_color=ACCENT_POINT, hover_color=ACCENT_POINT_H)
         self.run_btn.pack(side="left", padx=(0, 10))
         self.stop_btn = make_btn_ghost(btn_row, "◼  Stop", self._stop_run)
         self.stop_btn.config(state="disabled", fg=FG_LIGHT)
