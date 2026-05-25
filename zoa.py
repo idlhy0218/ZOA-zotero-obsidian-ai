@@ -1419,7 +1419,8 @@ class ZOAApp:
                 zot_tags     = sqlite_get_tags(db, item_id)
 
                 title       = fields.get('title', 'No Title')
-                abstract    = fields.get('abstractNote', '').strip() if fields.get('abstractNote') else ''
+                raw_abstract = fields.get('abstractNote')
+                abstract    = str(raw_abstract).strip() if raw_abstract is not None else ''
                 date        = fields.get('date', 'No Date')
                 url         = fields.get('url', '')
                 publication = fields.get('publicationTitle', 'No Journal')
@@ -1484,7 +1485,7 @@ class ZOAApp:
                     else:
                         self._log("       —  No PDF match.", "skip")
 
-                if not final_text or len(final_text.strip()) < 20:
+                if not final_text or not final_text.strip():
                     self._log("       ✗  No abstract or PDF text content. Skipping.", "warn")
                     self.root.after(0, lambda i=idx: self._set_progress(i, total))
                     continue
