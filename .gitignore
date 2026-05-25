@@ -1,6 +1,7 @@
 # ── Security ─────────────────────────────
 # API keys and credentials — never upload
 .env
+prompt_template.txt
 
 # Developer-only documentation
 README_DEV.md
