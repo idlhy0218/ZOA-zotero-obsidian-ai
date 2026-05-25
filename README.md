@@ -6,6 +6,10 @@ An automated academic paper summarization pipeline that integrates Zotero, Obsid
 
 ---
 
+<video src="image/instruction1.mp4" controls width="100%"></video>
+
+---
+
 ## Requirements
 
 | Tool | Purpose | Notes |

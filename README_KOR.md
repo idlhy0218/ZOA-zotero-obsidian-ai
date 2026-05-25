@@ -4,6 +4,10 @@ Zotero, Obsidian, 그리고 다중 AI(Gemini, Claude, OpenAI, DeepSeek) 연동�
 
 ---
 
+<video src="image/instruction1.mp4" controls width="100%"></video>
+
+---
+
 ## 준비물
 
 ZOA를 사용하려면 아래의 도구들이 설치되어 있어야 합니다.
