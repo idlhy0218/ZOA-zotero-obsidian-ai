@@ -31,6 +31,8 @@ https://github.com/user-attachments/assets/ba92afdc-8fcd-4e8a-a1cc-d8e83f8473ff
 * **[Download ZOA (GitHub Releases)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)**
 * Download the build for your OS: `ZOA.exe` (Windows) or `ZOA-macOS.zip` (macOS).
 
+https://github.com/user-attachments/assets/f95b8227-991f-4deb-bb5c-d9f9d37b7802
+
 ### 1. Create a Dedicated ZOA Folder
 You must create a dedicated folder named **ZOA** and place the downloaded executable (`ZOA.exe` for Windows, `ZOA-macOS.zip` for macOS) inside it.
 * **[Crucial Requirement]** The executable and the `.env` configuration file (created automatically on first launch) **must always reside in the same folder together.** If you move only the executable to another location (like your Desktop) or separate it from the `.env` file, ZOA will fail to detect your settings and won't run.
