@@ -24,9 +24,9 @@ An automated academic paper summarization pipeline that integrates Zotero, Obsid
 * **[Download ZOA (GitHub Releases)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)**
 * Download the build for your OS: `ZOA.exe` (Windows) or `ZOA-macOS.zip` (macOS).
 
-### 1. Create a Dedicated Folder
-Place the downloaded executable in its own empty folder (e.g., `Documents/ZOA/`).
-* On first launch, ZOA automatically creates a `.env` config file in that folder. Do **not** run it from the Desktop or Downloads folder.
+### 1. Create a Dedicated ZOA Folder
+You must create a dedicated folder named **ZOA** and place the downloaded executable (`ZOA.exe` for Windows, `ZOA-macOS.zip` for macOS) inside it.
+* **[Crucial Requirement]** The executable and the `.env` configuration file (created automatically on first launch) **must always reside in the same folder together.** If you move only the executable to another location (like your Desktop) or separate it from the `.env` file, ZOA will fail to detect your settings and won't run.
 
 ### 2. Obtain an API Key
 Get an API key from at least one of the following providers:
@@ -35,8 +35,11 @@ Get an API key from at least one of the following providers:
 * [OpenAI Platform](https://platform.openai.com/) — GPT
 * [DeepSeek Platform](https://platform.deepseek.com/) — DeepSeek
 
-### 3. Run the Setup Wizard
+### 3. Run the Setup Wizard & Security Information
 Double-click the executable. On first launch, a Setup Wizard will guide you through entering your API key(s) and folder paths. All settings are saved locally to your `.env` file.
+
+> **⚠️ API Key Privacy & Security Guarantee**
+> The API keys stored in your `.env` file are kept strictly local to your machine. They are **never shared with or transmitted to anyone else.** You can use ZOA with complete peace of mind.
 
 ---
 
