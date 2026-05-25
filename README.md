@@ -34,6 +34,7 @@ https://github.com/user-attachments/assets/ba92afdc-8fcd-4e8a-a1cc-d8e83f8473ff
 ### 1. Create a Dedicated ZOA Folder
 You must create a dedicated folder named **ZOA** and place the downloaded executable (`ZOA.exe` for Windows, `ZOA-macOS.zip` for macOS) inside it.
 * **[Crucial Requirement]** The executable and the `.env` configuration file (created automatically on first launch) **must always reside in the same folder together.** If you move only the executable to another location (like your Desktop) or separate it from the `.env` file, ZOA will fail to detect your settings and won't run.
+* **[Windows SmartScreen Warning]** When launching `ZOA.exe` for the first time, Windows Defender may display a **"Windows protected your PC"** warning. This is a common warning for unsigned custom executables. You can safely ignore this by clicking **"More info"** and then clicking the **"Run anyway"** button to start the app.
 
 ### 2. Obtain an API Key
 Get an API key from at least one of the following providers:
