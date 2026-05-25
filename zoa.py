@@ -990,7 +990,7 @@ class ZOAApp:
         dup_row = tk.Frame(c3, bg=BG_CARD); dup_row.pack(fill="x", pady=(0, 10))
         tk.Label(dup_row, text="Duplicate:", font=FONT_LABEL,
                  fg=FG_DIM, bg=BG_CARD).pack(side="left", padx=(0, 10))
-        self.dup_var = tk.StringVar(value="skip")
+        self.dup_var = tk.StringVar(value="overwrite")
         for lbl, val in [("Skip", "skip"), ("Overwrite", "overwrite"), ("Update if newer", "update")]:
             rb = ModernRadiobutton(dup_row, text=lbl, variable=self.dup_var, value=val,
                                    bg=BG_CARD, fg=FG_MID, font=FONT_LABEL)
