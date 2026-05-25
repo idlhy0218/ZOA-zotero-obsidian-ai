@@ -1,5 +1,8 @@
 """
 ZOA (Zotero-Obsidian-AI Summary) — v1.0
+
+Copyright (c) 2026 Heeyoung Lee. All rights reserved.
+Licensed under the MIT License. See LICENSE file in the project root for details.
 """
 
 import tkinter as tk

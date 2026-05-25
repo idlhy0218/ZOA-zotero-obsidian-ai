@@ -145,3 +145,10 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 ZOA 앱을 사용하시던 중 버그가 발생하거나 기능 개선이 필요하다면 아래의 이슈 링크를 통해 제보해 주십시오.
 * **[에러 및 피드백 제보하기 (GitHub Issues)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/issues)**
 * 제보 시 에러가 발생한 화면 스크린샷과 앱 하단 **Execution Log**의 텍스트 내용을 함께 기재해 주시면 더욱 신속한 오류 해결이 가능합니다.
+
+---
+
+## 라이선스 (License)
+
+본 프로젝트는 [MIT 라이선스](LICENSE)를 따릅니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참고하십시오.  
+Copyright (c) 2026 Heeyoung Lee. All rights reserved.

@@ -144,3 +144,10 @@ Leave the field blank in the Setup Wizard. If Zotero is installed in its default
 If you encounter a bug or have a feature suggestion, please open an issue:
 * **[Report an Issue (GitHub Issues)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/issues)**
 * Include a screenshot of the error and the contents of the **Execution Log** panel at the bottom of the app for faster resolution.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LICENSE) file for details.  
+Copyright (c) 2026 Heeyoung Lee. All rights reserved.
