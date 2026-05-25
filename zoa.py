@@ -728,10 +728,10 @@ class ZOAApp:
         left.pack(side="left")
         tk.Label(left, text="ZOA (Zotero-Obsidian-AI Summary)",
                  font=FONT_APPNAME, fg=FG, bg=BG_CARD).pack(anchor="w")
-        tk.Label(left, text="Heeyoung Lee",
+        tk.Label(left, text="v1.0  |  Copyright (c) 2026 Heeyoung Lee",
                  font=FONT_SUBNAME, fg=FG_DIM, bg=BG_CARD).pack(anchor="w", pady=(2, 0))
 
-        tk.Label(inner_h, text="v1.0",
+        tk.Label(inner_h, text="MIT License",
                  font=FONT_VER, fg=FG_LIGHT, bg=BG_CARD).pack(side="right", anchor="se")
 
         # ── Scroll canvas
