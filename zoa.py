@@ -1202,22 +1202,42 @@ class ZOAApp:
                     self.root.after(0, lambda i=idx: self._set_progress(i, total))
                     continue
 
-                prompt = f"""You are a professional researcher.
-I will provide text from a research paper titled: "{title}".
-Task: Summarize the provided text ({content_source}) in English.
-Constraint: Focus ONLY on the content related to the paper "{title}".
+                prompt = f"""You are an expert academic research analyst specializing in summarizing \
+peer-reviewed academic literature. Your summaries are precise, jargon-aware, \
+and strictly grounded in the provided text.
 
-[Text Input]:
+## Task
+Summarize the {content_source} from the research paper titled: "{title}".
+
+## Critical Constraints
+- Base your summary ONLY on the provided text below. Do not infer, extrapolate, \
+or supplement with outside knowledge.
+- If information for a section is not present in the text, write: \
+"Not reported in the provided text."
+- Use clear academic English. Be concise: each section should be 2–4 sentences maximum.
+
+## Output Format (Markdown)
+
+### 1. Research Objective
+State the central research question and the population or context under study.
+
+### 2. Methodology
+Specify: (a) data source(s) and sample, (b) key variables, \
+(c) statistical models or analytic strategy.
+
+### 3. Key Results
+Report the main findings, including direction and magnitude of effects where available. \
+Prioritize statistically significant results.
+
+### 4. Keywords
+Provide exactly 5 keywords using # prefix. Apply these rules in order:
+- Include at least 2 methodology keywords (e.g., #DiD, #Fixed-Effects, #Multilevel-Model).
+- Use umbrella/concept terms for substantive topics (e.g., #Substance-Use, not #Opioids).
+- Capitalize the first letter of each word; hyphenate multi-word terms.
+
+---
+[Text Input]
 {final_text[:50000]}
-
-[Output Format - Markdown]:
-1. **Research Objective**: 
-2. **Methodology**: (data sources, statistical models)
-3. **Key Results**: 
-4. **Keywords**: Provide 5 keywords with # prefix.
-   - Must include methodology keywords (e.g., #DiD, #OLS, #Panel-Data).
-   - Use umbrella terms (e.g., #Substance-Use).
-   - Capitalize first letters.
 """
                 try:
                     if active_provider == 'gemini':
