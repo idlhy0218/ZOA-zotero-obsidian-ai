@@ -6,7 +6,7 @@ Zotero, Obsidian, 그리고 다중 AI(Gemini, Claude, OpenAI, DeepSeek) 연동�
 
 ---
 
-https://github.com/user-attachments/assets/feb04e67-5687-460d-b6bd-ea8585a36925
+https://github.com/user-attachments/assets/3697a18f-aa96-4cc1-a27d-a22d59f4feaa
 
 ---
 
