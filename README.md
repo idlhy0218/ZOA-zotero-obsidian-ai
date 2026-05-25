@@ -14,11 +14,12 @@ https://github.com/user-attachments/assets/da7de93b-2f8a-4740-ad8b-83ee452dfc8c
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| Zotero | Academic library management | Zotmoov plugin recommended for PDF organization |
+| Zotero | Academic library management | Integrates metadata locally using `zotero.sqlite` |
 | Obsidian | Storing and managing summary notes | Free to download and use |
 | AI API Key | Generating paper summaries | At least one key required (Gemini, Claude, OpenAI, or DeepSeek) |
+| PDF Folder | Extraction of paper full-text | The directory where Zotero stores your PDF files (default `storage` folder or custom folder) |
 
-> **Why Zotmoov?** Zotmoov automatically moves Zotero PDFs into organized folders. ZOA uses this folder to match PDFs to papers, significantly improving full-text summarization accuracy.
+> 💡 **Activating Full-Text Analysis:** You do not need to use plugins like Zotmoov to organize your PDFs. Whether your PDFs are auto-organized into a custom directory or scattered in Zotero's default storage folder, ZOA will scan the directory **recursively**. Simply set your PDF folder path in the ZOA options to the topmost directory containing your Zotero PDFs, and they will be matched perfectly.
 
 ---
 
@@ -109,7 +110,7 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 ## FAQ
 
 **Q. Is the Zotmoov plugin required?**  
-No. ZOA works without it. However, Zotmoov greatly improves PDF matching success rates. Without a matched PDF, ZOA safely falls back to abstract-based summarization.
+No. Even if you don't use Zotmoov, ZOA will work perfectly as long as you point the PDF Folder path in the options to your default Zotero storage folder (usually containing folders of individual items). ZOA recursively scans the directories to match PDFs with paper entries. If no matching PDF is found, ZOA automatically falls back to abstract-based summarization.
 
 **Q. Will I be charged for API usage?**  
 Charges depend on each provider's pricing policy (Google, Anthropic, OpenAI, DeepSeek). Some offer free tiers. Check each provider's official platform for details.
