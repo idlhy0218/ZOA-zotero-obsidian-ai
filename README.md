@@ -47,6 +47,7 @@ ZOA 실행 파일을 더블클릭하여 구동합니다. 최초 실행 시 나�
 * **Zotero 컬렉션 다중 선택**: 로컬 조테로의 폴더 구조(Collection)를 실시간 검색하고 원하는 폴더들만 다중 선택하여 요약을 시작할 수 있습니다.
 * **로컬 DB 연동 및 초고속 조회**: 온라인 동기화 지연 없이 로컬 SQLite DB(`zotero.sqlite`)를 직접 조회하여 데이터를 즉각 식별합니다.
 * **지능형 PDF 매칭 및 전체 본문 요약**: 논문 저자명, 연도, 키워드를 활용해 내 컴퓨터 속 PDF 본문을 자동 매칭합니다. 본문이 매칭되면 최대 30페이지 분량의 PDF 전체 텍스트를 읽어 정밀 요약을 생성하며, 미매칭 시 초록(Abstract) 기반 요약으로 자동 전환됩니다.
+* **구조화된 학술 요약 포맷**: AI가 연구 목적(Research Objective), 방법론(Methodology), 핵심 결과(Key Results), 키워드(Keywords) 4개 섹션으로 체계화된 요약을 생성합니다. 앱에서 키워드 개수(1~10개, 기본값 5개)를 직접 설정할 수 있습니다.
 * **자동 위키링크 및 태그 연결**: 요약 내 포함된 저자, 학술지, 태그 등을 옵시디언 고유의 `[[위키링크]]` 형태로 자동 치환하여 유기적인 지식 그래프 구축을 지원합니다.
 * **필터링 및 중복 처리**: 최근 N일 이내에 추가된 논문만 골라 요약하는 필터와, 이미 요약된 문서에 대한 건너뛰기/덮어쓰기/새로운 논문만 업데이트 기능을 세부적으로 제공합니다.
 
@@ -78,10 +79,22 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 - **Zotero Tags**: 태그1, 태그2
 - **URL**: https://...
 
-## AI 핵심 요약 (Summary)
-> (선택한 AI가 PDF 전체 본문 혹은 초록을 분석하여 도출한 상세 연구 목적, 방법론, 핵심 분석 결과, 주요 공헌 및 한계점 정보가 깔끔하게 기술됩니다.)
+## AI Summary (Full PDF Content)
 
-## 원문 초록 (Abstract)
+### 1. Research Objective
+(연구 질문 및 연구 대상/맥락)
+
+### 2. Methodology
+(데이터 출처, 주요 변수, 분석 모델)
+
+### 3. Key Results
+(주요 발견 사항, 효과의 방향 및 크기 포함)
+
+### 4. Keywords
+#Keyword1 #Keyword2 #Keyword3 #Keyword4 #Keyword5
+
+---
+## Original Abstract
 > (Zotero 라이브러리에 등록되어 있는 영문/국문 원본 초록 정보가 보존됩니다.)
 ```
 
@@ -114,6 +127,8 @@ zotero_link: zotero://select/items/0_XXXXXXXX
   * Google Gemini, Anthropic Claude, OpenAI, DeepSeek 4대 인공지능 엔진 종합 지원
   * 제공사 변경 시 적용 가능한 최신 모델로 동적 콤보박스 전환 연동
   * 파이썬 표준 라이브러리(urllib) 기반 REST 클라이언트 적용으로 패키징 최적화 및 경량화 성공
+  * 학술 전문 AI 요약 프롬프트 적용: Research Objective / Methodology / Key Results / Keywords 4개 섹션 구조화 출력
+  * UI에서 키워드 개수 설정 기능 추가 (1~10개, 기본값 5개)
 
 ---
 

@@ -783,7 +783,7 @@ class ZOAApp:
                            activebackground=BG_CARD, font=FONT_LABEL,
                            relief="flat", bd=0).pack(side="left", padx=(0, 10))
 
-        lim_row = tk.Frame(c3, bg=BG_CARD); lim_row.pack(fill="x")
+        lim_row = tk.Frame(c3, bg=BG_CARD); lim_row.pack(fill="x", pady=(0, 10))
         tk.Label(lim_row, text="Max papers:", font=FONT_LABEL,
                  fg=FG_DIM, bg=BG_CARD).pack(side="left")
         self.limit_var = tk.StringVar(value="500")
@@ -793,8 +793,18 @@ class ZOAApp:
                    highlightbackground=BORDER, bd=0,
                    buttonbackground=BG).pack(side="left", padx=(6, 20))
 
+        tk.Label(lim_row, text="Keywords:", font=FONT_LABEL,
+                 fg=FG_DIM, bg=BG_CARD).pack(side="left")
+        self.keyword_count_var = tk.StringVar(value="5")
+        tk.Spinbox(lim_row, from_=1, to=10, textvariable=self.keyword_count_var,
+                   width=3, font=FONT_ENTRY, bg=BG_INPUT, fg=FG,
+                   relief="flat", highlightthickness=1,
+                   highlightbackground=BORDER, bd=0,
+                   buttonbackground=BG).pack(side="left", padx=(6, 20))
+
         # Multi-provider API Comboboxes
-        tk.Label(lim_row, text="Provider:", font=FONT_LABEL,
+        prov_row = tk.Frame(c3, bg=BG_CARD); prov_row.pack(fill="x")
+        tk.Label(prov_row, text="Provider:", font=FONT_LABEL,
                  fg=FG_DIM, bg=BG_CARD).pack(side="left")
         
         self.provider_map = {
@@ -809,16 +819,16 @@ class ZOAApp:
         self.provider_var = tk.StringVar(value=default_provider_name)
         
         self._apply_combo_style()
-        self.provider_cb = ttk.Combobox(lim_row, textvariable=self.provider_var,
+        self.provider_cb = ttk.Combobox(prov_row, textvariable=self.provider_var,
                                         values=list(PROVIDER_MODELS.keys()), state="readonly",
                                         font=FONT_ENTRY, width=15)
         self.provider_cb.pack(side="left", padx=(6, 20))
         self.provider_cb.bind("<<ComboboxSelected>>", self._on_provider_changed)
 
-        tk.Label(lim_row, text="Model:", font=FONT_LABEL,
+        tk.Label(prov_row, text="Model:", font=FONT_LABEL,
                  fg=FG_DIM, bg=BG_CARD).pack(side="left")
         self.model_var = tk.StringVar(value=MODEL_NAME)
-        self.model_cb = ttk.Combobox(lim_row, textvariable=self.model_var,
+        self.model_cb = ttk.Combobox(prov_row, textvariable=self.model_var,
                                      values=PROVIDER_MODELS[default_provider_name], state="readonly",
                                      font=FONT_ENTRY, width=22)
         self.model_cb.pack(side="left", padx=(6, 0))
@@ -1026,12 +1036,13 @@ class ZOAApp:
         _cfg['MODEL_NAME'] = model_name
         save_config(_cfg)
         
-        read_full   = self.full_pdf_var.get()
-        limit       = int(self.limit_var.get())
-        dup_mode    = self.dup_var.get()
-        use_wiki    = self.wikilink_var.get()
-        use_recent  = self.recent_var.get()
-        recent_days = int(self.recent_days_var.get()) if use_recent else None
+        read_full     = self.full_pdf_var.get()
+        limit         = int(self.limit_var.get())
+        keyword_count = int(self.keyword_count_var.get())
+        dup_mode      = self.dup_var.get()
+        use_wiki      = self.wikilink_var.get()
+        use_recent    = self.recent_var.get()
+        recent_days   = int(self.recent_days_var.get()) if use_recent else None
         if not obs_path:
             self._log("Set Obsidian output folder first.", "err"); return
         if read_full and not pdf_path:
@@ -1052,7 +1063,7 @@ class ZOAApp:
             target=self._run_pipeline,
             args=(col_names, pdf_path, obs_path, read_full,
                   limit, prov_name, model_name, dup_mode, use_wiki,
-                  use_recent, recent_days),
+                  use_recent, recent_days, keyword_count),
             daemon=True).start()
 
     def _stop_run(self):
@@ -1061,7 +1072,7 @@ class ZOAApp:
         self._log("Stop requested.", "warn")
 
     def _run_pipeline(self, col_names, pdf_path, obs_path, read_full,
-                      limit, prov_name, active_model, dup_mode, use_wiki, use_recent, recent_days):
+                      limit, prov_name, active_model, dup_mode, use_wiki, use_recent, recent_days, keyword_count=5):
         try:
             _cfg = load_config()
             active_provider = _cfg.get('API_PROVIDER', 'gemini')
@@ -1230,7 +1241,7 @@ Report the main findings, including direction and magnitude of effects where ava
 Prioritize statistically significant results.
 
 ### 4. Keywords
-Provide exactly 5 keywords using # prefix. Apply these rules in order:
+Provide exactly {keyword_count} keywords using # prefix. Apply these rules in order:
 - Include at least 2 methodology keywords (e.g., #DiD, #Fixed-Effects, #Multilevel-Model).
 - Use umbrella/concept terms for substantive topics (e.g., #Substance-Use, not #Opioids).
 - Capitalize the first letter of each word; hyphenate multi-word terms.
