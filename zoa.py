@@ -447,6 +447,50 @@ def field_label(parent, text):
     tk.Label(parent, text=text, font=FONT_SMALL,
              fg=FG_DIM, bg=BG_CARD).pack(anchor="w", pady=(0, 4))
 
+class ToolTip:
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tip_window = None
+        self.widget.bind("<Enter>", self.show_tip)
+        self.widget.bind("<Leave>", self.hide_tip)
+        self.widget.bind("<ButtonPress>", self.hide_tip)
+
+    def show_tip(self, event=None):
+        if self.tip_window or not self.text:
+            return
+        x = self.widget.winfo_rootx() + 20
+        y = self.widget.winfo_rooty() + 15
+        self.tip_window = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True)
+        tw.wm_geometry(f"+{x}+{y}")
+        
+        label = tk.Label(tw, text=self.text, justify="left",
+                         background="#1C1C1C", foreground="#FAFAF9",
+                         relief="solid", borderwidth=1, highlightthickness=0,
+                         font=("Segoe UI", 10), padx=8, pady=6)
+        label.pack()
+
+    def hide_tip(self, event=None):
+        tw = self.tip_window
+        self.tip_window = None
+        if tw:
+            tw.destroy()
+
+def field_label_with_tooltip(parent, text, tooltip_text):
+    row = tk.Frame(parent, bg=BG_CARD)
+    row.pack(anchor="w", pady=(0, 4))
+    
+    lbl = tk.Label(row, text=text, font=FONT_SMALL,
+                   fg=FG_DIM, bg=BG_CARD)
+    lbl.pack(side="left")
+    
+    info_icon = tk.Label(row, text=" !", font=("Segoe UI", 9, "bold"),
+                         fg=FG_LIGHT, bg=BG_CARD, cursor="hand2")
+    info_icon.pack(side="left", padx=(4, 0))
+    
+    ToolTip(info_icon, tooltip_text)
+
 def thin_divider(parent, pady=(12, 12)):
     tk.Frame(parent, bg=BORDER, height=1).pack(fill="x", pady=pady)
 
@@ -731,11 +775,13 @@ class ZOAApp:
         make_section_label(M, "02  File Paths")
         c2 = card(M); c2.pack(fill="x")
 
-        field_label(c2, "PDF Folder")
+        field_label_with_tooltip(c2, "PDF Folder", 
+                                 "Select the folder containing your Zotero PDFs.\n(Scans recursively. Zotero 'storage' or Zotmoov folders work perfectly.)")
         self.pdf_path_var = tk.StringVar(value=PDF_PATH)
         self._path_row(c2, self.pdf_path_var)
         thin_divider(c2, (12, 12))
-        field_label(c2, "Obsidian Vault")
+        field_label_with_tooltip(c2, "Obsidian Vault",
+                                 "Select your Obsidian Vault (or subfolder)\nwhere the summary Markdown (.md) notes will be saved.")
         self.obs_path_var = tk.StringVar(value=OBS_PATH)
         self._path_row(c2, self.obs_path_var)
 
