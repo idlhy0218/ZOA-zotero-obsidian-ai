@@ -42,8 +42,23 @@ jobs:
       - name: Install dependencies
         run: pip install pyinstaller google-generativeai pypdf pillow
 
+      - name: Create macOS ICNS icon
+        run: |
+          mkdir app_icon.iconset
+          sips -z 16 16     image/logo.png --out app_icon.iconset/icon_16x16.png
+          sips -z 32 32     image/logo.png --out app_icon.iconset/icon_16x16@2x.png
+          sips -z 32 32     image/logo.png --out app_icon.iconset/icon_32x32.png
+          sips -z 64 64     image/logo.png --out app_icon.iconset/icon_32x32@2x.png
+          sips -z 128 128   image/logo.png --out app_icon.iconset/icon_128x128.png
+          sips -z 256 256   image/logo.png --out app_icon.iconset/icon_128x128@2x.png
+          sips -z 256 256   image/logo.png --out app_icon.iconset/icon_256x256.png
+          sips -z 512 512   image/logo.png --out app_icon.iconset/icon_256x256@2x.png
+          sips -z 512 512   image/logo.png --out app_icon.iconset/icon_512x512.png
+          sips -z 1024 1024 image/logo.png --out app_icon.iconset/icon_512x512@2x.png
+          iconutil -c icns app_icon.iconset
+
       - name: Build macOS app
-        run: pyinstaller --clean --windowed --name "ZOA" --add-data "app_icon.ico:." zoa.py
+        run: pyinstaller --clean --windowed --name "ZOA" --icon="app_icon.icns" --add-data "app_icon.ico:." zoa.py
 
       - name: Zip macOS app
         run: cd dist && zip -r ZOA-macOS.zip ZOA.app

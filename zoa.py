@@ -17,6 +17,11 @@ from pathlib import Path
 def get_app_dir() -> Path:
     """Return the folder that contains the exe (or script when developing)."""
     if getattr(sys, 'frozen', False):   # running as PyInstaller bundle
+        if sys.platform == 'darwin':
+            # On macOS, write configuration to user's home directory under .zoa to avoid read-only bundle/translocation errors
+            path = Path.home() / '.zoa'
+            path.mkdir(parents=True, exist_ok=True)
+            return path
         return Path(sys.executable).parent
     return Path(__file__).parent
 
@@ -55,22 +60,25 @@ def load_config():
 
 def save_config(cfg: dict):
     """Write the given config dict to .env next to the exe/script."""
-    env_path = get_app_dir() / '.env'
-    lines = [
-        "# ZOA (Zotero-Obsidian-AI Summary) — Configuration (auto-generated)",
-        "# Do NOT share this file or commit it to version control.\n",
-        f"GEMINI_KEY={cfg.get('GEMINI_KEY', '')}",
-        f"CLAUDE_KEY={cfg.get('CLAUDE_KEY', '')}",
-        f"OPENAI_KEY={cfg.get('OPENAI_KEY', '')}",
-        f"DEEPSEEK_KEY={cfg.get('DEEPSEEK_KEY', '')}",
-        f"API_PROVIDER={cfg.get('API_PROVIDER', 'gemini')}",
-        f"PDF_PATH={cfg.get('PDF_PATH', '')}",
-        f"OBS_PATH={cfg.get('OBS_PATH', '')}",
-        f"ZOTERO_DB={cfg.get('ZOTERO_DB', '')}",
-        f"MODEL_NAME={cfg.get('MODEL_NAME', 'gemini-2.5-flash')}",
-    ]
-    with open(env_path, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(lines) + '\n')
+    try:
+        env_path = get_app_dir() / '.env'
+        lines = [
+            "# ZOA (Zotero-Obsidian-AI Summary) — Configuration (auto-generated)",
+            "# Do NOT share this file or commit it to version control.\n",
+            f"GEMINI_KEY={cfg.get('GEMINI_KEY', '')}",
+            f"CLAUDE_KEY={cfg.get('CLAUDE_KEY', '')}",
+            f"OPENAI_KEY={cfg.get('OPENAI_KEY', '')}",
+            f"DEEPSEEK_KEY={cfg.get('DEEPSEEK_KEY', '')}",
+            f"API_PROVIDER={cfg.get('API_PROVIDER', 'gemini')}",
+            f"PDF_PATH={cfg.get('PDF_PATH', '')}",
+            f"OBS_PATH={cfg.get('OBS_PATH', '')}",
+            f"ZOTERO_DB={cfg.get('ZOTERO_DB', '')}",
+            f"MODEL_NAME={cfg.get('MODEL_NAME', 'gemini-2.5-flash')}",
+        ]
+        with open(env_path, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(lines) + '\n')
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to save configuration: {e}")
 
 def config_is_complete(cfg: dict) -> bool:
     """Return True only if at least one API key is present."""
@@ -472,9 +480,12 @@ def load_prompt_template() -> str:
     return DEFAULT_PROMPT_TEMPLATE
 
 def save_prompt_template(content: str):
-    path = get_app_dir() / 'prompt_template.txt'
-    with open(path, 'w', encoding='utf-8') as f:
-        f.write(content)
+    try:
+        path = get_app_dir() / 'prompt_template.txt'
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(content)
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to save prompt template: {e}")
 
 # ─────────────────────────────────────────────
 # Widget helpers
