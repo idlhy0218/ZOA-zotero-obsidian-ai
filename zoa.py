@@ -410,7 +410,7 @@ peer-reviewed academic literature. Your summaries are precise, jargon-aware, \
 and strictly grounded in the provided text.
 
 ## Task
-Summarize the {content_source} from the research paper titled: "{title}".
+Summarize the provided {content_source} of the research paper titled: "{title}".
 
 ## Critical Constraints
 - Base your summary ONLY on the provided text below. Do not infer, extrapolate, \
@@ -1419,7 +1419,7 @@ class ZOAApp:
                 zot_tags     = sqlite_get_tags(db, item_id)
 
                 title       = fields.get('title', 'No Title')
-                abstract    = fields.get('abstractNote', '')
+                abstract    = fields.get('abstractNote', '').strip() if fields.get('abstractNote') else ''
                 date        = fields.get('date', 'No Date')
                 url         = fields.get('url', '')
                 publication = fields.get('publicationTitle', 'No Journal')
@@ -1466,7 +1466,7 @@ class ZOAApp:
                 self._log(f"{pg}  →  {filename}", "info")
                 self._set_status(f"{pg} Processing…")
 
-                has_pdf = False; content_source = "Abstract Only"; final_text = abstract
+                has_pdf = False; content_source = "abstract"; final_text = abstract
                 if read_full and pdf_index:
                     matched = find_best_pdf_match(fields, creators_raw, pdf_index)
                     if matched:
@@ -1475,7 +1475,7 @@ class ZOAApp:
                             reader = PdfReader(matched)
                             extracted = "".join(p.extract_text() or "" for p in reader.pages[:30])
                             if len(extracted) > 500:
-                                final_text = extracted; content_source = "Full PDF Content"; has_pdf = True
+                                final_text = extracted; content_source = "full PDF content"; has_pdf = True
                                 self._log(f"       ✓  {os.path.basename(matched)}", "ok")
                             else:
                                 self._log("       —  PDF insufficient; using abstract.", "warn")
@@ -1484,8 +1484,8 @@ class ZOAApp:
                     else:
                         self._log("       —  No PDF match.", "skip")
 
-                if not final_text:
-                    self._log("       ✗  No content. Skipping.", "warn")
+                if not final_text or len(final_text.strip()) < 20:
+                    self._log("       ✗  No abstract or PDF text content. Skipping.", "warn")
                     self.root.after(0, lambda i=idx: self._set_progress(i, total))
                     continue
 
