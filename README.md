@@ -61,6 +61,7 @@ Double-click the executable. On first launch, a Setup Wizard will guide you thro
 * **Local DB Integration**: Queries your local `zotero.sqlite` directly — no sync delays, instant results.
 * **Intelligent PDF Matching & Full-Text Summarization**: Automatically matches PDFs using author name, year, and title keywords. When matched, up to 30 pages of PDF text are extracted for precise summarization; falls back to abstract-only mode if no PDF is found.
 * **Structured Academic Summary Format**: Every AI summary is organized into four clear sections — Research Objective, Methodology, Key Results, and Keywords. The number of keywords (1–10, default 5) can be configured directly in the app.
+* **Customizable AI Prompt**: Easily modify the AI summarization prompt template using the integrated collapsible text editor. Supports dynamic placeholder tags like `{title}`, `{content_source}`, `{keyword_count}`, and `{text}`. Custom templates are persistently saved locally in `prompt_template.txt`.
 * **Auto Wikilinks & Tag Linking**: Authors, journals, and tags in the summary are automatically converted to Obsidian `[[wikilinks]]` for knowledge graph integration.
 * **Filtering & Duplicate Handling**: Filter by papers added within the last N days; handle existing notes with Skip, Overwrite, or Update-if-newer modes.
 
