@@ -1,139 +1,138 @@
 # ZOA (Zotero-Obsidian-AI Summary)
 
-Zotero, Obsidian, 그리고 다중 AI(Gemini, Claude, OpenAI, DeepSeek) 연동을 지원하는 학술 논문 자동 요약 파이프라인입니다. 로컬 Zotero 라이브러리에서 논문 정보를 조회하고 PDF 본문을 추출하여, 사용자가 선택한 AI 모델을 통해 요약 마크다운 문서를 생성한 후 Obsidian 보관소에 자동으로 저장합니다.
+An automated academic paper summarization pipeline that integrates Zotero, Obsidian, and multiple AI providers (Gemini, Claude, OpenAI, DeepSeek). ZOA reads your local Zotero library, extracts PDF content, generates structured AI summaries, and saves them as Markdown notes directly into your Obsidian vault.
+
+> 한국어 설명서: [README_KOR.md](README_KOR.md)
 
 ---
 
-## 준비물
+## Requirements
 
-ZOA를 사용하려면 아래의 도구들이 설치되어 있어야 합니다.
+| Tool | Purpose | Notes |
+|------|---------|-------|
+| Zotero | Academic library management | Zotmoov plugin recommended for PDF organization |
+| Obsidian | Storing and managing summary notes | Free to download and use |
+| AI API Key | Generating paper summaries | At least one key required (Gemini, Claude, OpenAI, or DeepSeek) |
 
-| 준비물 | 용도 | 비고 |
-|--------|------|------|
-| Zotero | 학술 논문 라이브러리 관리 | PDF 파일 관리를 위해 Zotmoov 플러그인 사용을 권장합니다. |
-| Obsidian | 요약 마크다운 문서 저장 및 관리 | 무료 다운로드 및 사용이 가능합니다. |
-| AI API Key | 논문 요약 생성 | Gemini, Claude, OpenAI, DeepSeek 중 최소 하나의 API Key가 필요합니다. |
-
-> Zotmoov 권장 이유: Zotero에 등록된 PDF 파일을 지정한 폴더로 자동 분류해 주는 도구입니다. ZOA는 이 폴더를 참조하여 PDF 본문을 자동으로 매칭하므로, 요약의 정확도가 향상됩니다.
+> **Why Zotmoov?** Zotmoov automatically moves Zotero PDFs into organized folders. ZOA uses this folder to match PDFs to papers, significantly improving full-text summarization accuracy.
 
 ---
 
-## 설치 및 실행
+## Installation & Setup
 
-### 📥 최신 버전 다운로드
-* **[ZOA 최신 정식 버전 다운로드 (GitHub Releases)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)**
-* 운영체제에 맞는 최신 정식 빌드 파일(Windows: `ZOA.exe`, macOS: `ZOA-macOS.zip`)을 위 링크에서 손쉽게 내려받으실 수 있습니다.
+### 📥 Download the Latest Release
+* **[Download ZOA (GitHub Releases)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)**
+* Download the build for your OS: `ZOA.exe` (Windows) or `ZOA-macOS.zip` (macOS).
 
-### 1. 전용 폴더 생성 및 실행 파일 배치
-다운로드한 ZOA 실행 파일(Windows: `ZOA.exe`, macOS: `ZOA-macOS.zip`)을 별도의 빈 폴더(예: `문서/ZOA/`)에 넣어줍니다.
-* 최초 실행 시 설정 파일인 `.env`가 해당 폴더에 자동 생성되므로, 바탕화면이나 다운로드 폴더에 그대로 두지 마시고 반드시 전용 폴더를 생성하여 사용해 주십시오.
+### 1. Create a Dedicated Folder
+Place the downloaded executable in its own empty folder (e.g., `Documents/ZOA/`).
+* On first launch, ZOA automatically creates a `.env` config file in that folder. Do **not** run it from the Desktop or Downloads folder.
 
-### 2. API Key 발급
-사용하고자 하는 인공지능 서비스의 공식 플랫폼에서 API Key를 발급받습니다.
-* Google AI Studio (Gemini)
-* Anthropic Console (Claude)
-* OpenAI Platform (GPT)
-* DeepSeek Platform (DeepSeek)
+### 2. Obtain an API Key
+Get an API key from at least one of the following providers:
+* [Google AI Studio](https://aistudio.google.com/app/apikey) — Gemini
+* [Anthropic Console](https://console.anthropic.com/) — Claude
+* [OpenAI Platform](https://platform.openai.com/) — GPT
+* [DeepSeek Platform](https://platform.deepseek.com/) — DeepSeek
 
-### 3. 설정 마법사 진행
-ZOA 실행 파일을 더블클릭하여 구동합니다. 최초 실행 시 나타나는 설정 마법사(Setup Wizard) 안내에 따라 API Key 및 파일 경로를 입력하면 모든 설정이 완벽히 완료됩니다. 설정 데이터는 컴퓨터 로컬 공간에만 안전하게 저장됩니다.
-
----
-
-## 주요 기능
-
-* **설정 마법사 제공**: GUI 기반의 초기 설정을 통해 초보자도 메모장 수동 편집 없이 키 값과 폴더 경로를 안전하게 구성할 수 있습니다.
-* **다중 AI 지원 및 모델 동적 전환**: Google Gemini, Anthropic Claude, OpenAI, DeepSeek API를 종합 지원합니다. 선택한 AI 제공사에 맞게 최신 모델 리스트가 동적으로 갱신됩니다.
-* **Zotero 컬렉션 다중 선택**: 로컬 조테로의 폴더 구조(Collection)를 실시간 검색하고 원하는 폴더들만 다중 선택하여 요약을 시작할 수 있습니다.
-* **로컬 DB 연동 및 초고속 조회**: 온라인 동기화 지연 없이 로컬 SQLite DB(`zotero.sqlite`)를 직접 조회하여 데이터를 즉각 식별합니다.
-* **지능형 PDF 매칭 및 전체 본문 요약**: 논문 저자명, 연도, 키워드를 활용해 내 컴퓨터 속 PDF 본문을 자동 매칭합니다. 본문이 매칭되면 최대 30페이지 분량의 PDF 전체 텍스트를 읽어 정밀 요약을 생성하며, 미매칭 시 초록(Abstract) 기반 요약으로 자동 전환됩니다.
-* **구조화된 학술 요약 포맷**: AI가 연구 목적(Research Objective), 방법론(Methodology), 핵심 결과(Key Results), 키워드(Keywords) 4개 섹션으로 체계화된 요약을 생성합니다. 앱에서 키워드 개수(1~10개, 기본값 5개)를 직접 설정할 수 있습니다.
-* **자동 위키링크 및 태그 연결**: 요약 내 포함된 저자, 학술지, 태그 등을 옵시디언 고유의 `[[위키링크]]` 형태로 자동 치환하여 유기적인 지식 그래프 구축을 지원합니다.
-* **필터링 및 중복 처리**: 최근 N일 이내에 추가된 논문만 골라 요약하는 필터와, 이미 요약된 문서에 대한 건너뛰기/덮어쓰기/새로운 논문만 업데이트 기능을 세부적으로 제공합니다.
+### 3. Run the Setup Wizard
+Double-click the executable. On first launch, a Setup Wizard will guide you through entering your API key(s) and folder paths. All settings are saved locally to your `.env` file.
 
 ---
 
-## 저장되는 요약 마크다운 구조
+## Features
 
-생성되어 Obsidian으로 저장되는 마크다운 문서는 아래와 같은 표준적인 템플릿 구조를 지닙니다.
+* **Setup Wizard**: A GUI-based first-run wizard lets beginners configure API keys and folder paths without manually editing any files.
+* **Multi-AI Support & Dynamic Model Switching**: Supports Google Gemini, Anthropic Claude, OpenAI, and DeepSeek. The model dropdown updates automatically when you switch providers.
+* **Multi-Collection Selection**: Browse and search your Zotero collection tree in real time; select multiple folders to summarize at once.
+* **Local DB Integration**: Queries your local `zotero.sqlite` directly — no sync delays, instant results.
+* **Intelligent PDF Matching & Full-Text Summarization**: Automatically matches PDFs using author name, year, and title keywords. When matched, up to 30 pages of PDF text are extracted for precise summarization; falls back to abstract-only mode if no PDF is found.
+* **Structured Academic Summary Format**: Every AI summary is organized into four clear sections — Research Objective, Methodology, Key Results, and Keywords. The number of keywords (1–10, default 5) can be configured directly in the app.
+* **Auto Wikilinks & Tag Linking**: Authors, journals, and tags in the summary are automatically converted to Obsidian `[[wikilinks]]` for knowledge graph integration.
+* **Filtering & Duplicate Handling**: Filter by papers added within the last N days; handle existing notes with Skip, Overwrite, or Update-if-newer modes.
+
+---
+
+## Output Markdown Structure
+
+Each summary saved to Obsidian follows this template:
 
 ```markdown
 ---
-title: "논문 제목"
+title: "Paper Title"
 authors:
   - Last, First
 date: 2026
-journal: "학술지명"
-has_pdf: true
+journal: "Journal Name"
 zotero_link: zotero://select/items/0_XXXXXXXX
 ---
 
-# 논문 제목 (Title)
+# Paper Title
 
 ## Bibliographic Info
 - **Authors**: Last, First
-- **Journal**: 학술지명
+- **Journal**: Journal Name
 - **Date**: 2026
 - **Zotero Link**: [Open in Zotero](zotero://select/items/0_XXXXXXXX)
 - **PDF Status**: PDF Found
-- **Zotero Tags**: 태그1, 태그2
+- **Zotero Tags**: tag1, tag2
 - **URL**: https://...
 
 ## AI Summary (Full PDF Content)
 
 ### 1. Research Objective
-(연구 질문 및 연구 대상/맥락)
+(Central research question and the population or context under study.)
 
 ### 2. Methodology
-(데이터 출처, 주요 변수, 분석 모델)
+(Data source(s) and sample, key variables, statistical models or analytic strategy.)
 
 ### 3. Key Results
-(주요 발견 사항, 효과의 방향 및 크기 포함)
+(Main findings, including direction and magnitude of effects where available.)
 
 ### 4. Keywords
 #Keyword1 #Keyword2 #Keyword3 #Keyword4 #Keyword5
 
 ---
 ## Original Abstract
-> (Zotero 라이브러리에 등록되어 있는 영문/국문 원본 초록 정보가 보존됩니다.)
+> (The original abstract from Zotero is preserved here.)
 ```
 
 ---
 
-## 자주 묻는 질문 (FAQ)
+## FAQ
 
-**Q. Zotmoov 플러그인이 필수입니까?**  
-필수가 아닙니다. 플러그인이 없어도 ZOA는 정상 작동합니다. 다만 Zotmoov를 통해 PDF가 분류되어 있으면 본문 분석 성공률이 크게 높아지며, PDF가 없거나 찾지 못한 경우에는 Zotero에 등록된 초록을 바탕으로 안전하게 요약을 진행합니다.
+**Q. Is the Zotmoov plugin required?**  
+No. ZOA works without it. However, Zotmoov greatly improves PDF matching success rates. Without a matched PDF, ZOA safely falls back to abstract-based summarization.
 
-**Q. API 호출 요금이 부과됩니까?**  
-사용하시는 개별 AI 서비스(Google, Anthropic, OpenAI, DeepSeek)의 과금 정책에 따라 요금이 부과되거나 무료 한도가 제공될 수 있습니다. 자세한 요금은 각 서비스의 공식 개발자 플랫폼 홈페이지를 참고해 주십시오.
+**Q. Will I be charged for API usage?**  
+Charges depend on each provider's pricing policy (Google, Anthropic, OpenAI, DeepSeek). Some offer free tiers. Check each provider's official platform for details.
 
-**Q. Zotero SQLite 데이터베이스 경로를 모르는 경우에는 어떻게 합니까?**  
-설정 마법사의 해당 필드를 빈칸으로 두고 진행하시면 됩니다. 조테로가 기본 폴더 경로에 설치되어 있다면 프로그램이 실행되는 즉시 위치를 자동으로 탐색하여 감지합니다.
-
----
-
-## 개인정보 및 보안 정책
-
-* **로컬 보안 저장**: 사용자의 중요 자산인 API Key 및 연동 설정 데이터는 인터넷 상의 어떠한 외부 서버로도 전송되지 않으며, 오직 실행 파일이 위치한 경로 내의 `.env` 파일에 로컬 저장되어 완벽히 보호됩니다.
-* **직접 통신**: 논문 정보 및 PDF 추출 텍스트는 오직 사용자가 명시한 공식 AI API 서버(Google, Anthropic, OpenAI, DeepSeek)로만 암호화 전송되며, 어떠한 제3자 서버나 마케팅 용도로 수집 또는 공유되지 않습니다.
+**Q. I don't know where my Zotero database is. What do I do?**  
+Leave the field blank in the Setup Wizard. If Zotero is installed in its default location, ZOA will detect `zotero.sqlite` automatically.
 
 ---
 
-## 버전 기록 (Version History)
+## Privacy & Security
 
-* **v1.0 (ZOA 정식 릴리즈)**
-  * 기존 GOZ 파이프라인 전면 개편 및 다중 API 연동 구조 구현
-  * Google Gemini, Anthropic Claude, OpenAI, DeepSeek 4대 인공지능 엔진 종합 지원
-  * 제공사 변경 시 적용 가능한 최신 모델로 동적 콤보박스 전환 연동
-  * 파이썬 표준 라이브러리(urllib) 기반 REST 클라이언트 적용으로 패키징 최적화 및 경량화 성공
-  * 학술 전문 AI 요약 프롬프트 적용: Research Objective / Methodology / Key Results / Keywords 4개 섹션 구조화 출력
-  * UI에서 키워드 개수 설정 기능 추가 (1~10개, 기본값 5개)
+* **Local Storage Only**: Your API keys and configuration are never sent to any external server. They are stored exclusively in the `.env` file located next to the executable.
+* **Direct Communication**: Paper data and extracted PDF text are sent only to the official AI API endpoint you select (Google, Anthropic, OpenAI, or DeepSeek). No third-party servers are involved.
 
 ---
 
-## 버그 제보 및 기능 건의 (Support)
+## Version History
 
-ZOA 앱을 사용하시던 중 버그가 발생하거나 기능 개선이 필요하다면 아래의 이슈 링크를 통해 제보해 주십시오.
-* **[에러 및 피드백 제보하기 (GitHub Issues)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/issues)**
-* 제보 시 에러가 발생한 화면 스크린샷과 앱 하단 **Execution Log**의 텍스트 내용을 함께 기재해 주시면 더욱 신속한 오류 해결이 가능합니다.
+* **v1.0 (Initial Release)**
+  * Full rewrite of the GOZ pipeline with multi-provider API architecture
+  * Support for Google Gemini, Anthropic Claude, OpenAI, and DeepSeek
+  * Dynamic model combobox that updates when switching providers
+  * Lightweight REST client using Python's standard `urllib` library — no heavy SDK dependencies
+  * Structured academic AI prompt: 4-section output (Research Objective / Methodology / Key Results / Keywords)
+  * Keyword count setting added to UI (1–10, default 5)
+
+---
+
+## Bug Reports & Feature Requests
+
+If you encounter a bug or have a feature suggestion, please open an issue:
+* **[Report an Issue (GitHub Issues)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/issues)**
+* Include a screenshot of the error and the contents of the **Execution Log** panel at the bottom of the app for faster resolution.
