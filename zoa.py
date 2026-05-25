@@ -403,6 +403,57 @@ FONT_TAG     = ("Segoe UI",     11)
 FONT_MONO    = ("Consolas",     11)
 
 # ─────────────────────────────────────────────
+# Prompt Templates and Helpers
+# ─────────────────────────────────────────────
+DEFAULT_PROMPT_TEMPLATE = """You are an expert academic research analyst specializing in summarizing \
+peer-reviewed academic literature. Your summaries are precise, jargon-aware, \
+and strictly grounded in the provided text.
+
+## Task
+Summarize the {content_source} from the research paper titled: "{title}".
+
+## Critical Constraints
+- Base your summary ONLY on the provided text below. Do not infer, extrapolate, \
+or supplement with outside knowledge.
+- If information for a section is not present in the text, write: \
+"Not reported in the provided text."
+- Use clear academic English. Be concise: each section should be 2–4 sentences maximum.
+
+## Output Format (Markdown)
+
+### 1. Research Objective
+State the central research question and the population or context under study.
+
+### 2. Methodology
+Specify: (a) data source(s) and sample, (b) key variables, \
+(c) statistical models or analytic strategy.
+
+### 3. Key Results
+Report the main findings, including direction and magnitude of effects where available. \
+Prioritize statistically significant results.
+
+### 4. Keywords
+Provide exactly {keyword_count} keywords using # prefix. Apply these rules in order:
+- Include at least 2 methodology keywords (e.g., #DiD, #Fixed-Effects, #Multilevel-Model).
+- Use umbrella/concept terms for substantive topics (e.g., #Substance-Use, not #Opioids).
+- Capitalize the first letter of each word; hyphenate multi-word terms."""
+
+def load_prompt_template() -> str:
+    path = get_app_dir() / 'prompt_template.txt'
+    if path.exists():
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                return f.read()
+        except:
+            pass
+    return DEFAULT_PROMPT_TEMPLATE
+
+def save_prompt_template(content: str):
+    path = get_app_dir() / 'prompt_template.txt'
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(content)
+
+# ─────────────────────────────────────────────
 # Widget helpers
 # ─────────────────────────────────────────────
 def make_entry(parent, textvariable, width=46, placeholder=""):
@@ -507,6 +558,112 @@ def thin_divider(parent, pady=(12, 12)):
     tk.Frame(parent, bg=BORDER, height=1).pack(fill="x", pady=pady)
 
 # ─────────────────────────────────────────────
+# Modern Custom UI Widgets
+# ─────────────────────────────────────────────
+class ModernCheckbutton(tk.Frame):
+    def __init__(self, parent, text, variable, command=None, bg=BG_CARD, fg=FG_MID, font=FONT_LABEL, active_color=None):
+        super().__init__(parent, bg=bg)
+        self.variable = variable
+        self.command = command
+        self.bg = bg
+        self.fg = fg
+        self.active_color = active_color or ACCENT
+        
+        self.canvas = tk.Canvas(self, width=18, height=18, bg=bg, highlightthickness=0, cursor="hand2")
+        self.canvas.pack(side="left", padx=(0, 8))
+        
+        self.label = tk.Label(self, text=text, font=font, fg=fg, bg=bg, cursor="hand2")
+        self.label.pack(side="left")
+        
+        self.canvas.bind("<Button-1>", self._toggle)
+        self.label.bind("<Button-1>", self._toggle)
+        
+        self.canvas.bind("<Enter>", self._on_enter)
+        self.canvas.bind("<Leave>", self._on_leave)
+        self.label.bind("<Enter>", self._on_enter)
+        self.label.bind("<Leave>", self._on_leave)
+        
+        self.var_trace = self.variable.trace_add("write", self._update_ui)
+        self._update_ui()
+        
+    def _toggle(self, event=None):
+        self.variable.set(not self.variable.get())
+        if self.command:
+            self.command()
+            
+    def _update_ui(self, *args):
+        self.canvas.delete("all")
+        val = self.variable.get()
+        if val:
+            self.canvas.create_rectangle(1, 1, 17, 17, fill=self.active_color, outline=self.active_color, width=1)
+            self.canvas.create_line(5, 9, 8, 12, fill="white", width=2)
+            self.canvas.create_line(8, 12, 13, 5, fill="white", width=2)
+        else:
+            self.canvas.create_rectangle(1, 1, 17, 17, fill=BG_INPUT, outline=BORDER_MID, width=1.5)
+            
+    def _on_enter(self, event=None):
+        if not self.variable.get():
+            self.canvas.delete("all")
+            self.canvas.create_rectangle(1, 1, 17, 17, fill=BG_INPUT, outline=self.active_color, width=1.5)
+            
+    def _on_leave(self, event=None):
+        if not self.variable.get():
+            self.canvas.delete("all")
+            self.canvas.create_rectangle(1, 1, 17, 17, fill=BG_INPUT, outline=BORDER_MID, width=1.5)
+
+class ModernRadiobutton(tk.Frame):
+    def __init__(self, parent, text, variable, value, command=None, bg=BG_CARD, fg=FG_MID, font=FONT_LABEL):
+        super().__init__(parent, bg=bg)
+        self.variable = variable
+        self.value = value
+        self.command = command
+        self.bg = bg
+        self.fg = fg
+        
+        self.canvas = tk.Canvas(self, width=18, height=18, bg=bg, highlightthickness=0, cursor="hand2")
+        self.canvas.pack(side="left", padx=(0, 8))
+        
+        self.label = tk.Label(self, text=text, font=font, fg=fg, bg=bg, cursor="hand2")
+        self.label.pack(side="left")
+        
+        self.canvas.bind("<Button-1>", self._select)
+        self.label.bind("<Button-1>", self._select)
+        
+        self.canvas.bind("<Enter>", self._on_enter)
+        self.canvas.bind("<Leave>", self._on_leave)
+        self.label.bind("<Enter>", self._on_enter)
+        self.label.bind("<Leave>", self._on_leave)
+        
+        self.var_trace = self.variable.trace_add("write", self._update_ui)
+        self._update_ui()
+        
+    def _select(self, event=None):
+        self.variable.set(self.value)
+        if self.command:
+            self.command()
+            
+    def _update_ui(self, *args):
+        self.canvas.delete("all")
+        val = self.variable.get()
+        if val == self.value:
+            self.canvas.create_oval(1, 1, 17, 17, outline=ACCENT, width=1.5)
+            self.canvas.create_oval(5, 5, 13, 13, fill=ACCENT, outline=ACCENT)
+        else:
+            self.canvas.create_oval(1, 1, 17, 17, outline=BORDER_MID, width=1.5)
+            
+    def _on_enter(self, event=None):
+        val = self.variable.get()
+        if val != self.value:
+            self.canvas.delete("all")
+            self.canvas.create_oval(1, 1, 17, 17, outline=ACCENT, width=1.5)
+            
+    def _on_leave(self, event=None):
+        val = self.variable.get()
+        if val != self.value:
+            self.canvas.delete("all")
+            self.canvas.create_oval(1, 1, 17, 17, outline=BORDER_MID, width=1.5)
+
+# ─────────────────────────────────────────────
 # Collection Picker Widget
 # ─────────────────────────────────────────────
 class CollectionPicker(tk.Frame):
@@ -549,7 +706,7 @@ class CollectionPicker(tk.Frame):
 
         self._vsb = tk.Scrollbar(list_outer, orient="vertical",
                                  bg=BG, troughcolor=BG,
-                                 width=8, bd=0, relief="flat")
+                                 width=12, bd=0, relief="flat")
         self._vsb.pack(side="right", fill="y", padx=(0, 2), pady=2)
 
         self._canvas = tk.Canvas(list_outer, bg=BG_CARD,
@@ -744,7 +901,7 @@ class ZOAApp:
 
         self._main_vsb = tk.Scrollbar(outer, orient="vertical",
                                       bg=BG, troughcolor=BG,
-                                      width=8, bd=0, relief="flat")
+                                      width=14, bd=0, relief="flat")
         self._main_vsb.pack(side="right", fill="y")
 
         self._canvas = tk.Canvas(outer, bg=BG, highlightthickness=0,
@@ -774,11 +931,10 @@ class ZOAApp:
         self._load_btn.pack(side="left", padx=(0, 14))
 
         self.all_var = tk.BooleanVar()
-        tk.Checkbutton(top, text="Entire Library",
-                       variable=self.all_var, command=self._toggle_all,
-                       bg=BG_CARD, fg=FG_MID, selectcolor=BG_CARD,
-                       activebackground=BG_CARD, font=FONT_LABEL,
-                       relief="flat", bd=0).pack(side="right")
+        self.all_chk = ModernCheckbutton(top, text="Entire Library",
+                                         variable=self.all_var, command=self._toggle_all,
+                                         bg=BG_CARD, fg=FG_MID, font=FONT_LABEL)
+        self.all_chk.pack(side="right")
 
         self._picker = CollectionPicker(c1, height=210)
         self._picker.pack(fill="x")
@@ -836,10 +992,9 @@ class ZOAApp:
                  fg=FG_DIM, bg=BG_CARD).pack(side="left", padx=(0, 10))
         self.dup_var = tk.StringVar(value="skip")
         for lbl, val in [("Skip", "skip"), ("Overwrite", "overwrite"), ("Update if newer", "update")]:
-            tk.Radiobutton(dup_row, text=lbl, variable=self.dup_var, value=val,
-                           bg=BG_CARD, fg=FG_MID, selectcolor=BG_CARD,
-                           activebackground=BG_CARD, font=FONT_LABEL,
-                           relief="flat", bd=0).pack(side="left", padx=(0, 10))
+            rb = ModernRadiobutton(dup_row, text=lbl, variable=self.dup_var, value=val,
+                                   bg=BG_CARD, fg=FG_MID, font=FONT_LABEL)
+            rb.pack(side="left", padx=(0, 14))
 
         lim_row = tk.Frame(c3, bg=BG_CARD); lim_row.pack(fill="x", pady=(0, 10))
         tk.Label(lim_row, text="Max papers:", font=FONT_LABEL,
@@ -892,6 +1047,49 @@ class ZOAApp:
         self.model_cb.pack(side="left", padx=(6, 0))
         self.model_cb.bind("<<ComboboxSelected>>", self._on_model_changed)
 
+        thin_divider(c3, (12, 12))
+        
+        prompt_opt_row = tk.Frame(c3, bg=BG_CARD)
+        prompt_opt_row.pack(fill="x")
+        
+        self.custom_prompt_var = tk.BooleanVar(value=False)
+        self.custom_prompt_chk = ModernCheckbutton(
+            prompt_opt_row, text="Customize AI Prompt",
+            variable=self.custom_prompt_var, command=self._toggle_prompt_editor,
+            bg=BG_CARD, fg=FG_MID, font=FONT_LABEL, active_color=ACCENT_POINT
+        )
+        self.custom_prompt_chk.pack(side="left")
+
+        self.prompt_editor_frame = tk.Frame(c3, bg=BG_CARD)
+        # Dynamic pack in self._toggle_prompt_editor()
+        
+        desc_txt = "Available placeholders:  {title}   {content_source}   {keyword_count}   {text}"
+        tk.Label(self.prompt_editor_frame, text=desc_txt, font=FONT_VER,
+                 fg=FG_DIM, bg=BG_CARD).pack(anchor="w", pady=(8, 4))
+                 
+        text_wrap = tk.Frame(self.prompt_editor_frame, bg=BG_INPUT,
+                            bd=1, relief="solid", highlightthickness=0)
+        text_wrap.pack(fill="x", pady=4)
+        
+        text_vsb = tk.Scrollbar(text_wrap, orient="vertical", width=10, bd=0)
+        text_vsb.pack(side="right", fill="y")
+        
+        self.prompt_text_box = tk.Text(text_wrap, height=12, font=FONT_ENTRY,
+                                       bg=BG_INPUT, fg=FG, insertbackground=FG,
+                                       wrap="word", relief="flat", padx=10, pady=8,
+                                       yscrollcommand=text_vsb.set)
+        self.prompt_text_box.pack(side="left", fill="x", expand=True)
+        text_vsb.config(command=self.prompt_text_box.yview)
+        
+        self.prompt_text_box.insert("1.0", load_prompt_template())
+        
+        action_row = tk.Frame(self.prompt_editor_frame, bg=BG_CARD)
+        action_row.pack(fill="x", pady=(6, 0))
+        
+        make_btn_primary(action_row, "Save Template", self._save_custom_prompt,
+                         bg_color=ACCENT_POINT, hover_color=ACCENT_POINT_H).pack(side="left", padx=(0, 10))
+        make_btn_ghost(action_row, "Reset to Default", self._reset_custom_prompt).pack(side="left")
+
         # ─── 04  Progress ─────────────────────
         make_section_label(M, "04  Progress")
         c4 = card(M); c4.pack(fill="x")
@@ -934,7 +1132,7 @@ class ZOAApp:
         log_wrap.pack(fill="both", expand=True, pady=(0, 28))
 
         vsb_log = tk.Scrollbar(log_wrap, bg=LOG_BG,
-                               troughcolor=LOG_BG, bd=0, width=7)
+                               troughcolor=LOG_BG, bd=0, width=12)
         vsb_log.pack(side="right", fill="y")
 
         self.log_box = tk.Text(log_wrap, height=14, font=FONT_LOG,
@@ -971,11 +1169,9 @@ class ZOAApp:
         self._canvas.yview_scroll(-1 * (event.delta // 120), "units")
 
     def _toggle_chk(self, parent, text, var, command=None, pad_left=0):
-        kw = {"command": command} if command else {}
-        tk.Checkbutton(parent, text=text, variable=var,
-                       bg=BG_CARD, fg=FG_MID, selectcolor=BG_CARD,
-                       activebackground=BG_CARD, font=FONT_LABEL,
-                       relief="flat", bd=0, **kw).pack(side="left", padx=(pad_left, 0))
+        chk = ModernCheckbutton(parent, text=text, variable=var,
+                                command=command, bg=BG_CARD, fg=FG_MID, font=FONT_LABEL)
+        chk.pack(side="left", padx=(pad_left, 0))
 
     def _path_row(self, parent, var):
         row = tk.Frame(parent, bg=BG_CARD); row.pack(fill="x")
@@ -1006,6 +1202,28 @@ class ZOAApp:
             self.recent_spin.config(state="normal", fg=FG)
         else:
             self.recent_spin.config(state="disabled", fg=FG_DIM)
+
+    def _toggle_prompt_editor(self):
+        if self.custom_prompt_var.get():
+            self.prompt_editor_frame.pack(fill="x", pady=(8, 0))
+        else:
+            self.prompt_editor_frame.pack_forget()
+        self.main.update_idletasks()
+        self._canvas.configure(scrollregion=self._canvas.bbox("all"))
+
+    def _save_custom_prompt(self):
+        content = self.prompt_text_box.get("1.0", "end-1c").strip()
+        if content:
+            save_prompt_template(content)
+            self._log("✓  Custom prompt template saved.", "ok")
+        else:
+            self._log("⚠  Prompt template cannot be empty.", "warn")
+
+    def _reset_custom_prompt(self):
+        self.prompt_text_box.delete("1.0", "end")
+        self.prompt_text_box.insert("1.0", DEFAULT_PROMPT_TEMPLATE)
+        save_prompt_template(DEFAULT_PROMPT_TEMPLATE)
+        self._log("✓  Custom prompt template reset to default.", "ok")
 
     def _on_provider_changed(self, event=None):
         prov_name = self.provider_var.get()
@@ -1271,43 +1489,26 @@ class ZOAApp:
                     self.root.after(0, lambda i=idx: self._set_progress(i, total))
                     continue
 
-                prompt = f"""You are an expert academic research analyst specializing in summarizing \
-peer-reviewed academic literature. Your summaries are precise, jargon-aware, \
-and strictly grounded in the provided text.
+                try:
+                    raw_template = self.prompt_text_box.get("1.0", "end-1c").strip()
+                except:
+                    raw_template = load_prompt_template()
 
-## Task
-Summarize the {content_source} from the research paper titled: "{title}".
-
-## Critical Constraints
-- Base your summary ONLY on the provided text below. Do not infer, extrapolate, \
-or supplement with outside knowledge.
-- If information for a section is not present in the text, write: \
-"Not reported in the provided text."
-- Use clear academic English. Be concise: each section should be 2–4 sentences maximum.
-
-## Output Format (Markdown)
-
-### 1. Research Objective
-State the central research question and the population or context under study.
-
-### 2. Methodology
-Specify: (a) data source(s) and sample, (b) key variables, \
-(c) statistical models or analytic strategy.
-
-### 3. Key Results
-Report the main findings, including direction and magnitude of effects where available. \
-Prioritize statistically significant results.
-
-### 4. Keywords
-Provide exactly {keyword_count} keywords using # prefix. Apply these rules in order:
-- Include at least 2 methodology keywords (e.g., #DiD, #Fixed-Effects, #Multilevel-Model).
-- Use umbrella/concept terms for substantive topics (e.g., #Substance-Use, not #Opioids).
-- Capitalize the first letter of each word; hyphenate multi-word terms.
-
----
-[Text Input]
-{final_text[:50000]}
-"""
+                try:
+                    prompt = raw_template.format(
+                        content_source=content_source,
+                        title=title,
+                        keyword_count=keyword_count,
+                        text=final_text[:50000]
+                    )
+                except Exception as format_err:
+                    self._log(f"       ⚠  Prompt format error: {format_err}. Using fallback.", "warn")
+                    prompt = DEFAULT_PROMPT_TEMPLATE.format(
+                        content_source=content_source,
+                        title=title,
+                        keyword_count=keyword_count,
+                        text=final_text[:50000]
+                    )
                 try:
                     if active_provider == 'gemini':
                         summary_text = model.generate_content(prompt).text
@@ -1623,10 +1824,9 @@ class SetupWizard(tk.Toplevel):
             ]
 
             for val, name in providers:
-                rb = tk.Radiobutton(prov_frame, text=name, variable=self._provider_var, value=val,
-                                    bg=BG, fg=FG_MID, selectcolor=BG, activebackground=BG,
-                                    font=FONT_LABEL, relief="flat", bd=0)
-                rb.pack(anchor="w", pady=5)
+                rb = ModernRadiobutton(prov_frame, text=name, variable=self._provider_var, value=val,
+                                       bg=BG, fg=FG_MID, font=FONT_LABEL)
+                rb.pack(anchor="w", pady=6)
 
             self._next_btn.config(text="Next →")
             self._back_btn.config(state="normal")
