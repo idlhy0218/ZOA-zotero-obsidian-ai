@@ -31,6 +31,8 @@ ZOA를 사용하려면 아래의 도구들이 설치되어 있어야 합니다.
 * **[ZOA 최신 정식 버전 다운로드 (GitHub Releases)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)**
 * 운영체제에 맞는 최신 정식 빌드 파일(Windows: `ZOA.exe`, macOS: `ZOA-macOS.zip`)을 위 링크에서 손쉽게 내려받으실 수 있습니다.
 
+https://github.com/user-attachments/assets/8ceca447-8950-432c-9446-bd815b829593
+
 ### 1. 전용 ZOA 폴더 생성 및 실행 파일 배치
 반드시 **ZOA**라는 이름의 전용 폴더를 새로 생성하고, 다운로드한 ZOA 실행 파일(Windows: `ZOA.exe`, macOS: `ZOA-macOS.zip`)을 그 안에 넣어줍니다.
 * **[매우 중요]** 실행 파일과 최초 실행 시 생성되는 설정 파일인 `.env`는 **항상 같은 폴더 안에 함께 있어야 합니다.** 실행 파일만 바탕화면 등으로 이동하거나 `.env` 파일과 분리될 경우, 프로그램이 설정을 인식하지 못해 정상적으로 작동하지 않습니다.
