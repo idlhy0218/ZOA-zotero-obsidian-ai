@@ -25,9 +25,13 @@ https://github.com/user-attachments/assets/3697a18f-aa96-4cc1-a27d-a22d59f4feaa
 
 ### 1. 다운로드
 
-**[→ GitHub Releases에서 다운로드](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)**
+<div align="center">
 
-운영체제에 맞는 빌드 파일을 내려받으세요: `ZOA.exe` (Windows) 또는 `ZOA-macOS.zip` (macOS)
+[![ZOA 다운로드](https://img.shields.io/badge/⬇%20ZOA%20다운로드-v1.0--beta-4A90D9?style=for-the-badge&logo=github&logoColor=white)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)
+
+**`ZOA.exe`** (Windows) &nbsp;|&nbsp; **`ZOA-macOS.zip`** (macOS)
+
+</div>
 
 ### 2. 전용 폴더 생성
 

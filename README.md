@@ -27,9 +27,13 @@ https://github.com/user-attachments/assets/ba92afdc-8fcd-4e8a-a1cc-d8e83f8473ff
 
 ### 1. Download
 
-**[→ Download from GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)**
+<div align="center">
 
-Download the build for your OS: `ZOA.exe` (Windows) or `ZOA-macOS.zip` (macOS).
+[![Download ZOA](https://img.shields.io/badge/⬇%20Download%20ZOA-v1.0--beta-4A90D9?style=for-the-badge&logo=github&logoColor=white)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)
+
+**`ZOA.exe`** for Windows &nbsp;|&nbsp; **`ZOA-macOS.zip`** for macOS
+
+</div>
 
 ### 2. Create a Dedicated Folder
 
