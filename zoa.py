@@ -18,14 +18,15 @@ _APP_DIR_CACHE: Path | None = None  # cached once per session to avoid path swit
 
 def get_app_dir() -> Path:
     """Return the folder that contains the configuration.
-    Result is cached for the lifetime of the process so that save and load
-    always use the same directory regardless of transient write-test failures.
+    Result is cached for the lifetime of the process.
+    On macOS, always use user's home directory (~/.zoa) to avoid read-only bundle/translocation errors.
+    On Windows/Linux, always use the executable/script directory (portable mode) as explicitly requested.
     """
     global _APP_DIR_CACHE
     if _APP_DIR_CACHE is not None:
         return _APP_DIR_CACHE
 
-    # 1. On macOS, always use user's home directory (~/.zoa) to avoid read-only bundle/translocation errors
+    # 1. On macOS, always use user's home directory (~/.zoa)
     if sys.platform == 'darwin':
         path = Path.home() / '.zoa'
         path.mkdir(parents=True, exist_ok=True)
@@ -38,18 +39,7 @@ def get_app_dir() -> Path:
     else:
         local_path = Path(__file__).resolve().parent
 
-    # Test if the local folder is writable (for first-run .env creation)
-    try:
-        test_file = local_path / '.zoa_write_test'
-        test_file.touch()
-        test_file.unlink()
-        _APP_DIR_CACHE = local_path
-    except (IOError, OSError):
-        # Fallback to home directory if local path is not writable (e.g., Program Files, read-only drive)
-        home_path = Path.home() / '.zoa'
-        home_path.mkdir(parents=True, exist_ok=True)
-        _APP_DIR_CACHE = home_path
-
+    _APP_DIR_CACHE = local_path
     return _APP_DIR_CACHE
 
 def get_resource_path(relative_path: str) -> Path:
@@ -2016,7 +2006,9 @@ class ZOAApp:
 
     def _path_row(self, parent, var):
         row = tk.Frame(parent, bg=BG_CARD); row.pack(fill="x")
-        make_entry(row, var, width=54).pack(side="left", padx=(0, 10), ipady=6)
+        entry = make_entry(row, var, width=54)
+        entry.pack(side="left", padx=(0, 10), ipady=6)
+        entry.bind("<FocusOut>", lambda e: self._save_main_paths())
         make_btn_ghost(row, "Browse…", lambda: self._browse(var)).pack(side="left")
 
     def _apply_combo_style(self):
@@ -2033,7 +2025,15 @@ class ZOAApp:
 
     def _browse(self, var):
         p = filedialog.askdirectory(initialdir=var.get() or os.path.expanduser("~"))
-        if p: var.set(p)
+        if p:
+            var.set(p)
+            self._save_main_paths()
+
+    def _save_main_paths(self):
+        global CONFIG
+        CONFIG['PDF_PATH'] = self.pdf_path_var.get().strip()
+        CONFIG['OBS_PATH'] = self.obs_path_var.get().strip()
+        save_config(CONFIG)
 
     def _toggle_all(self):
         self._picker.set_disabled(self.all_var.get())
@@ -2882,16 +2882,17 @@ if __name__ == "__main__":
         wizard = SetupWizard(root)
         root.wait_window(wizard)
         # Reload config after wizard saves .env
-        cfg          = load_config()
-        GEMINI_KEY   = cfg.get('GEMINI_KEY', '')
-        CLAUDE_KEY   = cfg.get('CLAUDE_KEY', '')
-        OPENAI_KEY   = cfg.get('OPENAI_KEY', '')
-        DEEPSEEK_KEY = cfg.get('DEEPSEEK_KEY', '')
-        API_PROVIDER = cfg.get('API_PROVIDER', 'gemini')
-        PDF_PATH     = cfg.get('PDF_PATH', '')
-        OBS_PATH     = cfg.get('OBS_PATH', '')
-        ZOTERO_DB    = cfg.get('ZOTERO_DB', '')
-        MODEL_NAME   = cfg.get('MODEL_NAME', 'gemini-2.5-flash')
+        global CONFIG
+        CONFIG       = load_config()
+        GEMINI_KEY   = CONFIG.get('GEMINI_KEY', '')
+        CLAUDE_KEY   = CONFIG.get('CLAUDE_KEY', '')
+        OPENAI_KEY   = CONFIG.get('OPENAI_KEY', '')
+        DEEPSEEK_KEY = CONFIG.get('DEEPSEEK_KEY', '')
+        API_PROVIDER = CONFIG.get('API_PROVIDER', 'gemini')
+        PDF_PATH     = CONFIG.get('PDF_PATH', '')
+        OBS_PATH     = CONFIG.get('OBS_PATH', '')
+        ZOTERO_DB    = CONFIG.get('ZOTERO_DB', '')
+        MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-2.5-flash')
 
     root.deiconify()         # show main window
     ZOAApp(root)
