@@ -61,7 +61,10 @@ def load_config():
         'PDF_PATH': '',
         'OBS_PATH': '',
         'ZOTERO_DB': '',
-        'MODEL_NAME': 'gemini-2.5-flash'
+        'MODEL_NAME': 'gemini-2.5-flash',
+        'FILENAME_FMT': 'default',
+        'PDF_MAX_PAGES': '30',
+        'SKIP_EMPTY_ABS': 'False'
     }
     env_path = get_app_dir() / '.env'
     if env_path.exists():
@@ -91,6 +94,9 @@ def save_config(cfg: dict):
             f"OBS_PATH={cfg.get('OBS_PATH', '')}",
             f"ZOTERO_DB={cfg.get('ZOTERO_DB', '')}",
             f"MODEL_NAME={cfg.get('MODEL_NAME', 'gemini-2.5-flash')}",
+            f"FILENAME_FMT={cfg.get('FILENAME_FMT', 'default')}",
+            f"PDF_MAX_PAGES={cfg.get('PDF_MAX_PAGES', '30')}",
+            f"SKIP_EMPTY_ABS={cfg.get('SKIP_EMPTY_ABS', 'False')}",
         ]
         with open(env_path, 'w', encoding='utf-8') as f:
             f.write('\n'.join(lines) + '\n')
@@ -1167,6 +1173,224 @@ class CollectionPicker(tk.Frame):
 
 
 # ─────────────────────────────────────────────
+# Preferences / Settings Dialog
+# ─────────────────────────────────────────────
+class SettingsDialog(tk.Toplevel):
+    def __init__(self, parent, app):
+        super().__init__(parent)
+        self.app = app
+        self.title("Preferences — ZOA")
+        self.geometry("540x630")
+        self.resizable(False, False)
+        self.configure(bg=BG)
+        self.grab_set()
+        apply_window_icon(self)
+        
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
+        
+        # Load current configuration values
+        self._filename_var = tk.StringVar(value=CONFIG.get('FILENAME_FMT', 'default'))
+        self._pdf_pages_var = tk.StringVar(value=CONFIG.get('PDF_MAX_PAGES', '30'))
+        self._skip_empty_var = tk.BooleanVar(value=CONFIG.get('SKIP_EMPTY_ABS', 'False') == 'True')
+        
+        self._build_ui()
+        
+        # Center on screen
+        self.update_idletasks()
+        x = parent.winfo_rootx() + (parent.winfo_width() - 540) // 2
+        y = parent.winfo_rooty() + (parent.winfo_height() - 630) // 2
+        self.geometry(f"540x630+{x}+{y}")
+        
+    def _build_ui(self):
+        # ── Header
+        hdr = tk.Frame(self, bg=BG_CARD, bd=0, highlightthickness=1, highlightbackground=BORDER)
+        hdr.pack(fill="x")
+        inner_hdr = tk.Frame(hdr, bg=BG_CARD, pady=14, padx=24)
+        inner_hdr.pack(fill="x")
+        tk.Label(inner_hdr, text="ZOA Preferences", font=FONT_H1, fg=FG, bg=BG_CARD).pack(anchor="w")
+        tk.Label(inner_hdr, text="Configure folders, naming patterns, and extraction limits.", font=FONT_SUBNAME, fg=FG_DIM, bg=BG_CARD).pack(anchor="w", pady=(2, 0))
+        
+        # ── Scrollable Content Area
+        outer_f = tk.Frame(self, bg=BG)
+        outer_f.pack(fill="both", expand=True, padx=20, pady=(15, 10))
+        
+        canvas = tk.Canvas(outer_f, bg=BG, highlightthickness=0)
+        vsb = ModernScrollbar(outer_f, command=canvas.yview, orient="vertical", thumb_color=BORDER_MID, hover_color=ACCENT, trough_color=BG, width=8)
+        canvas.configure(yscrollcommand=vsb.set)
+        
+        vsb.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+        
+        inner_f = tk.Frame(canvas, bg=BG)
+        win_id = canvas.create_window((0, 0), window=inner_f, anchor="nw")
+        
+        def _configure_inner(e):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+            canvas.itemconfig(win_id, width=canvas.winfo_width())
+            
+        inner_f.bind("<Configure>", _configure_inner)
+        canvas.bind("<Configure>", lambda e: canvas.itemconfig(win_id, width=e.width))
+        
+        self._canvas = canvas
+        self._bind_mousewheel(self, self._dialog_scroll)
+        
+        # ── 01. File & Paths Card
+        make_section_label(inner_f, "01  Files & Paths")
+        c1 = card(inner_f)
+        c1.pack(fill="x", pady=(0, 10))
+        
+        field_label(c1, "Easily locate configurations and prompt templates:")
+        
+        btn_row = tk.Frame(c1, bg=BG_CARD)
+        btn_row.pack(fill="x", pady=(8, 4))
+        
+        make_btn_ghost(btn_row, "Open .env Directory", self._open_env_dir).pack(side="left", padx=(0, 8), fill="x", expand=True)
+        make_btn_ghost(btn_row, "Open AI Prompt File", self._open_prompt_template).pack(side="left", padx=(0, 8), fill="x", expand=True)
+        
+        thin_divider(c1, pady=(12, 12))
+        
+        field_label(c1, "Rerun initial setup wizard to re-authenticate keys or directories:")
+        make_btn_primary(c1, "Rerun Setup Wizard", self._rerun_wizard, bg_color=ACCENT_POINT, hover_color=ACCENT_POINT_H).pack(fill="x", pady=(4, 0))
+        
+        # ── 02. Naming Pattern Card
+        make_section_label(inner_f, "02  Obsidian Filename Format")
+        c2 = card(inner_f)
+        c2.pack(fill="x", pady=(0, 10))
+        
+        formats = [
+            ("default", "Classic ZOA: [Author]_[Year]_[Journal]\n(e.g., Lee_2026_ZOA.md)"),
+            ("title", "Clean Title: [Paper Title]\n(e.g., An Automated Paper Summary Pipeline.md)"),
+            ("year_author_title", "Structured Year: [[Year]] [Author] - [Title]\n(e.g., [2026] Lee - An Automated Paper Summary Pipeline.md)"),
+            ("author_year_title", "Readable Year: [Author] ([Year]) - [Title]\n(e.g., Lee (2026) - An Automated Paper Summary Pipeline.md)")
+        ]
+        
+        for val, desc in formats:
+            row = tk.Frame(c2, bg=BG_CARD)
+            row.pack(fill="x", pady=6)
+            rb = ModernRadiobutton(row, text=desc, variable=self._filename_var, value=val, bg=BG_CARD, fg=FG_MID, font=FONT_LABEL)
+            rb.pack(anchor="w")
+            
+        # ── 03. Extraction Settings Card
+        make_section_label(inner_f, "03  Text Extraction & Fallbacks")
+        c3 = card(inner_f)
+        c3.pack(fill="x", pady=(0, 15))
+        
+        field_label_with_tooltip(c3, "Maximum PDF Pages to Analyze", "ZOA extracts full-text from the first N pages of matched PDFs. Higher values capture more content but increase API token consumption.")
+        
+        pg_row = tk.Frame(c3, bg=BG_CARD)
+        pg_row.pack(fill="x", pady=(0, 12))
+        self._pg_entry = tk.Entry(pg_row, textvariable=self._pdf_pages_var, width=10, font=FONT_ENTRY, bg=BG_INPUT, fg=FG, relief="flat", insertbackground=FG, highlightthickness=1, highlightbackground=BORDER, highlightcolor=ACCENT)
+        self._pg_entry.pack(side="left", ipady=4)
+        tk.Label(pg_row, text="pages  (Default: 30)", font=FONT_SMALL, fg=FG_DIM, bg=BG_CARD).pack(side="left", padx=8)
+        
+        thin_divider(c3, pady=(8, 12))
+        
+        self._skip_chk = ModernCheckbutton(c3, text="Skip papers with empty abstracts in Zotero DB", variable=self._skip_empty_var, bg=BG_CARD, fg=FG_MID, font=FONT_LABEL)
+        self._skip_chk.pack(anchor="w", pady=4)
+        
+        # ── Footer / Navigation Bar
+        ftr_border = tk.Frame(self, bg=BORDER, height=1)
+        ftr_border.pack(fill="x")
+        
+        ftr = tk.Frame(self, bg=BG_CARD, padx=24, pady=12)
+        ftr.pack(fill="x", side="bottom")
+        
+        make_btn_primary(ftr, "Save Settings", self._save_settings).pack(side="right", padx=(8, 0))
+        make_btn_ghost(ftr, "Cancel", self._on_close).pack(side="right")
+        
+    def _open_env_dir(self):
+        try:
+            import platform, subprocess
+            path = get_app_dir()
+            if platform.system() == "Windows":
+                os.startfile(path)
+            elif platform.system() == "Darwin":
+                subprocess.run(["open", str(path)])
+            else:
+                subprocess.run(["xdg-open", str(path)])
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to open directory: {e}", parent=self)
+            
+    def _open_prompt_template(self):
+        try:
+            import platform, subprocess
+            path = get_app_dir() / 'prompt_template.txt'
+            if not path.exists():
+                save_prompt_template(DEFAULT_PROMPT_TEMPLATE)
+            if platform.system() == "Windows":
+                os.startfile(path)
+            elif platform.system() == "Darwin":
+                subprocess.run(["open", str(path)])
+            else:
+                subprocess.run(["xdg-open", str(path)])
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to open file: {e}", parent=self)
+            
+    def _rerun_wizard(self):
+        if messagebox.askyesno("Setup Wizard", "Do you want to rerun the initial setup wizard?", parent=self):
+            self.destroy()
+            wizard = SetupWizard(self.app.root)
+            self.app.root.wait_window(wizard)
+            
+            # Reload global configuration
+            global CONFIG, GEMINI_KEY, CLAUDE_KEY, OPENAI_KEY, DEEPSEEK_KEY, API_PROVIDER, PDF_PATH, OBS_PATH, ZOTERO_DB, MODEL_NAME
+            CONFIG = load_config()
+            GEMINI_KEY   = CONFIG.get('GEMINI_KEY', '')
+            CLAUDE_KEY   = CONFIG.get('CLAUDE_KEY', '')
+            OPENAI_KEY   = CONFIG.get('OPENAI_KEY', '')
+            DEEPSEEK_KEY = CONFIG.get('DEEPSEEK_KEY', '')
+            API_PROVIDER = CONFIG.get('API_PROVIDER', 'gemini')
+            PDF_PATH     = CONFIG.get('PDF_PATH', '')
+            OBS_PATH     = CONFIG.get('OBS_PATH', '')
+            ZOTERO_DB    = CONFIG.get('ZOTERO_DB', '')
+            MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-2.5-flash')
+            
+            self.app._check_env()
+            
+    def _save_settings(self):
+        # Validate PDF pages entry
+        try:
+            pages = int(self._pdf_pages_var.get().strip())
+            if pages <= 0: raise ValueError()
+        except ValueError:
+            messagebox.showerror("Validation Error", "Maximum PDF Pages must be a positive integer.", parent=self)
+            return
+            
+        # Update CONFIG globally and save to .env
+        global CONFIG
+        CONFIG['FILENAME_FMT'] = self._filename_var.get()
+        CONFIG['PDF_MAX_PAGES'] = str(pages)
+        CONFIG['SKIP_EMPTY_ABS'] = "True" if self._skip_empty_var.get() else "False"
+        
+        save_config(CONFIG)
+        
+        self.destroy()
+        messagebox.showinfo("Saved", "Preferences have been saved successfully.", parent=self.app.root)
+        
+    def _on_close(self):
+        self.grab_release()
+        self.destroy()
+        
+    def center_window(self):
+        self.update_idletasks()
+        w, h = 540, 630
+        x = self.master.winfo_rootx() + (self.master.winfo_width() - w) // 2
+        y = self.master.winfo_rooty() + (self.master.winfo_height() - h) // 2
+        self.geometry(f"{w}x{h}+{x}+{y}")
+        
+    def _dialog_scroll(self, event):
+        delta = event.delta
+        scroll_units = -1 * (delta // 120) if sys.platform != 'darwin' else -1 * delta
+        self._canvas.yview_scroll(scroll_units, "units")
+
+    def _bind_mousewheel(self, widget, callback):
+        widget.bind("<MouseWheel>", callback)
+        for child in widget.winfo_children():
+            self._bind_mousewheel(child, callback)
+
+
+
+# ─────────────────────────────────────────────
 # Main App
 # ─────────────────────────────────────────────
 class ZOAApp:
@@ -1199,8 +1423,16 @@ class ZOAApp:
         tk.Label(left, text="v1.0-beta  |  Copyright (c) 2026 Heeyoung Lee",
                  font=FONT_SUBNAME, fg=FG_DIM, bg=BG_CARD).pack(anchor="w", pady=(2, 0))
 
-        tk.Label(inner_h, text="MIT License",
-                 font=FONT_VER, fg=FG_LIGHT, bg=BG_CARD).pack(side="right", anchor="se")
+        right_h = tk.Frame(inner_h, bg=BG_CARD)
+        right_h.pack(side="right", fill="y", anchor="se")
+        
+        tk.Label(right_h, text="MIT License",
+                 font=FONT_VER, fg=FG_LIGHT, bg=BG_CARD).pack(side="left", anchor="center", padx=(0, 15))
+                 
+        self.settings_btn = ModernButton(right_h, text="⚙ Settings", command=self._open_settings,
+                                         bg=BG_CARD, fg=FG_MID, font=FONT_SUBNAME,
+                                         hover_bg=BG_HOVER, border_color=BORDER, padx=8, pady=4)
+        self.settings_btn.pack(side="left", anchor="center")
 
         # ── Scroll canvas
         outer = tk.Frame(self.root, bg=BG)
@@ -1475,6 +1707,10 @@ class ZOAApp:
 
     def stop_smooth_scroll(self):
         self._scrolling_active = False
+
+    def _open_settings(self):
+        dialog = SettingsDialog(self.root, self)
+        self.root.wait_window(dialog)
 
     def _on_root_scroll(self, event):
         w = event.widget
@@ -1803,12 +2039,30 @@ class ZOAApp:
 
                 year_m = re.search(r'\d{4}', date)
                 year   = year_m.group(0) if year_m else 'NoYear'
-                pub_ac = ("".join(w[0] for w in publication.split()).upper()
-                          if publication and publication != 'No Journal' else "NoJournal")
-                filename    = clean_filename(f"{author_for_file}_{year}_{pub_ac}.md")
+                
+                # Dynamic filename formatting based on preferences
+                fmt = CONFIG.get('FILENAME_FMT', 'default')
+                if fmt == 'title':
+                    filename = clean_filename(f"{title}.md")
+                elif fmt == 'year_author_title':
+                    filename = clean_filename(f"[{year}] {author_for_file} - {title}.md")
+                elif fmt == 'author_year_title':
+                    filename = clean_filename(f"{author_for_file} ({year}) - {title}.md")
+                else:
+                    # 'default'
+                    pub_ac = ("".join(w[0] for w in publication.split()).upper()
+                              if publication and publication != 'No Journal' else "NoJournal")
+                    filename = clean_filename(f"{author_for_file}_{year}_{pub_ac}.md")
                 full_path   = os.path.join(obs_path, filename)
                 zotero_link = f"zotero://select/items/0_{item_key}"
                 pg          = f"[{idx:>3}/{total}]"
+
+                # Check for empty abstract skip setting
+                if CONFIG.get('SKIP_EMPTY_ABS', 'False') == 'True' and not abstract.strip():
+                    self._log(f"{pg}  skip (empty abstract)  {title}", "skip")
+                    skip_count += 1
+                    self.root.after(0, lambda i=idx: self._set_progress(i, total))
+                    continue
 
                 if os.path.exists(full_path):
                     if dup_mode == "skip":
@@ -1836,7 +2090,13 @@ class ZOAApp:
                         try:
                             from pypdf import PdfReader
                             reader = PdfReader(matched)
-                            extracted = "".join(p.extract_text() or "" for p in reader.pages[:30])
+                            max_pages_cfg = CONFIG.get('PDF_MAX_PAGES', '30')
+                            try:
+                                max_pages = int(max_pages_cfg)
+                                if max_pages <= 0: max_pages = 30
+                            except:
+                                max_pages = 30
+                            extracted = "".join(p.extract_text() or "" for p in reader.pages[:max_pages])
                             if len(extracted) > 500:
                                 final_text = extracted; content_source = "full PDF content"; has_pdf = True
                                 self._log(f"       ✓  {os.path.basename(matched)}", "ok")
