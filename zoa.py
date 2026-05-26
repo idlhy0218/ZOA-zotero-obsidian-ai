@@ -499,28 +499,76 @@ def make_entry(parent, textvariable, width=46, placeholder=""):
                  highlightcolor=ACCENT)
     return e
 
+class ModernButton(tk.Label):
+    """Custom premium label-based button that supports uniform custom colors on all platforms including macOS."""
+    def __init__(self, parent, text, command, bg, fg, font, hover_bg, active_bg=None, border_color=None, **kwargs):
+        self.command = command
+        self.bg = bg
+        self.hover_bg = hover_bg
+        self.active_bg = active_bg or hover_bg
+        self.fg = fg
+        self.enabled = True
+        
+        highlightthickness = 1 if border_color else 0
+        highlightbackground = border_color or bg
+        highlightcolor = border_color or bg
+        
+        super().__init__(parent, text=text, font=font, bg=bg, fg=fg,
+                         cursor="hand2", relief="flat", bd=0,
+                         highlightthickness=highlightthickness,
+                         highlightbackground=highlightbackground,
+                         highlightcolor=highlightcolor,
+                         **kwargs)
+        
+        self.bind("<Button-1>", self._on_click)
+        self.bind("<Enter>", self._on_enter)
+        self.bind("<Leave>", self._on_leave)
+        
+    def _on_click(self, event=None):
+        if self.enabled and self.command:
+            # Subtle flash click effect
+            orig_bg = self.cget("bg")
+            self.config(bg=self.active_bg)
+            self.after(80, lambda: self.config(bg=orig_bg))
+            self.command()
+            
+    def _on_enter(self, event=None):
+        if self.enabled:
+            self.config(bg=self.hover_bg)
+            
+    def _on_leave(self, event=None):
+        if self.enabled:
+            self.config(bg=self.bg)
+            
+    def set_state(self, state):
+        if state == "disabled":
+            self.enabled = False
+            self.config(fg=FG_LIGHT, cursor="arrow")
+        else:
+            self.enabled = True
+            self.config(fg=self.fg, cursor="hand2")
+            
+    def config(self, **kwargs):
+        if "state" in kwargs:
+            self.set_state(kwargs["state"])
+            del kwargs["state"]
+        if "fg" in kwargs:
+            self.fg = kwargs["fg"]
+        super().config(**kwargs)
+        
+    def configure(self, **kwargs):
+        self.config(**kwargs)
+
 def make_btn_primary(parent, text, command, bg_color=None, hover_color=None):
     bg = bg_color or ACCENT
     hov = hover_color or ACCENT_H
-    btn = tk.Button(parent, text=text, command=command,
-                    bg=bg, fg=BG_CARD, relief="flat",
-                    font=FONT_BTN_P, padx=18, pady=8,
-                    cursor="hand2", bd=0,
-                    activebackground=hov, activeforeground=BG_CARD)
-    btn.bind("<Enter>", lambda e: btn.config(bg=hov))
-    btn.bind("<Leave>", lambda e: btn.config(bg=bg))
-    return btn
+    return ModernButton(parent, text=text, command=command, bg=bg, fg=BG_CARD,
+                        font=FONT_BTN_P, hover_bg=hov, active_bg=hov, padx=18, pady=8)
 
 def make_btn_ghost(parent, text, command):
-    btn = tk.Button(parent, text=text, command=command,
-                    bg=BG_CARD, fg=FG_MID, relief="flat",
-                    font=FONT_BTN_G, padx=14, pady=8,
-                    cursor="hand2", bd=1,
-                    activebackground=BG_HOVER, activeforeground=FG,
-                    highlightthickness=0)
-    btn.bind("<Enter>", lambda e: btn.config(bg=BG_HOVER, fg=FG))
-    btn.bind("<Leave>", lambda e: btn.config(bg=BG_CARD, fg=FG_MID))
-    return btn
+    return ModernButton(parent, text=text, command=command, bg=BG_CARD, fg=FG_MID,
+                        font=FONT_BTN_G, hover_bg=BG_HOVER, active_bg=BG_HOVER,
+                        border_color=BORDER, padx=14, pady=8)
 
 def make_section_label(parent, text):
     """Minimal uppercase section label, no horizontal rule."""
@@ -740,7 +788,7 @@ class CollectionPicker(tk.Frame):
 
         self._vsb = tk.Scrollbar(list_outer, orient="vertical",
                                  bg=BG, troughcolor=BG,
-                                 width=12, bd=0, relief="flat")
+                                 width=8, bd=0, relief="flat")
         self._vsb.pack(side="right", fill="y", padx=(0, 2), pady=2)
 
         self._canvas = tk.Canvas(list_outer, bg=BG_CARD,
@@ -783,7 +831,11 @@ class CollectionPicker(tk.Frame):
                 w._mw_bound = True
 
     def _on_mousewheel(self, event):
-        self._canvas.yview_scroll(-1 * (event.delta // 120), "units")
+        if sys.platform == 'darwin':
+            scroll_units = -1 * event.delta
+        else:
+            scroll_units = -1 * (event.delta // 120)
+        self._canvas.yview_scroll(scroll_units, "units")
 
     def _on_search(self, *_):
         if not self._all_names: return
@@ -935,7 +987,7 @@ class ZOAApp:
 
         self._main_vsb = tk.Scrollbar(outer, orient="vertical",
                                       bg=BG, troughcolor=BG,
-                                      width=14, bd=0, relief="flat")
+                                      width=16, bd=0, relief="flat")
         self._main_vsb.pack(side="right", fill="y")
 
         self._canvas = tk.Canvas(outer, bg=BG, highlightthickness=0,
@@ -1112,7 +1164,7 @@ class ZOAApp:
                             bd=1, relief="solid", highlightthickness=0)
         text_wrap.pack(fill="x", pady=4)
         
-        text_vsb = tk.Scrollbar(text_wrap, orient="vertical", width=10, bd=0)
+        text_vsb = tk.Scrollbar(text_wrap, orient="vertical", width=8, bd=0)
         text_vsb.pack(side="right", fill="y")
         
         self.prompt_text_box = tk.Text(text_wrap, height=12, font=FONT_ENTRY,
@@ -1173,7 +1225,7 @@ class ZOAApp:
         log_wrap.pack(fill="both", expand=True, pady=(0, 28))
 
         vsb_log = tk.Scrollbar(log_wrap, bg=LOG_BG,
-                               troughcolor=LOG_BG, bd=0, width=12)
+                               troughcolor=LOG_BG, bd=0, width=8)
         vsb_log.pack(side="right", fill="y")
 
         self.log_box = tk.Text(log_wrap, height=14, font=FONT_LOG,
@@ -1203,11 +1255,19 @@ class ZOAApp:
         try:
             cur = w
             while cur:
-                if cur is self._picker._canvas or cur is self._picker._inner:
+                if (cur is self._picker._canvas or 
+                    cur is self._picker._inner or 
+                    cur is self.log_box or 
+                    cur is self.prompt_text_box):
                     return
                 cur = cur.master
         except: pass
-        self._canvas.yview_scroll(-1 * (event.delta // 120), "units")
+        
+        if sys.platform == 'darwin':
+            scroll_units = -1 * event.delta
+        else:
+            scroll_units = -1 * (event.delta // 120)
+        self._canvas.yview_scroll(scroll_units, "units")
 
     def _toggle_chk(self, parent, text, var, command=None, pad_left=0):
         chk = ModernCheckbutton(parent, text=text, variable=var,
@@ -1779,11 +1839,9 @@ class SetupWizard(tk.Toplevel):
         self._back_btn = make_btn_ghost(nav, "← Back", self._prev_step)
         self._back_btn.pack(side="left")
 
-        self._skip_btn = tk.Button(nav, text="Skip", font=FONT_BTN_G,
-                                   bg=BG_CARD, fg=FG_DIM, relief="flat",
-                                   bd=0, cursor="hand2",
-                                   activebackground=BG_CARD,
-                                   command=self._skip_step)
+        self._skip_btn = ModernButton(nav, text="Skip", command=self._skip_step,
+                                      bg=BG_CARD, fg=FG_DIM, font=FONT_BTN_G,
+                                      hover_bg=BG_HOVER, padx=14, pady=8)
         self._skip_btn.pack(side="left", padx=12)
 
         self._next_btn = make_btn_primary(nav, "Next →", self._next_step)
