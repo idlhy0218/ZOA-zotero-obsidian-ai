@@ -37,6 +37,13 @@ https://github.com/user-attachments/assets/f95b8227-991f-4deb-bb5c-d9f9d37b7802
 You must create a dedicated folder named **ZOA** and place the downloaded executable (`ZOA.exe` for Windows, `ZOA-macOS.zip` for macOS) inside it.
 * **[Crucial Requirement]** The executable and the `.env` configuration file (created automatically on first launch) **must always reside in the same folder together.** If you move only the executable to another location (like your Desktop) or separate it from the `.env` file, ZOA will fail to detect your settings and won't run.
 * **[Windows SmartScreen Warning]** When launching `ZOA.exe` for the first time, Windows Defender may display a **"Windows protected your PC"** warning. This is a common warning for unsigned custom executables. You can safely ignore this by clicking **"More info"** and then clicking the **"Run anyway"** button to start the app.
+* **[macOS App Blocked Troubleshooting]** When launching ZOA on macOS for the first time, you may see a **"blocked because it is from an unidentified developer"** warning. You can easily allow the app via System Settings:
+  1. Click the Apple menu () in the top-left corner > **[System Settings]** (or System Preferences).
+  2. Navigate to **[Privacy & Security]**.
+  3. Scroll down to the **"Security"** section.
+  4. Click **[Open Anyway]** next to the blocked ZOA app.
+  5. Authenticate with your password or Touch ID and launch the app.
+
 
 ### 2. Obtain an API Key
 Get an API key from at least one of the following providers:
