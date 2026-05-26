@@ -2512,17 +2512,34 @@ class SetupWizard(tk.Toplevel):
         self._provider_var = tk.StringVar(value="gemini")
         self._ok     = False            # did the user finish setup?
 
+        # Normal python dictionary to safely keep track of values across screens.
+        # This prevents values from getting lost when Tkinter destroys entry widgets.
+        self._saved_data = {
+            "GEMINI_KEY": "",
+            "CLAUDE_KEY": "",
+            "OPENAI_KEY": "",
+            "DEEPSEEK_KEY": "",
+            "OBS_PATH": "",
+            "ZOTERO_DB": "",
+            "PDF_PATH": "",
+            "API_PROVIDER": "gemini",
+        }
+
         # pre-fill with existing config
         cfg = load_config()
         for field in self._values:
-            self._values[field].set(cfg.get(field, ""))
+            val = cfg.get(field, "")
+            self._values[field].set(val)
+            self._saved_data[field] = val
         if cfg.get("API_PROVIDER"):
             self._provider_var.set(cfg["API_PROVIDER"])
+            self._saved_data["API_PROVIDER"] = cfg["API_PROVIDER"]
 
         # auto-detect Zotero DB
         default_db = Path.home() / 'Zotero' / 'zotero.sqlite'
         if default_db.exists() and not self._values["ZOTERO_DB"].get():
             self._values["ZOTERO_DB"].set(str(default_db))
+            self._saved_data["ZOTERO_DB"] = str(default_db)
 
         self._build()
         self._render_step()
@@ -2570,6 +2587,19 @@ class SetupWizard(tk.Toplevel):
         self._next_btn = make_btn_primary(nav, "Next →", self._next_step)
         self._next_btn.pack(side="right")
 
+    # ── Safe Data Backup/Restore ────────────────
+    def _save_current_step_data(self):
+        s = self.STEPS[self._step]
+        if s.get("type") == "keys":
+            for field in ["GEMINI_KEY", "CLAUDE_KEY", "OPENAI_KEY", "DEEPSEEK_KEY"]:
+                self._saved_data[field] = self._values[field].get().strip()
+        elif s.get("type") == "provider":
+            self._saved_data["API_PROVIDER"] = self._provider_var.get()
+        else:
+            field = s.get("field")
+            if field:
+                self._saved_data[field] = self._values[field].get().strip()
+
     # ── Step rendering ───────────────────────
     def _render_step(self):
         # Update dots
@@ -2582,6 +2612,17 @@ class SetupWizard(tk.Toplevel):
 
         s = self.STEPS[self._step]
         is_last = self._step == len(self.STEPS) - 1
+
+        # Restore StringVar values from safe storage before rendering
+        if s.get("type") == "keys":
+            for field in ["GEMINI_KEY", "CLAUDE_KEY", "OPENAI_KEY", "DEEPSEEK_KEY"]:
+                self._values[field].set(self._saved_data[field])
+        elif s.get("type") == "provider":
+            self._provider_var.set(self._saved_data["API_PROVIDER"])
+        else:
+            field = s.get("field")
+            if field:
+                self._values[field].set(self._saved_data[field])
 
         if s.get("type") == "keys":
             # Icon + title
@@ -2716,22 +2757,25 @@ class SetupWizard(tk.Toplevel):
         path = filedialog.askdirectory(initialdir=cur or os.path.expanduser("~"))
         if path:
             self._values[field].set(path)
+            self._saved_data[field] = path
 
     # ── Navigation ───────────────────────────
     def _next_step(self):
+        self._save_current_step_data()
+
         s = self.STEPS[self._step]
         if s.get("type") == "keys":
             # Must have at least one key to continue!
-            gem = self._values["GEMINI_KEY"].get().strip()
-            cld = self._values["CLAUDE_KEY"].get().strip()
-            opn = self._values["OPENAI_KEY"].get().strip()
-            dps = self._values["DEEPSEEK_KEY"].get().strip()
+            gem = self._saved_data["GEMINI_KEY"]
+            cld = self._saved_data["CLAUDE_KEY"]
+            opn = self._saved_data["OPENAI_KEY"]
+            dps = self._saved_data["DEEPSEEK_KEY"]
             if not (gem or cld or opn or dps):
                 messagebox.showwarning("Required",
                     "At least one API Key must be provided to continue.",
                     parent=self)
                 return
-        elif s.get("required") and not self._values[s["field"]].get().strip():
+        elif s.get("required") and not self._saved_data[s["field"]]:
             messagebox.showwarning("Required",
                 f"{s['title']} is required to continue.",
                 parent=self)
@@ -2744,6 +2788,7 @@ class SetupWizard(tk.Toplevel):
             self._finish()
 
     def _skip_step(self):
+        self._save_current_step_data()
         if self.STEPS[self._step].get("required"):
             return
         if self._step < len(self.STEPS) - 1:
@@ -2753,21 +2798,25 @@ class SetupWizard(tk.Toplevel):
             self._finish()
 
     def _prev_step(self):
+        self._save_current_step_data()
         if self._step > 0:
             self._step -= 1
             self._render_step()
 
     def _finish(self):
+        self._save_current_step_data()
+
         # Start from the existing config so we preserve all defaults (LIMIT, DUP_MODE, etc.)
         cfg = load_config()
 
         # Overlay with values entered in the wizard
-        for field, var in self._values.items():
-            v = var.get().strip()
+        for field, v in self._saved_data.items():
+            if field == "API_PROVIDER":
+                continue
             if v:  # only overwrite if the user provided a value
                 cfg[field] = v
 
-        cfg["API_PROVIDER"] = self._provider_var.get()
+        cfg["API_PROVIDER"] = self._saved_data["API_PROVIDER"]
 
         # Set a sensible default model for the chosen provider (only when not already set)
         default_models = {
