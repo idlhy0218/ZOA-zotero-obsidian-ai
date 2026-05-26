@@ -1374,7 +1374,7 @@ class SettingsDialog(tk.Toplevel):
                                         values=list(self.provider_map.keys()),
                                         state="readonly", font=FONT_LABEL)
         self.provider_cb.pack(fill="x")
-        self.provider_cb.bind("<<ComboboxSelected>>", self._on_provider_changed)
+        self.provider_cb.bind("<<ComboboxSelected>>", lambda e: [self._on_provider_changed(e), self._auto_save(e)])
         
         col2 = tk.Frame(prov_row, bg=BG_CARD)
         col2.pack(side="left", fill="both", expand=True)
@@ -1391,14 +1391,14 @@ class SettingsDialog(tk.Toplevel):
                                      values=PROVIDER_MODELS.get(current_provider_name, []),
                                      state="readonly", font=FONT_LABEL)
         self.model_cb.pack(fill="x")
-        self.model_cb.bind("<<ComboboxSelected>>", self._on_model_changed)
+        self.model_cb.bind("<<ComboboxSelected>>", lambda e: [self._on_model_changed(e), self._auto_save(e)])
         
         thin_divider(c1, pady=(12, 12))
         
         self._prompt_chk = chk_with_tooltip(
             c1, "Customize AI Prompt Template", self._custom_prompt_var,
             "Enable to edit the system prompt template used for generating summaries.",
-            command=self._toggle_prompt_editor
+            command=lambda: [self._toggle_prompt_editor(), self._auto_save()]
         )
         
         self.prompt_editor_frame = tk.Frame(c1, bg=BG_CARD)
@@ -1424,11 +1424,12 @@ class SettingsDialog(tk.Toplevel):
         text_vsb.command = self.prompt_text_box.yview
         
         self.prompt_text_box.insert("1.0", load_prompt_template())
+        self.prompt_text_box.bind("<FocusOut>", self._auto_save)
         
         action_row = tk.Frame(self.prompt_editor_frame, bg=BG_CARD)
         action_row.pack(fill="x", pady=(6, 0))
         
-        make_btn_ghost(action_row, "Reset to Default", self._reset_custom_prompt).pack(side="left")
+        make_btn_ghost(action_row, "Reset to Default", lambda: [self._reset_custom_prompt(), self._auto_save()]).pack(side="left")
         
         # ── 02. Summarization Preferences Card
         make_section_label(inner_f, "02  Summarization Preferences")
@@ -1439,11 +1440,13 @@ class SettingsDialog(tk.Toplevel):
             c2, "Maximum Papers to Process", self._limit_var, "papers",
             "The maximum number of papers ZOA will process in a single execution. Prevents unexpected API costs."
         )
+        self._limit_entry.bind("<FocusOut>", self._auto_save)
         
         self._kw_entry = entry_row_with_tooltip(
             c2, "Keywords to Extract", self._keyword_count_var, "keywords",
             "The number of scholarly keywords the AI should extract and append to each paper summary."
         )
+        self._kw_entry.bind("<FocusOut>", self._auto_save)
         
         thin_divider(c2, pady=(10, 10))
         
@@ -1462,14 +1465,15 @@ class SettingsDialog(tk.Toplevel):
         for val, desc in dup_modes:
             rb_row = tk.Frame(c2, bg=BG_CARD)
             rb_row.pack(fill="x", pady=2)
-            rb = ModernRadiobutton(rb_row, text=desc, variable=self._dup_var, value=val, bg=BG_CARD, fg=FG_MID, font=FONT_LABEL)
+            rb = ModernRadiobutton(rb_row, text=desc, variable=self._dup_var, value=val, bg=BG_CARD, fg=FG_MID, font=FONT_LABEL, command=self._auto_save)
             rb.pack(anchor="w")
             
         thin_divider(c2, pady=(10, 10))
         
         self._wiki_chk = chk_with_tooltip(
             c2, "Use [[Wikilinks]] for Collections", self._wikilink_var,
-            "Format Zotero collections inside summaries as Obsidian internal wikilinks [[Collection Name]]."
+            "Format Zotero collections inside summaries as Obsidian internal wikilinks [[Collection Name]].",
+            command=self._auto_save
         )
         
         # ── 03. Text Extraction Options Card
@@ -1480,17 +1484,19 @@ class SettingsDialog(tk.Toplevel):
         self._full_pdf_chk = chk_with_tooltip(
             c3, "Read Full PDF Content", self._full_pdf_var,
             "Extract text from attached PDF files to feed to the AI. If disabled, ZOA falls back to the Zotero abstract.",
-            command=self._on_full_pdf_toggled
+            command=lambda: [self._on_full_pdf_toggled(), self._auto_save()]
         )
         
         self._pg_entry = entry_row_with_tooltip(
             c3, "Maximum PDF Pages to Analyze", self._pdf_pages_var, "pages",
             "Limits text extraction to the first N pages of PDFs to save API tokens and time."
         )
+        self._pg_entry.bind("<FocusOut>", self._auto_save)
         
         self._skip_chk = chk_with_tooltip(
             c3, "Skip papers with empty abstracts in Zotero DB", self._skip_empty_var,
-            "Skip summarization for papers that do not have any abstract text in Zotero."
+            "Skip summarization for papers that do not have any abstract text in Zotero.",
+            command=self._auto_save
         )
         
         # ── 04. Recent Papers Filter Card
@@ -1501,13 +1507,14 @@ class SettingsDialog(tk.Toplevel):
         self._use_recent_chk = chk_with_tooltip(
             c4, "Only Process Recent Papers", self._use_recent_var,
             "Limit summarization to papers that were added or modified in Zotero within a specific number of days.",
-            command=self._on_use_recent_toggled
+            command=lambda: [self._on_use_recent_toggled(), self._auto_save()]
         )
         
         self._recent_days_entry = entry_row_with_tooltip(
             c4, "Recent Days Limit", self._recent_days_var, "days",
             "Specify the threshold in days. Only papers newer than this will be processed."
         )
+        self._recent_days_entry.bind("<FocusOut>", self._auto_save)
         
         # ── 05. Obsidian Filename Format Card
         make_section_label(inner_f, "05  Obsidian Filename Format")
@@ -1531,7 +1538,7 @@ class SettingsDialog(tk.Toplevel):
         for val, desc in formats:
             row = tk.Frame(c5, bg=BG_CARD)
             row.pack(fill="x", pady=6)
-            rb = ModernRadiobutton(row, text=desc, variable=self._filename_var, value=val, bg=BG_CARD, fg=FG_MID, font=FONT_LABEL)
+            rb = ModernRadiobutton(row, text=desc, variable=self._filename_var, value=val, bg=BG_CARD, fg=FG_MID, font=FONT_LABEL, command=self._auto_save)
             rb.pack(anchor="w")
             
         # ── 06. System Utilities Card
@@ -1575,7 +1582,7 @@ class SettingsDialog(tk.Toplevel):
         ftr = tk.Frame(self, bg=BG_CARD, padx=24, pady=12)
         ftr.pack(fill="x", side="bottom")
         
-        make_btn_primary(ftr, "Save Settings", self._save_settings).pack(side="right", padx=(8, 0))
+        make_btn_primary(ftr, "Save Settings", lambda: self._save_settings(show_msg=True)).pack(side="right", padx=(8, 0))
         make_btn_ghost(ftr, "Cancel", self._on_close).pack(side="right")
         
         # Initialize dynamic view states
@@ -1666,42 +1673,50 @@ class SettingsDialog(tk.Toplevel):
             
             self.app._check_env()
             
-    def _save_settings(self):
+    def _auto_save(self, event=None):
+        self._save_settings(show_msg=False)
+
+    def _save_settings(self, show_msg=True):
         try:
             limit = int(self._limit_var.get().strip())
             if limit <= 0: raise ValueError()
         except ValueError:
-            messagebox.showerror("Validation Error", "Max Papers Limit must be a positive integer.", parent=self)
-            return
+            if show_msg:
+                messagebox.showerror("Validation Error", "Max Papers Limit must be a positive integer.", parent=self)
+            return False
             
         try:
             kw_count = int(self._keyword_count_var.get().strip())
             if kw_count <= 0: raise ValueError()
         except ValueError:
-            messagebox.showerror("Validation Error", "Keywords to Extract must be a positive integer.", parent=self)
-            return
+            if show_msg:
+                messagebox.showerror("Validation Error", "Keywords to Extract must be a positive integer.", parent=self)
+            return False
             
         try:
             pages = int(self._pdf_pages_var.get().strip())
             if pages <= 0: raise ValueError()
         except ValueError:
-            messagebox.showerror("Validation Error", "Maximum PDF Pages must be a positive integer.", parent=self)
-            return
+            if show_msg:
+                messagebox.showerror("Validation Error", "Maximum PDF Pages must be a positive integer.", parent=self)
+            return False
             
         try:
             recent_days = int(self._recent_days_var.get().strip())
             if recent_days <= 0: raise ValueError()
         except ValueError:
-            messagebox.showerror("Validation Error", "Recent Days Limit must be a positive integer.", parent=self)
-            return
+            if show_msg:
+                messagebox.showerror("Validation Error", "Recent Days Limit must be a positive integer.", parent=self)
+            return False
 
         if self._custom_prompt_var.get():
             prompt_content = self.prompt_text_box.get("1.0", "end-1c").strip()
             if prompt_content:
                 save_prompt_template(prompt_content)
             else:
-                messagebox.showerror("Validation Error", "Custom AI Prompt Template cannot be empty.", parent=self)
-                return
+                if show_msg:
+                    messagebox.showerror("Validation Error", "Custom AI Prompt Template cannot be empty.", parent=self)
+                return False
 
         global CONFIG
         CONFIG['API_PROVIDER'] = self.provider_map[self._provider_var.get()]
@@ -1734,8 +1749,10 @@ class SettingsDialog(tk.Toplevel):
         
         self.app._check_env()
         
-        self.destroy()
-        messagebox.showinfo("Saved", "Preferences have been saved successfully.", parent=self.app.root)
+        if show_msg:
+            self.destroy()
+            messagebox.showinfo("Saved", "Preferences have been saved successfully.", parent=self.app.root)
+        return True
         
     def _on_close(self):
         self.grab_release()
