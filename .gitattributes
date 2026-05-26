@@ -9,3 +9,7 @@ RULES.md export-ignore
 image/ export-ignore
 dist/ export-ignore
 __pycache__/ export-ignore
+palette.md export-ignore
+prompt_template.txt export-ignore
+app_icon* export-ignore
+LICENSE export-ignore

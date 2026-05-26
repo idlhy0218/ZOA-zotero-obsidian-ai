@@ -1,6 +1,8 @@
 # ZOA (Zotero-Obsidian-AI Summary) v1.0-beta
 
-![Downloads](https://img.shields.io/github/downloads/idlhy0218/ZOA-zotero-obsidian-ai/total?style=flat-square)
+![Downloads](https://img.shields.io/github/downloads/idlhy0218/ZOA-zotero-obsidian-ai/total?style=flat-square&color=615478)
+[![지원 플랫폼](https://img.shields.io/badge/플랫폼-Windows%20%7C%20macOS-A40808?style=flat-square)](#설치-및-실행)
+[![파이썬 버전](https://img.shields.io/badge/파이썬-3.11+-615478?style=flat-square)](#설치-및-실행)
 
 Zotero, Obsidian, 그리고 다중 AI(Gemini, Claude, OpenAI, DeepSeek)를 연동하는 학술 논문 자동 요약 파이프라인입니다. 로컬 Zotero 라이브러리에서 논문 정보를 조회하고 PDF 본문을 추출하여, 선택한 AI 모델로 구조화된 요약 마크다운 문서를 생성한 후 Obsidian 보관소에 자동 저장합니다.
 
@@ -27,7 +29,7 @@ https://github.com/user-attachments/assets/3697a18f-aa96-4cc1-a27d-a22d59f4feaa
 
 <div align="center">
 
-[![ZOA 다운로드](https://img.shields.io/badge/⬇%20ZOA%20다운로드-v1.0--beta-4A90D9?style=for-the-badge&logo=github&logoColor=white)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)
+[![ZOA 다운로드](https://img.shields.io/badge/⬇%20ZOA%20다운로드-v1.0--beta-A40808?style=for-the-badge&logo=github&logoColor=white)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)
 
 **`ZOA.exe`** (Windows) &nbsp;|&nbsp; **`ZOA-macOS.zip`** (macOS)
 
@@ -45,12 +47,12 @@ https://github.com/user-attachments/assets/3697a18f-aa96-4cc1-a27d-a22d59f4feaa
 
 아래 제공사 중 최소 하나에서 API Key를 발급받습니다:
 
-| 제공사 | 링크 |
+| 제공사 | API 발급 링크 |
 |--------|------|
-| Google Gemini | [Google AI Studio](https://aistudio.google.com/app/apikey) |
-| Anthropic Claude | [Anthropic Console](https://console.anthropic.com/) |
-| OpenAI | [OpenAI Platform](https://platform.openai.com/) |
-| DeepSeek | [DeepSeek Platform](https://platform.deepseek.com/) |
+| ![Google Gemini](https://img.shields.io/badge/Google%20Gemini-615478?style=flat-square&logo=google&logoColor=white) | [Google AI Studio](https://aistudio.google.com/app/apikey) |
+| ![Anthropic Claude](https://img.shields.io/badge/Anthropic%20Claude-615478?style=flat-square&logo=anthropic&logoColor=white) | [Anthropic Console](https://console.anthropic.com/) |
+| ![OpenAI](https://img.shields.io/badge/OpenAI-615478?style=flat-square&logo=openai&logoColor=white) | [OpenAI Platform](https://platform.openai.com/) |
+| ![DeepSeek](https://img.shields.io/badge/DeepSeek-615478?style=flat-square) | [DeepSeek Platform](https://platform.deepseek.com/) |
 
 ### 4. 설정 마법사 진행
 

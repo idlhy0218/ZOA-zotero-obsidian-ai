@@ -94,9 +94,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
@@ -107,14 +104,9 @@ jobs:
         with:
           name: ZOA-macOS
 
-      - name: Create source package (Python users)
-        run: |
-          zip ZOA-source.zip zoa.py ZOA.bat README.md README_KOR.md LICENSE .env.template
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ZOA.exe
             ZOA-macOS.zip
-            ZOA-source.zip

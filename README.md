@@ -1,6 +1,8 @@
 # ZOA (Zotero-Obsidian-AI Summary) v1.0-beta
 
-![Downloads](https://img.shields.io/github/downloads/idlhy0218/ZOA-zotero-obsidian-ai/total?style=flat-square)
+![Downloads](https://img.shields.io/github/downloads/idlhy0218/ZOA-zotero-obsidian-ai/total?style=flat-square&color=615478)
+[![Supported Platforms](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-A40808?style=flat-square)](#installation--setup)
+[![Python Version](https://img.shields.io/badge/Python-3.11+-615478?style=flat-square)](#installation--setup)
 
 An automated academic paper summarization pipeline that integrates Zotero, Obsidian, and multiple AI providers. ZOA reads your local Zotero library, extracts PDF content, generates structured AI summaries, and saves them as Markdown notes directly into your Obsidian vault.
 
@@ -29,7 +31,7 @@ https://github.com/user-attachments/assets/ba92afdc-8fcd-4e8a-a1cc-d8e83f8473ff
 
 <div align="center">
 
-[![Download ZOA](https://img.shields.io/badge/⬇%20Download%20ZOA-v1.0--beta-4A90D9?style=for-the-badge&logo=github&logoColor=white)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)
+[![Download ZOA](https://img.shields.io/badge/⬇%20Download%20ZOA-v1.0--beta-A40808?style=for-the-badge&logo=github&logoColor=white)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)
 
 **`ZOA.exe`** for Windows &nbsp;|&nbsp; **`ZOA-macOS.zip`** for macOS
 
@@ -47,12 +49,12 @@ Place the executable in its own dedicated folder (e.g., `ZOA/`). The `.env` conf
 
 Obtain a key from at least one provider:
 
-| Provider | Link |
+| Provider | Access & API Console |
 |----------|------|
-| Google Gemini | [Google AI Studio](https://aistudio.google.com/app/apikey) |
-| Anthropic Claude | [Anthropic Console](https://console.anthropic.com/) |
-| OpenAI | [OpenAI Platform](https://platform.openai.com/) |
-| DeepSeek | [DeepSeek Platform](https://platform.deepseek.com/) |
+| ![Google Gemini](https://img.shields.io/badge/Google%20Gemini-615478?style=flat-square&logo=google&logoColor=white) | [Google AI Studio](https://aistudio.google.com/app/apikey) |
+| ![Anthropic Claude](https://img.shields.io/badge/Anthropic%20Claude-615478?style=flat-square&logo=anthropic&logoColor=white) | [Anthropic Console](https://console.anthropic.com/) |
+| ![OpenAI](https://img.shields.io/badge/OpenAI-615478?style=flat-square&logo=openai&logoColor=white) | [OpenAI Platform](https://platform.openai.com/) |
+| ![DeepSeek](https://img.shields.io/badge/DeepSeek-615478?style=flat-square) | [DeepSeek Platform](https://platform.deepseek.com/) |
 
 ### 4. Run the Setup Wizard
 
