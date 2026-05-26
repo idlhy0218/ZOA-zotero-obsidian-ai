@@ -2882,7 +2882,6 @@ if __name__ == "__main__":
         wizard = SetupWizard(root)
         root.wait_window(wizard)
         # Reload config after wizard saves .env
-        global CONFIG
         CONFIG       = load_config()
         GEMINI_KEY   = CONFIG.get('GEMINI_KEY', '')
         CLAUDE_KEY   = CONFIG.get('CLAUDE_KEY', '')
