@@ -15,15 +15,22 @@ from pathlib import Path
 # App directory & Resource Path — PyInstaller compatible
 # ─────────────────────────────────────────────
 def get_app_dir() -> Path:
-    """Return the folder that contains the exe (or script when developing)."""
-    if getattr(sys, 'frozen', False):   # running as PyInstaller bundle
-        if sys.platform == 'darwin':
-            # On macOS, write configuration to user's home directory under .zoa to avoid read-only bundle/translocation errors
-            path = Path.home() / '.zoa'
-            path.mkdir(parents=True, exist_ok=True)
-            return path
-        return Path(sys.executable).parent
-    return Path(__file__).parent
+    """Return the folder that contains the configuration."""
+    # Check if a local .env exists in the executable's/script's directory first
+    local_path = None
+    if getattr(sys, 'frozen', False):
+        if sys.platform != 'darwin':
+            local_path = Path(sys.executable).resolve().parent
+    else:
+        local_path = Path(__file__).resolve().parent
+
+    if local_path and (local_path / '.env').exists():
+        return local_path
+
+    # Fallback/Default to user's home directory under .zoa
+    home_path = Path.home() / '.zoa'
+    home_path.mkdir(parents=True, exist_ok=True)
+    return home_path
 
 def get_resource_path(relative_path: str) -> Path:
     """Return the absolute path to a resource, compatible with PyInstaller's --onefile mode."""
@@ -2095,6 +2102,17 @@ class ZOAApp:
         self.log_box.delete("1.0", "end")
         self.log_box.config(state="disabled")
 
+        # Get active provider display name and model name from CONFIG
+        prov_code = CONFIG.get('API_PROVIDER', 'gemini')
+        prov_map_rev = {
+            "gemini": "Google Gemini",
+            "claude": "Anthropic Claude",
+            "openai": "OpenAI",
+            "deepseek": "DeepSeek"
+        }
+        prov_name = prov_map_rev.get(prov_code, "Google Gemini")
+        model_name = CONFIG.get('MODEL_NAME', 'gemini-2.5-flash')
+
         threading.Thread(
             target=self._run_pipeline,
             args=(col_names, pdf_path, obs_path, read_full,
@@ -2453,7 +2471,7 @@ class SetupWizard(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.title("Setup — ZOA (Zotero-Obsidian-AI Summary)")
-        self.geometry("560x580")
+        self.geometry("560x640")
         apply_window_icon(self)
 
         self.resizable(False, False)
@@ -2491,13 +2509,13 @@ class SetupWizard(tk.Toplevel):
         self.update_idletasks()
         # Center on screen
         x = (self.winfo_screenwidth()  - 560) // 2
-        y = (self.winfo_screenheight() - 580) // 2
-        self.geometry(f"560x580+{x}+{y}")
+        y = (self.winfo_screenheight() - 640) // 2
+        self.geometry(f"560x640+{x}+{y}")
 
     # ── Layout skeleton ──────────────────────
     def _build(self):
         # Progress bar area
-        self._prog_frame = tk.Frame(self, bg=BG, padx=36, pady=18)
+        self._prog_frame = tk.Frame(self, bg=BG, padx=36, pady=(16, 8))
         self._prog_frame.pack(fill="x")
 
         # Step dots
@@ -2518,7 +2536,7 @@ class SetupWizard(tk.Toplevel):
         nav.pack(side="bottom", fill="x")
 
         # Content area (packed next to fill the remaining space in the middle)
-        self._content = tk.Frame(self, bg=BG, padx=44, pady=24)
+        self._content = tk.Frame(self, bg=BG, padx=44, pady=(12, 16))
         self._content.pack(fill="both", expand=True)
 
         self._back_btn = make_btn_ghost(nav, "← Back", self._prev_step)
