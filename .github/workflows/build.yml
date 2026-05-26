@@ -57,8 +57,26 @@ jobs:
           sips -z 1024 1024 image/logo.png --out app_icon.iconset/icon_512x512@2x.png
           iconutil -c icns app_icon.iconset
 
-      - name: Build macOS app
-        run: pyinstaller --clean --windowed --name "ZOA" --icon="app_icon.icns" --add-data "app_icon.ico:." zoa.py
+      - name: Build macOS app (slimmed)
+        run: |
+          pyinstaller --clean --windowed --name "ZOA" --icon="app_icon.icns" \
+            --add-data "app_icon.ico:." \
+            --exclude-module matplotlib \
+            --exclude-module numpy \
+            --exclude-module pandas \
+            --exclude-module scipy \
+            --exclude-module unittest \
+            --exclude-module email \
+            --exclude-module xmlrpc \
+            --exclude-module pydoc \
+            --exclude-module doctest \
+            --exclude-module difflib \
+            --exclude-module pdb \
+            --exclude-module setuptools \
+            --exclude-module pkg_resources \
+            --exclude-module IPython \
+            --exclude-module jupyter \
+            zoa.py
 
       - name: Zip macOS app
         run: cd dist && zip -r ZOA-macOS.zip ZOA.app
@@ -76,6 +94,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
@@ -86,9 +107,14 @@ jobs:
         with:
           name: ZOA-macOS
 
+      - name: Create source package (Python users)
+        run: |
+          zip ZOA-source.zip zoa.py ZOA.bat README.md README_KOR.md LICENSE .env.template
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ZOA.exe
             ZOA-macOS.zip
+            ZOA-source.zip
