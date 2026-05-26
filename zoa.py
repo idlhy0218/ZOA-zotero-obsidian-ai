@@ -16,21 +16,29 @@ from pathlib import Path
 # ─────────────────────────────────────────────
 def get_app_dir() -> Path:
     """Return the folder that contains the configuration."""
-    # Check if a local .env exists in the executable's/script's directory first
-    local_path = None
+    # 1. On macOS, always use user's home directory (~/.zoa) to avoid read-only bundle/translocation errors
+    if sys.platform == 'darwin':
+        path = Path.home() / '.zoa'
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    # 2. On Windows/Linux, prioritize executable/script directory (portable mode)
     if getattr(sys, 'frozen', False):
-        if sys.platform != 'darwin':
-            local_path = Path(sys.executable).resolve().parent
+        local_path = Path(sys.executable).resolve().parent
     else:
         local_path = Path(__file__).resolve().parent
 
-    if local_path and (local_path / '.env').exists():
+    # Test if the local folder is writable (for first-run .env creation)
+    try:
+        test_file = local_path / '.zoa_write_test'
+        test_file.touch()
+        test_file.unlink()
         return local_path
-
-    # Fallback/Default to user's home directory under .zoa
-    home_path = Path.home() / '.zoa'
-    home_path.mkdir(parents=True, exist_ok=True)
-    return home_path
+    except (IOError, OSError):
+        # Fallback to home directory if local path is not writable (e.g., Program Files, read-only drive)
+        home_path = Path.home() / '.zoa'
+        home_path.mkdir(parents=True, exist_ok=True)
+        return home_path
 
 def get_resource_path(relative_path: str) -> Path:
     """Return the absolute path to a resource, compatible with PyInstaller's --onefile mode."""
