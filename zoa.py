@@ -64,7 +64,15 @@ def load_config():
         'MODEL_NAME': 'gemini-2.5-flash',
         'FILENAME_FMT': 'default',
         'PDF_MAX_PAGES': '30',
-        'SKIP_EMPTY_ABS': 'False'
+        'SKIP_EMPTY_ABS': 'False',
+        'FULL_PDF': 'True',
+        'USE_WIKILINKS': 'True',
+        'USE_RECENT': 'False',
+        'RECENT_DAYS': '7',
+        'DUP_MODE': 'overwrite',
+        'LIMIT': '500',
+        'KEYWORD_COUNT': '5',
+        'CUSTOM_PROMPT': 'False'
     }
     env_path = get_app_dir() / '.env'
     if env_path.exists():
@@ -97,6 +105,14 @@ def save_config(cfg: dict):
             f"FILENAME_FMT={cfg.get('FILENAME_FMT', 'default')}",
             f"PDF_MAX_PAGES={cfg.get('PDF_MAX_PAGES', '30')}",
             f"SKIP_EMPTY_ABS={cfg.get('SKIP_EMPTY_ABS', 'False')}",
+            f"FULL_PDF={cfg.get('FULL_PDF', 'True')}",
+            f"USE_WIKILINKS={cfg.get('USE_WIKILINKS', 'True')}",
+            f"USE_RECENT={cfg.get('USE_RECENT', 'False')}",
+            f"RECENT_DAYS={cfg.get('RECENT_DAYS', '7')}",
+            f"DUP_MODE={cfg.get('DUP_MODE', 'overwrite')}",
+            f"LIMIT={cfg.get('LIMIT', '500')}",
+            f"KEYWORD_COUNT={cfg.get('KEYWORD_COUNT', '5')}",
+            f"CUSTOM_PROMPT={cfg.get('CUSTOM_PROMPT', 'False')}",
         ]
         with open(env_path, 'w', encoding='utf-8') as f:
             f.write('\n'.join(lines) + '\n')
@@ -1175,31 +1191,107 @@ class CollectionPicker(tk.Frame):
 # ─────────────────────────────────────────────
 # Preferences / Settings Dialog
 # ─────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# Preferences / Settings Dialog Helpers
+# ─────────────────────────────────────────────
+def chk_with_tooltip(parent, text, variable, tooltip_text, command=None):
+    row = tk.Frame(parent, bg=BG_CARD)
+    row.pack(fill="x", pady=4)
+    
+    chk = ModernCheckbutton(row, text=text, variable=variable, bg=BG_CARD, fg=FG_MID, font=FONT_LABEL, command=command)
+    chk.pack(side="left")
+    
+    info = CircledExclamation(row, BG_CARD)
+    info.pack(side="left", padx=(5, 0))
+    ToolTip(info, tooltip_text)
+    return chk
+
+def entry_row_with_tooltip(parent, label_text, variable, suffix, tooltip_text):
+    row = tk.Frame(parent, bg=BG_CARD)
+    row.pack(fill="x", pady=6)
+    
+    left = tk.Frame(row, bg=BG_CARD)
+    left.pack(side="left", fill="y", anchor="w")
+    
+    lbl = tk.Label(left, text=label_text, font=FONT_SMALL, fg=FG_DIM, bg=BG_CARD)
+    lbl.pack(side="left")
+    
+    info = CircledExclamation(left, BG_CARD)
+    info.pack(side="left", padx=(5, 0))
+    ToolTip(info, tooltip_text)
+    
+    right = tk.Frame(row, bg=BG_CARD)
+    right.pack(side="right", fill="y", anchor="e")
+    
+    entry = tk.Entry(right, textvariable=variable, width=8, font=FONT_ENTRY,
+                     bg=BG_INPUT, fg=FG, relief="flat", insertbackground=FG,
+                     highlightthickness=1, highlightbackground=BORDER, highlightcolor=ACCENT)
+    entry.pack(side="left", ipady=2)
+    
+    if suffix:
+        tk.Label(right, text=f" {suffix}", font=FONT_SMALL, fg=FG_DIM, bg=BG_CARD).pack(side="left", padx=(4, 0))
+        
+    return entry
+
+
 class SettingsDialog(tk.Toplevel):
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
         self.title("Preferences — ZOA")
-        self.geometry("540x630")
-        self.resizable(False, False)
+        self.geometry("640x700")
+        self.resizable(True, True)
+        self.minsize(580, 500)
         self.configure(bg=BG)
         self.grab_set()
         apply_window_icon(self)
         
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         
+        # Mappings
+        self.provider_map = {
+            "Google Gemini": "gemini",
+            "Anthropic Claude": "claude",
+            "OpenAI": "openai",
+            "DeepSeek": "deepseek"
+        }
+        self.provider_reverse_map = {v: k for k, v in self.provider_map.items()}
+        
         # Load current configuration values
-        self._filename_var = tk.StringVar(value=CONFIG.get('FILENAME_FMT', 'default'))
+        self._provider_var = tk.StringVar(value=self._get_provider_display_name(CONFIG.get('API_PROVIDER', 'gemini')))
+        self._model_var = tk.StringVar(value=CONFIG.get('MODEL_NAME', 'gemini-2.5-flash'))
+        self._custom_prompt_var = tk.BooleanVar(value=CONFIG.get('CUSTOM_PROMPT', 'False') == 'True')
+        
+        self._limit_var = tk.StringVar(value=CONFIG.get('LIMIT', '500'))
+        self._keyword_count_var = tk.StringVar(value=CONFIG.get('KEYWORD_COUNT', '5'))
+        self._dup_var = tk.StringVar(value=CONFIG.get('DUP_MODE', 'overwrite'))
+        self._wikilink_var = tk.BooleanVar(value=CONFIG.get('USE_WIKILINKS', 'True') == 'True')
+        
+        self._full_pdf_var = tk.BooleanVar(value=CONFIG.get('FULL_PDF', 'True') == 'True')
         self._pdf_pages_var = tk.StringVar(value=CONFIG.get('PDF_MAX_PAGES', '30'))
         self._skip_empty_var = tk.BooleanVar(value=CONFIG.get('SKIP_EMPTY_ABS', 'False') == 'True')
+        
+        self._use_recent_var = tk.BooleanVar(value=CONFIG.get('USE_RECENT', 'False') == 'True')
+        self._recent_days_var = tk.StringVar(value=CONFIG.get('RECENT_DAYS', '7'))
+        
+        self._filename_var = tk.StringVar(value=CONFIG.get('FILENAME_FMT', 'default'))
         
         self._build_ui()
         
         # Center on screen
         self.update_idletasks()
-        x = parent.winfo_rootx() + (parent.winfo_width() - 540) // 2
-        y = parent.winfo_rooty() + (parent.winfo_height() - 630) // 2
-        self.geometry(f"540x630+{x}+{y}")
+        x = parent.winfo_rootx() + (parent.winfo_width() - 640) // 2
+        y = parent.winfo_rooty() + (parent.winfo_height() - 700) // 2
+        self.geometry(f"640x700+{x}+{y}")
+        
+    def _get_provider_display_name(self, internal_name):
+        mapping = {
+            "gemini": "Google Gemini",
+            "claude": "Anthropic Claude",
+            "openai": "OpenAI",
+            "deepseek": "DeepSeek"
+        }
+        return mapping.get(internal_name, "Google Gemini")
         
     def _build_ui(self):
         # ── Header
@@ -1208,7 +1300,7 @@ class SettingsDialog(tk.Toplevel):
         inner_hdr = tk.Frame(hdr, bg=BG_CARD, pady=14, padx=24)
         inner_hdr.pack(fill="x")
         tk.Label(inner_hdr, text="ZOA Preferences", font=FONT_H1, fg=FG, bg=BG_CARD).pack(anchor="w")
-        tk.Label(inner_hdr, text="Configure folders, naming patterns, and extraction limits.", font=FONT_SUBNAME, fg=FG_DIM, bg=BG_CARD).pack(anchor="w", pady=(2, 0))
+        tk.Label(inner_hdr, text="Configure folders, naming patterns, models, and limits.", font=FONT_SUBNAME, fg=FG_DIM, bg=BG_CARD).pack(anchor="w", pady=(2, 0))
         
         # ── Scrollable Content Area
         outer_f = tk.Frame(self, bg=BG)
@@ -1221,7 +1313,7 @@ class SettingsDialog(tk.Toplevel):
         vsb.pack(side="right", fill="y")
         canvas.pack(side="left", fill="both", expand=True)
         
-        inner_f = tk.Frame(canvas, bg=BG)
+        self._inner = inner_f = tk.Frame(canvas, bg=BG)
         win_id = canvas.create_window((0, 0), window=inner_f, anchor="nw")
         
         def _configure_inner(e):
@@ -1232,30 +1324,175 @@ class SettingsDialog(tk.Toplevel):
         canvas.bind("<Configure>", lambda e: canvas.itemconfig(win_id, width=e.width))
         
         self._canvas = canvas
-        self._bind_mousewheel(self, self._dialog_scroll)
         
-        # ── 01. File & Paths Card
-        make_section_label(inner_f, "01  Files & Paths")
+        # ── 01. AI Engine Card
+        make_section_label(inner_f, "01  AI Model & Provider")
         c1 = card(inner_f)
         c1.pack(fill="x", pady=(0, 10))
         
-        field_label(c1, "Easily locate configurations and prompt templates:")
+        prov_row = tk.Frame(c1, bg=BG_CARD)
+        prov_row.pack(fill="x", pady=4)
         
-        btn_row = tk.Frame(c1, bg=BG_CARD)
-        btn_row.pack(fill="x", pady=(8, 4))
+        col1 = tk.Frame(prov_row, bg=BG_CARD)
+        col1.pack(side="left", fill="both", expand=True, padx=(0, 10))
         
-        make_btn_ghost(btn_row, "Open .env Directory", self._open_env_dir).pack(side="left", padx=(0, 8), fill="x", expand=True)
-        make_btn_ghost(btn_row, "Open AI Prompt File", self._open_prompt_template).pack(side="left", padx=(0, 8), fill="x", expand=True)
+        lbl1_row = tk.Frame(col1, bg=BG_CARD)
+        lbl1_row.pack(anchor="w", pady=(0, 4))
+        tk.Label(lbl1_row, text="API Provider", font=FONT_SMALL, fg=FG_DIM, bg=BG_CARD).pack(side="left")
+        info1 = CircledExclamation(lbl1_row, BG_CARD)
+        info1.pack(side="left", padx=(5, 0))
+        ToolTip(info1, "Select the AI service provider to generate paper summaries.")
+        
+        self.provider_cb = ttk.Combobox(col1, textvariable=self._provider_var,
+                                        values=list(self.provider_map.keys()),
+                                        state="readonly", font=FONT_LABEL)
+        self.provider_cb.pack(fill="x")
+        self.provider_cb.bind("<<ComboboxSelected>>", self._on_provider_changed)
+        
+        col2 = tk.Frame(prov_row, bg=BG_CARD)
+        col2.pack(side="left", fill="both", expand=True)
+        
+        lbl2_row = tk.Frame(col2, bg=BG_CARD)
+        lbl2_row.pack(anchor="w", pady=(0, 4))
+        tk.Label(lbl2_row, text="Model Name", font=FONT_SMALL, fg=FG_DIM, bg=BG_CARD).pack(side="left")
+        info2 = CircledExclamation(lbl2_row, BG_CARD)
+        info2.pack(side="left", padx=(5, 0))
+        ToolTip(info2, "Select the specific LLM model version. Different models vary in performance, speed, and token cost.")
+        
+        current_provider_name = self._get_provider_display_name(CONFIG.get('API_PROVIDER', 'gemini'))
+        self.model_cb = ttk.Combobox(col2, textvariable=self._model_var,
+                                     values=PROVIDER_MODELS.get(current_provider_name, []),
+                                     state="readonly", font=FONT_LABEL)
+        self.model_cb.pack(fill="x")
+        self.model_cb.bind("<<ComboboxSelected>>", self._on_model_changed)
         
         thin_divider(c1, pady=(12, 12))
         
-        field_label(c1, "Rerun initial setup wizard to re-authenticate keys or directories:")
-        make_btn_primary(c1, "Rerun Setup Wizard", self._rerun_wizard, bg_color=ACCENT_POINT, hover_color=ACCENT_POINT_H).pack(fill="x", pady=(4, 0))
+        self._prompt_chk = chk_with_tooltip(
+            c1, "Customize AI Prompt Template", self._custom_prompt_var,
+            "Enable to edit the system prompt template used for generating summaries.",
+            command=self._toggle_prompt_editor
+        )
         
-        # ── 02. Naming Pattern Card
-        make_section_label(inner_f, "02  Obsidian Filename Format")
+        self.prompt_editor_frame = tk.Frame(c1, bg=BG_CARD)
+        
+        desc_txt = "Available placeholders:  {title}   {content_source}   {keyword_count}   {text}"
+        tk.Label(self.prompt_editor_frame, text=desc_txt, font=FONT_VER,
+                 fg=FG_DIM, bg=BG_CARD).pack(anchor="w", pady=(8, 4))
+                 
+        text_wrap = tk.Frame(self.prompt_editor_frame, bg=BG_INPUT,
+                            bd=1, relief="solid", highlightthickness=0)
+        text_wrap.pack(fill="x", pady=4)
+        
+        text_vsb = ModernScrollbar(text_wrap, command=None, orient="vertical",
+                                   thumb_color=BORDER_MID, hover_color=ACCENT,
+                                   trough_color=BG_INPUT, width=8)
+        text_vsb.pack(side="right", fill="y")
+        
+        self.prompt_text_box = tk.Text(text_wrap, height=10, font=FONT_ENTRY,
+                                       bg=BG_INPUT, fg=FG, insertbackground=FG,
+                                       wrap="word", relief="flat", padx=10, pady=8,
+                                       yscrollcommand=text_vsb.set)
+        self.prompt_text_box.pack(side="left", fill="x", expand=True)
+        text_vsb.command = self.prompt_text_box.yview
+        
+        self.prompt_text_box.insert("1.0", load_prompt_template())
+        
+        action_row = tk.Frame(self.prompt_editor_frame, bg=BG_CARD)
+        action_row.pack(fill="x", pady=(6, 0))
+        
+        make_btn_ghost(action_row, "Reset to Default", self._reset_custom_prompt).pack(side="left")
+        
+        # ── 02. Summarization Preferences Card
+        make_section_label(inner_f, "02  Summarization Preferences")
         c2 = card(inner_f)
         c2.pack(fill="x", pady=(0, 10))
+        
+        self._limit_entry = entry_row_with_tooltip(
+            c2, "Maximum Papers to Process", self._limit_var, "papers",
+            "The maximum number of papers ZOA will process in a single execution. Prevents unexpected API costs."
+        )
+        
+        self._kw_entry = entry_row_with_tooltip(
+            c2, "Keywords to Extract", self._keyword_count_var, "keywords",
+            "The number of scholarly keywords the AI should extract and append to each paper summary."
+        )
+        
+        thin_divider(c2, pady=(10, 10))
+        
+        dup_lbl_row = tk.Frame(c2, bg=BG_CARD)
+        dup_lbl_row.pack(anchor="w", pady=(4, 6))
+        tk.Label(dup_lbl_row, text="Duplicate File Mode", font=FONT_SMALL, fg=FG_DIM, bg=BG_CARD).pack(side="left")
+        dup_info = CircledExclamation(dup_lbl_row, BG_CARD)
+        dup_info.pack(side="left", padx=(5, 0))
+        ToolTip(dup_info, "How ZOA handles Zotero items that already have a summary Markdown file in Obsidian.")
+        
+        dup_modes = [
+            ("overwrite", "Overwrite (replace existing summaries)"),
+            ("skip", "Skip (leave existing summaries untouched)"),
+            ("merge", "Merge (append new sections to existing summaries)")
+        ]
+        for val, desc in dup_modes:
+            rb_row = tk.Frame(c2, bg=BG_CARD)
+            rb_row.pack(fill="x", pady=2)
+            rb = ModernRadiobutton(rb_row, text=desc, variable=self._dup_var, value=val, bg=BG_CARD, fg=FG_MID, font=FONT_LABEL)
+            rb.pack(anchor="w")
+            
+        thin_divider(c2, pady=(10, 10))
+        
+        self._wiki_chk = chk_with_tooltip(
+            c2, "Use [[Wikilinks]] for Collections", self._wikilink_var,
+            "Format Zotero collections inside summaries as Obsidian internal wikilinks [[Collection Name]]."
+        )
+        
+        # ── 03. Text Extraction Options Card
+        make_section_label(inner_f, "03  Text Extraction Options")
+        c3 = card(inner_f)
+        c3.pack(fill="x", pady=(0, 10))
+        
+        self._full_pdf_chk = chk_with_tooltip(
+            c3, "Read Full PDF Content", self._full_pdf_var,
+            "Extract text from attached PDF files to feed to the AI. If disabled, ZOA falls back to the Zotero abstract.",
+            command=self._on_full_pdf_toggled
+        )
+        
+        self._pg_entry = entry_row_with_tooltip(
+            c3, "Maximum PDF Pages to Analyze", self._pdf_pages_var, "pages",
+            "Limits text extraction to the first N pages of PDFs to save API tokens and time."
+        )
+        
+        self._skip_chk = chk_with_tooltip(
+            c3, "Skip papers with empty abstracts in Zotero DB", self._skip_empty_var,
+            "Skip summarization for papers that do not have any abstract text in Zotero."
+        )
+        
+        # ── 04. Recent Papers Filter Card
+        make_section_label(inner_f, "04  Recent Papers Filter")
+        c4 = card(inner_f)
+        c4.pack(fill="x", pady=(0, 10))
+        
+        self._use_recent_chk = chk_with_tooltip(
+            c4, "Only Process Recent Papers", self._use_recent_var,
+            "Limit summarization to papers that were added or modified in Zotero within a specific number of days.",
+            command=self._on_use_recent_toggled
+        )
+        
+        self._recent_days_entry = entry_row_with_tooltip(
+            c4, "Recent Days Limit", self._recent_days_var, "days",
+            "Specify the threshold in days. Only papers newer than this will be processed."
+        )
+        
+        # ── 05. Obsidian Filename Format Card
+        make_section_label(inner_f, "05  Obsidian Filename Format")
+        c5 = card(inner_f)
+        c5.pack(fill="x", pady=(0, 10))
+        
+        fn_lbl_row = tk.Frame(c5, bg=BG_CARD)
+        fn_lbl_row.pack(anchor="w", pady=(0, 6))
+        tk.Label(fn_lbl_row, text="Filename Format Style", font=FONT_SMALL, fg=FG_DIM, bg=BG_CARD).pack(side="left")
+        fn_info = CircledExclamation(fn_lbl_row, BG_CARD)
+        fn_info.pack(side="left", padx=(5, 0))
+        ToolTip(fn_info, "Select the naming style for generated Markdown files in your vault.")
         
         formats = [
             ("default", "Classic ZOA: [Author]_[Year]_[Journal]\n(e.g., Lee_2026_ZOA.md)"),
@@ -1265,28 +1502,44 @@ class SettingsDialog(tk.Toplevel):
         ]
         
         for val, desc in formats:
-            row = tk.Frame(c2, bg=BG_CARD)
+            row = tk.Frame(c5, bg=BG_CARD)
             row.pack(fill="x", pady=6)
             rb = ModernRadiobutton(row, text=desc, variable=self._filename_var, value=val, bg=BG_CARD, fg=FG_MID, font=FONT_LABEL)
             rb.pack(anchor="w")
             
-        # ── 03. Extraction Settings Card
-        make_section_label(inner_f, "03  Text Extraction & Fallbacks")
-        c3 = card(inner_f)
-        c3.pack(fill="x", pady=(0, 15))
+        # ── 06. System Utilities Card
+        sec6_row = tk.Frame(inner_f, bg=BG)
+        sec6_row.pack(fill="x", pady=(22, 7))
+        tk.Label(sec6_row, text="06  SYSTEM UTILITIES", font=FONT_SEC,
+                 fg=FG_DIM, bg=BG).pack(side="left")
+        util_info = CircledExclamation(sec6_row, BG)
+        util_info.pack(side="left", padx=(7, 0))
+        ToolTip(util_info,
+                "Open Config Directory  →  .env file (all keys & folder paths)\n"
+                "Open AI Prompt File    →  prompt_template.txt (system prompt)\n\n"
+                "Keys editable in .env:\n"
+                "  GEMINI_KEY / CLAUDE_KEY / OPENAI_KEY / DEEPSEEK_KEY\n"
+                "  API_PROVIDER   (gemini | claude | openai | deepseek)\n"
+                "  PDF_PATH       (Zotero PDF storage folder)\n"
+                "  OBS_PATH       (Obsidian vault output folder)\n"
+                "  ZOTERO_DB      (path to Zotero SQLite database)\n"
+                "  MODEL_NAME     (e.g. gemini-2.5-flash, gpt-4o)")
+
+        c6 = card(inner_f)
+        c6.pack(fill="x", pady=(0, 15))
         
-        field_label_with_tooltip(c3, "Maximum PDF Pages to Analyze", "ZOA extracts full-text from the first N pages of matched PDFs. Higher values capture more content but increase API token consumption.")
+        field_label(c6, "Easily locate configurations and prompt templates:")
         
-        pg_row = tk.Frame(c3, bg=BG_CARD)
-        pg_row.pack(fill="x", pady=(0, 12))
-        self._pg_entry = tk.Entry(pg_row, textvariable=self._pdf_pages_var, width=10, font=FONT_ENTRY, bg=BG_INPUT, fg=FG, relief="flat", insertbackground=FG, highlightthickness=1, highlightbackground=BORDER, highlightcolor=ACCENT)
-        self._pg_entry.pack(side="left", ipady=4)
-        tk.Label(pg_row, text="pages  (Default: 30)", font=FONT_SMALL, fg=FG_DIM, bg=BG_CARD).pack(side="left", padx=8)
+        btn_row = tk.Frame(c6, bg=BG_CARD)
+        btn_row.pack(fill="x", pady=(8, 4))
         
-        thin_divider(c3, pady=(8, 12))
+        make_btn_ghost(btn_row, "Open .env Directory", self._open_env_dir).pack(side="left", padx=(0, 8), fill="x", expand=True)
+        make_btn_ghost(btn_row, "Open AI Prompt File", self._open_prompt_template).pack(side="left", padx=(0, 8), fill="x", expand=True)
         
-        self._skip_chk = ModernCheckbutton(c3, text="Skip papers with empty abstracts in Zotero DB", variable=self._skip_empty_var, bg=BG_CARD, fg=FG_MID, font=FONT_LABEL)
-        self._skip_chk.pack(anchor="w", pady=4)
+        thin_divider(c6, pady=(12, 12))
+        
+        field_label(c6, "Rerun initial setup wizard to re-authenticate keys or directories:")
+        make_btn_primary(c6, "Rerun Setup Wizard", self._rerun_wizard, bg_color=ACCENT_POINT, hover_color=ACCENT_POINT_H).pack(fill="x", pady=(4, 0))
         
         # ── Footer / Navigation Bar
         ftr_border = tk.Frame(self, bg=BORDER, height=1)
@@ -1297,6 +1550,46 @@ class SettingsDialog(tk.Toplevel):
         
         make_btn_primary(ftr, "Save Settings", self._save_settings).pack(side="right", padx=(8, 0))
         make_btn_ghost(ftr, "Cancel", self._on_close).pack(side="right")
+        
+        # Initialize dynamic view states
+        self._toggle_prompt_editor()
+        self._on_full_pdf_toggled()
+        self._on_use_recent_toggled()
+        
+        # Bind mousewheel scrolling dynamically to all widgets
+        self._bind_mousewheel(self, self._dialog_scroll)
+        
+    def _on_provider_changed(self, event=None):
+        prov_name = self._provider_var.get()
+        models = PROVIDER_MODELS.get(prov_name, [])
+        self.model_cb.config(values=models)
+        if models:
+            self.model_cb.set(models[0])
+            self._model_var.set(models[0])
+            
+    def _on_model_changed(self, event=None):
+        pass
+        
+    def _toggle_prompt_editor(self):
+        if self._custom_prompt_var.get():
+            self.prompt_editor_frame.pack(fill="x", pady=(8, 0))
+        else:
+            self.prompt_editor_frame.pack_forget()
+        self._inner.update_idletasks()
+        self._canvas.configure(scrollregion=self._canvas.bbox("all"))
+        
+    def _on_full_pdf_toggled(self):
+        state = "normal" if self._full_pdf_var.get() else "disabled"
+        self._pg_entry.config(state=state, bg=BG_INPUT if state == "normal" else BORDER)
+        
+    def _on_use_recent_toggled(self):
+        state = "normal" if self._use_recent_var.get() else "disabled"
+        self._recent_days_entry.config(state=state, bg=BG_INPUT if state == "normal" else BORDER)
+        
+    def _reset_custom_prompt(self):
+        self.prompt_text_box.delete("1.0", "end")
+        self.prompt_text_box.insert("1.0", DEFAULT_PROMPT_TEMPLATE)
+        save_prompt_template(DEFAULT_PROMPT_TEMPLATE)
         
     def _open_env_dir(self):
         try:
@@ -1332,7 +1625,6 @@ class SettingsDialog(tk.Toplevel):
             wizard = SetupWizard(self.app.root)
             self.app.root.wait_window(wizard)
             
-            # Reload global configuration
             global CONFIG, GEMINI_KEY, CLAUDE_KEY, OPENAI_KEY, DEEPSEEK_KEY, API_PROVIDER, PDF_PATH, OBS_PATH, ZOTERO_DB, MODEL_NAME
             CONFIG = load_config()
             GEMINI_KEY   = CONFIG.get('GEMINI_KEY', '')
@@ -1348,7 +1640,20 @@ class SettingsDialog(tk.Toplevel):
             self.app._check_env()
             
     def _save_settings(self):
-        # Validate PDF pages entry
+        try:
+            limit = int(self._limit_var.get().strip())
+            if limit <= 0: raise ValueError()
+        except ValueError:
+            messagebox.showerror("Validation Error", "Max Papers Limit must be a positive integer.", parent=self)
+            return
+            
+        try:
+            kw_count = int(self._keyword_count_var.get().strip())
+            if kw_count <= 0: raise ValueError()
+        except ValueError:
+            messagebox.showerror("Validation Error", "Keywords to Extract must be a positive integer.", parent=self)
+            return
+            
         try:
             pages = int(self._pdf_pages_var.get().strip())
             if pages <= 0: raise ValueError()
@@ -1356,13 +1661,51 @@ class SettingsDialog(tk.Toplevel):
             messagebox.showerror("Validation Error", "Maximum PDF Pages must be a positive integer.", parent=self)
             return
             
-        # Update CONFIG globally and save to .env
+        try:
+            recent_days = int(self._recent_days_var.get().strip())
+            if recent_days <= 0: raise ValueError()
+        except ValueError:
+            messagebox.showerror("Validation Error", "Recent Days Limit must be a positive integer.", parent=self)
+            return
+
+        if self._custom_prompt_var.get():
+            prompt_content = self.prompt_text_box.get("1.0", "end-1c").strip()
+            if prompt_content:
+                save_prompt_template(prompt_content)
+            else:
+                messagebox.showerror("Validation Error", "Custom AI Prompt Template cannot be empty.", parent=self)
+                return
+
         global CONFIG
-        CONFIG['FILENAME_FMT'] = self._filename_var.get()
+        CONFIG['API_PROVIDER'] = self.provider_map[self._provider_var.get()]
+        CONFIG['MODEL_NAME'] = self._model_var.get()
+        CONFIG['CUSTOM_PROMPT'] = "True" if self._custom_prompt_var.get() else "False"
+        
+        CONFIG['LIMIT'] = str(limit)
+        CONFIG['KEYWORD_COUNT'] = str(kw_count)
+        CONFIG['DUP_MODE'] = self._dup_var.get()
+        CONFIG['USE_WIKILINKS'] = "True" if self._wikilink_var.get() else "False"
+        
+        CONFIG['FULL_PDF'] = "True" if self._full_pdf_var.get() else "False"
         CONFIG['PDF_MAX_PAGES'] = str(pages)
         CONFIG['SKIP_EMPTY_ABS'] = "True" if self._skip_empty_var.get() else "False"
         
+        CONFIG['USE_RECENT'] = "True" if self._use_recent_var.get() else "False"
+        CONFIG['RECENT_DAYS'] = str(recent_days)
+        
+        CONFIG['FILENAME_FMT'] = self._filename_var.get()
+        
         save_config(CONFIG)
+        
+        global GEMINI_KEY, CLAUDE_KEY, OPENAI_KEY, DEEPSEEK_KEY, API_PROVIDER, MODEL_NAME
+        GEMINI_KEY   = CONFIG.get('GEMINI_KEY', '')
+        CLAUDE_KEY   = CONFIG.get('CLAUDE_KEY', '')
+        OPENAI_KEY   = CONFIG.get('OPENAI_KEY', '')
+        DEEPSEEK_KEY = CONFIG.get('DEEPSEEK_KEY', '')
+        API_PROVIDER = CONFIG.get('API_PROVIDER', 'gemini')
+        MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-2.5-flash')
+        
+        self.app._check_env()
         
         self.destroy()
         messagebox.showinfo("Saved", "Preferences have been saved successfully.", parent=self.app.root)
@@ -1373,7 +1716,7 @@ class SettingsDialog(tk.Toplevel):
         
     def center_window(self):
         self.update_idletasks()
-        w, h = 540, 630
+        w, h = 640, 700
         x = self.master.winfo_rootx() + (self.master.winfo_width() - w) // 2
         y = self.master.winfo_rooty() + (self.master.winfo_height() - h) // 2
         self.geometry(f"{w}x{h}+{x}+{y}")
@@ -1492,154 +1835,8 @@ class ZOAApp:
         self.obs_path_var = tk.StringVar(value=OBS_PATH)
         self._path_row(c2, self.obs_path_var)
 
-        # ─── 03  Options ──────────────────────
-        make_section_label(M, "03  Options")
-        c3 = card(M); c3.pack(fill="x")
-
-        # Toggle row
-        tog_row = tk.Frame(c3, bg=BG_CARD); tog_row.pack(fill="x", pady=(0, 12))
-        self.full_pdf_var = tk.BooleanVar(value=False)
-        self.full_pdf_chk = ModernCheckbutton(tog_row, text="Read full PDF", variable=self.full_pdf_var,
-                                              bg=BG_CARD, fg=FG_MID, font=FONT_LABEL)
-        self.full_pdf_chk.pack(side="left")
-        
-        pdf_info_icon = CircledExclamation(tog_row, BG_CARD)
-        pdf_info_icon.pack(side="left", padx=(5, 0))
-        ToolTip(pdf_info_icon, "If no matching PDF file is found or text extraction fails,\nZOA will automatically fall back to summarizing the Zotero abstract.")
-        
-        self.wikilink_var = tk.BooleanVar(value=False)
-        self._toggle_chk(tog_row, "Auto Wikilinks", self.wikilink_var, pad_left=20)
-
-        thin_divider(c3, (0, 12))
-
-        # Recent filter row
-        rec_row = tk.Frame(c3, bg=BG_CARD); rec_row.pack(fill="x", pady=(0, 12))
-        self.recent_var = tk.BooleanVar(value=False)
-        self._toggle_chk(rec_row, "Recent papers only", self.recent_var,
-                         command=self._toggle_recent)
-        tk.Label(rec_row, text="Days:", font=FONT_LABEL,
-                 fg=FG_DIM, bg=BG_CARD).pack(side="left", padx=(20, 6))
-        self.recent_days_var = tk.StringVar(value="7")
-        self.recent_spin = tk.Spinbox(rec_row, from_=1, to=365,
-                                      textvariable=self.recent_days_var,
-                                      width=4, font=FONT_ENTRY,
-                                      bg=BG_INPUT, fg=FG_DIM, relief="flat",
-                                      highlightthickness=1,
-                                      highlightbackground=BORDER, bd=0,
-                                      buttonbackground=BG,
-                                      state="disabled")
-        self.recent_spin.pack(side="left")
-
-        thin_divider(c3, (0, 12))
-
-        # Duplicate + limit row
-        dup_row = tk.Frame(c3, bg=BG_CARD); dup_row.pack(fill="x", pady=(0, 10))
-        tk.Label(dup_row, text="Duplicate:", font=FONT_LABEL,
-                 fg=FG_DIM, bg=BG_CARD).pack(side="left", padx=(0, 10))
-        self.dup_var = tk.StringVar(value="overwrite")
-        for lbl, val in [("Skip", "skip"), ("Overwrite", "overwrite"), ("Update if newer", "update")]:
-            rb = ModernRadiobutton(dup_row, text=lbl, variable=self.dup_var, value=val,
-                                   bg=BG_CARD, fg=FG_MID, font=FONT_LABEL)
-            rb.pack(side="left", padx=(0, 14))
-
-        lim_row = tk.Frame(c3, bg=BG_CARD); lim_row.pack(fill="x", pady=(0, 10))
-        tk.Label(lim_row, text="Max papers:", font=FONT_LABEL,
-                 fg=FG_DIM, bg=BG_CARD).pack(side="left")
-        self.limit_var = tk.StringVar(value="500")
-        tk.Spinbox(lim_row, from_=1, to=2000, textvariable=self.limit_var,
-                   width=5, font=FONT_ENTRY, bg=BG_INPUT, fg=FG,
-                   relief="flat", highlightthickness=1,
-                   highlightbackground=BORDER, bd=0,
-                   buttonbackground=BG).pack(side="left", padx=(6, 20))
-
-        tk.Label(lim_row, text="Keywords:", font=FONT_LABEL,
-                 fg=FG_DIM, bg=BG_CARD).pack(side="left")
-        self.keyword_count_var = tk.StringVar(value="5")
-        tk.Spinbox(lim_row, from_=1, to=10, textvariable=self.keyword_count_var,
-                   width=3, font=FONT_ENTRY, bg=BG_INPUT, fg=FG,
-                   relief="flat", highlightthickness=1,
-                   highlightbackground=BORDER, bd=0,
-                   buttonbackground=BG).pack(side="left", padx=(6, 20))
-
-        # Multi-provider API Comboboxes
-        prov_row = tk.Frame(c3, bg=BG_CARD); prov_row.pack(fill="x")
-        tk.Label(prov_row, text="Provider:", font=FONT_LABEL,
-                 fg=FG_DIM, bg=BG_CARD).pack(side="left")
-        
-        self.provider_map = {
-            "Google Gemini": "gemini",
-            "Anthropic Claude": "claude",
-            "OpenAI": "openai",
-            "DeepSeek": "deepseek"
-        }
-        self.provider_rev_map = {v: k for k, v in self.provider_map.items()}
-
-        default_provider_name = self.provider_rev_map.get(API_PROVIDER, "Google Gemini")
-        self.provider_var = tk.StringVar(value=default_provider_name)
-        
-        self._apply_combo_style()
-        self.provider_cb = ttk.Combobox(prov_row, textvariable=self.provider_var,
-                                        values=list(PROVIDER_MODELS.keys()), state="readonly",
-                                        font=FONT_ENTRY, width=15)
-        self.provider_cb.pack(side="left", padx=(6, 20))
-        self.provider_cb.bind("<<ComboboxSelected>>", self._on_provider_changed)
-
-        tk.Label(prov_row, text="Model:", font=FONT_LABEL,
-                 fg=FG_DIM, bg=BG_CARD).pack(side="left")
-        self.model_var = tk.StringVar(value=MODEL_NAME)
-        self.model_cb = ttk.Combobox(prov_row, textvariable=self.model_var,
-                                     values=PROVIDER_MODELS[default_provider_name], state="readonly",
-                                     font=FONT_ENTRY, width=22)
-        self.model_cb.pack(side="left", padx=(6, 0))
-        self.model_cb.bind("<<ComboboxSelected>>", self._on_model_changed)
-
-        thin_divider(c3, (12, 12))
-        
-        prompt_opt_row = tk.Frame(c3, bg=BG_CARD)
-        prompt_opt_row.pack(fill="x")
-        
-        self.custom_prompt_var = tk.BooleanVar(value=False)
-        self.custom_prompt_chk = ModernCheckbutton(
-            prompt_opt_row, text="Customize AI Prompt",
-            variable=self.custom_prompt_var, command=self._toggle_prompt_editor,
-            bg=BG_CARD, fg=FG_MID, font=FONT_LABEL, active_color=ACCENT_POINT
-        )
-        self.custom_prompt_chk.pack(side="left")
-
-        self.prompt_editor_frame = tk.Frame(c3, bg=BG_CARD)
-        # Dynamic pack in self._toggle_prompt_editor()
-        
-        desc_txt = "Available placeholders:  {title}   {content_source}   {keyword_count}   {text}"
-        tk.Label(self.prompt_editor_frame, text=desc_txt, font=FONT_VER,
-                 fg=FG_DIM, bg=BG_CARD).pack(anchor="w", pady=(8, 4))
-                 
-        text_wrap = tk.Frame(self.prompt_editor_frame, bg=BG_INPUT,
-                            bd=1, relief="solid", highlightthickness=0)
-        text_wrap.pack(fill="x", pady=4)
-        
-        text_vsb = ModernScrollbar(text_wrap, command=None, orient="vertical",
-                                   thumb_color=BORDER_MID, hover_color=ACCENT,
-                                   trough_color=BG_INPUT, width=8)
-        text_vsb.pack(side="right", fill="y")
-        
-        self.prompt_text_box = tk.Text(text_wrap, height=12, font=FONT_ENTRY,
-                                       bg=BG_INPUT, fg=FG, insertbackground=FG,
-                                       wrap="word", relief="flat", padx=10, pady=8,
-                                       yscrollcommand=text_vsb.set)
-        self.prompt_text_box.pack(side="left", fill="x", expand=True)
-        text_vsb.command = self.prompt_text_box.yview
-        
-        self.prompt_text_box.insert("1.0", load_prompt_template())
-        
-        action_row = tk.Frame(self.prompt_editor_frame, bg=BG_CARD)
-        action_row.pack(fill="x", pady=(6, 0))
-        
-        make_btn_primary(action_row, "Save Template", self._save_custom_prompt,
-                         bg_color=ACCENT_POINT, hover_color=ACCENT_POINT_H).pack(side="left", padx=(0, 10))
-        make_btn_ghost(action_row, "Reset to Default", self._reset_custom_prompt).pack(side="left")
-
-        # ─── 04  Progress ─────────────────────
-        make_section_label(M, "04  Progress")
+        # ─── 03  Progress ─────────────────────
+        make_section_label(M, "03  Progress")
         c4 = card(M); c4.pack(fill="x")
 
         prog_top = tk.Frame(c4, bg=BG_CARD); prog_top.pack(fill="x", pady=(0, 8))
@@ -1672,8 +1869,8 @@ class ZOAApp:
         tk.Label(btn_row, textvariable=self.status_var,
                  font=FONT_STATUS, fg=FG_DIM, bg=BG).pack(side="left")
 
-        # ─── 05  Log ──────────────────────────
-        make_section_label(M, "05  Execution Log")
+        # ─── 04  Log ──────────────────────────
+        make_section_label(M, "04  Execution Log")
         log_wrap = tk.Frame(M, bg=LOG_BG,
                             bd=1, relief="solid",
                             highlightthickness=0)
@@ -1715,12 +1912,14 @@ class ZOAApp:
     def _on_root_scroll(self, event):
         w = event.widget
         try:
+            toplevel = w.winfo_toplevel()
+            if toplevel != self.root:
+                return
             cur = w
             while cur:
                 if (cur is self._picker._canvas or 
                     cur is self._picker._inner or 
-                    cur is self.log_box or 
-                    cur is self.prompt_text_box):
+                    cur is self.log_box):
                     return
                 cur = cur.master
         except: pass
@@ -1795,51 +1994,7 @@ class ZOAApp:
     def _toggle_all(self):
         self._picker.set_disabled(self.all_var.get())
 
-    def _toggle_recent(self):
-        if self.recent_var.get():
-            self.recent_spin.config(state="normal", fg=FG)
-        else:
-            self.recent_spin.config(state="disabled", fg=FG_DIM)
 
-    def _toggle_prompt_editor(self):
-        if self.custom_prompt_var.get():
-            self.prompt_editor_frame.pack(fill="x", pady=(8, 0))
-        else:
-            self.prompt_editor_frame.pack_forget()
-        self.main.update_idletasks()
-        self._canvas.configure(scrollregion=self._canvas.bbox("all"))
-
-    def _save_custom_prompt(self):
-        content = self.prompt_text_box.get("1.0", "end-1c").strip()
-        if content:
-            save_prompt_template(content)
-            self._log("✓  Custom prompt template saved.", "ok")
-        else:
-            self._log("⚠  Prompt template cannot be empty.", "warn")
-
-    def _reset_custom_prompt(self):
-        self.prompt_text_box.delete("1.0", "end")
-        self.prompt_text_box.insert("1.0", DEFAULT_PROMPT_TEMPLATE)
-        save_prompt_template(DEFAULT_PROMPT_TEMPLATE)
-        self._log("✓  Custom prompt template reset to default.", "ok")
-
-    def _on_provider_changed(self, event=None):
-        prov_name = self.provider_var.get()
-        models = PROVIDER_MODELS[prov_name]
-        self.model_cb.config(values=models)
-        if models:
-            self.model_cb.set(models[0])
-            self.model_var.set(models[0])
-        # Auto-save immediately
-        _cfg = load_config()
-        _cfg['API_PROVIDER'] = self.provider_map[prov_name]
-        _cfg['MODEL_NAME'] = self.model_var.get()
-        save_config(_cfg)
-
-    def _on_model_changed(self, event=None):
-        _cfg = load_config()
-        _cfg['MODEL_NAME'] = self.model_var.get()
-        save_config(_cfg)
 
     def _load_collections(self):
         self._log("Loading collections from local Zotero DB…", "info")
@@ -1898,29 +2053,36 @@ class ZOAApp:
             return
         pdf_path    = self.pdf_path_var.get().strip()
         obs_path    = self.obs_path_var.get().strip()
-        prov_name   = self.provider_var.get()
-        prov_val    = self.provider_map[prov_name]
-        model_name  = self.model_var.get()
         
-        # Auto-save paths and selections to .env
-        _cfg = load_config()
-        _cfg['PDF_PATH'] = pdf_path
-        _cfg['OBS_PATH'] = obs_path
-        _cfg['API_PROVIDER'] = prov_val
-        _cfg['MODEL_NAME'] = model_name
-        save_config(_cfg)
+        # Auto-save paths to CONFIG
+        global CONFIG
+        CONFIG['PDF_PATH'] = pdf_path
+        CONFIG['OBS_PATH'] = obs_path
+        save_config(CONFIG)
         
-        read_full     = self.full_pdf_var.get()
-        limit         = int(self.limit_var.get())
-        keyword_count = int(self.keyword_count_var.get())
-        dup_mode      = self.dup_var.get()
-        use_wiki      = self.wikilink_var.get()
-        use_recent    = self.recent_var.get()
-        recent_days   = int(self.recent_days_var.get()) if use_recent else None
+        # Load settings from CONFIG
+        read_full     = CONFIG.get('FULL_PDF', 'True') == 'True'
+        try:
+            limit = int(CONFIG.get('LIMIT', '500'))
+        except:
+            limit = 500
+        try:
+            keyword_count = int(CONFIG.get('KEYWORD_COUNT', '5'))
+        except:
+            keyword_count = 5
+            
+        dup_mode      = CONFIG.get('DUP_MODE', 'overwrite')
+        use_wiki      = CONFIG.get('USE_WIKILINKS', 'True') == 'True'
+        use_recent    = CONFIG.get('USE_RECENT', 'False') == 'True'
+        try:
+            recent_days = int(CONFIG.get('RECENT_DAYS', '7')) if use_recent else None
+        except:
+            recent_days = 7 if use_recent else None
+            
         if not obs_path:
             self._log("Set Obsidian output folder first.", "err"); return
         if read_full and not pdf_path:
-            self._log("Set PDF folder or disable full PDF mode.", "err"); return
+            self._log("Set PDF folder or disable full PDF mode in Settings.", "err"); return
 
         self.running = True
         self.run_btn.config(state="disabled")
