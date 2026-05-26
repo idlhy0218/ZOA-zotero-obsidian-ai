@@ -2515,8 +2515,8 @@ class SetupWizard(tk.Toplevel):
     # ── Layout skeleton ──────────────────────
     def _build(self):
         # Progress bar area
-        self._prog_frame = tk.Frame(self, bg=BG, padx=36, pady=(16, 8))
-        self._prog_frame.pack(fill="x")
+        self._prog_frame = tk.Frame(self, bg=BG, padx=36)
+        self._prog_frame.pack(fill="x", pady=(16, 8))
 
         # Step dots
         self._dot_frame = tk.Frame(self._prog_frame, bg=BG)
@@ -2532,12 +2532,12 @@ class SetupWizard(tk.Toplevel):
         bottom_border = tk.Frame(self, bg=BORDER, height=1)
         bottom_border.pack(side="bottom", fill="x")
         
-        nav = tk.Frame(self, bg=BG_CARD, padx=36, pady=16)
-        nav.pack(side="bottom", fill="x")
+        nav = tk.Frame(self, bg=BG_CARD, padx=36)
+        nav.pack(side="bottom", fill="x", pady=16)
 
         # Content area (packed next to fill the remaining space in the middle)
-        self._content = tk.Frame(self, bg=BG, padx=44, pady=(12, 16))
-        self._content.pack(fill="both", expand=True)
+        self._content = tk.Frame(self, bg=BG, padx=44)
+        self._content.pack(fill="both", expand=True, pady=(12, 16))
 
         self._back_btn = make_btn_ghost(nav, "← Back", self._prev_step)
         self._back_btn.pack(side="left")
