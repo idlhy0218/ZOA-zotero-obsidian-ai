@@ -2,7 +2,7 @@
 
 ![Downloads](https://img.shields.io/github/downloads/idlhy0218/ZOA-zotero-obsidian-ai/total?style=flat-square)
 
-An automated academic paper summarization pipeline that integrates Zotero, Obsidian, and multiple AI providers (Gemini, Claude, OpenAI, DeepSeek). ZOA reads your local Zotero library, extracts PDF content, generates structured AI summaries, and saves them as Markdown notes directly into your Obsidian vault.
+An automated academic paper summarization pipeline that integrates Zotero, Obsidian, and multiple AI providers. ZOA reads your local Zotero library, extracts PDF content, generates structured AI summaries, and saves them as Markdown notes directly into your Obsidian vault.
 
 > 한국어 설명서: [README_KOR.md](README_KOR.md)
 
@@ -14,69 +14,69 @@ https://github.com/user-attachments/assets/ba92afdc-8fcd-4e8a-a1cc-d8e83f8473ff
 
 ## Requirements
 
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| Zotero | Academic library management | Integrates metadata locally using `zotero.sqlite` |
-| Obsidian | Storing and managing summary notes | Free to download and use |
-| AI API Key | Generating paper summaries | At least one key required (Gemini, Claude, OpenAI, or DeepSeek) |
-| PDF Folder | Extraction of paper full-text | The directory where Zotero stores your PDF files (default `storage` folder or custom folder) |
-
-> 💡 **Activating Full-Text Analysis:** You do not need to use plugins like Zotmoov to organize your PDFs. Whether your PDFs are auto-organized into a custom directory or scattered in Zotero's default storage folder, ZOA will scan the directory **recursively**. Simply set your PDF folder path in the ZOA options to the topmost directory containing your Zotero PDFs, and they will be matched perfectly.
+| Tool | Purpose |
+|------|---------|
+| Zotero | Academic library management (queries `zotero.sqlite` locally) |
+| Obsidian | Storing and managing summary Markdown notes |
+| AI API Key | Generating summaries — at least one key required |
+| PDF Folder | Zotero's PDF storage folder (scanned recursively) |
 
 ---
 
 ## Installation & Setup
 
-### 📥 Download the Latest Release
-* **[Download ZOA (GitHub Releases)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)**
-* Download the build for your OS: `ZOA.exe` (Windows) or `ZOA-macOS.zip` (macOS).
+### 1. Download
 
-https://github.com/user-attachments/assets/f95b8227-991f-4deb-bb5c-d9f9d37b7802
+**[→ Download from GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)**
 
-### 1. Create a Dedicated ZOA Folder
-You must create a dedicated folder named **ZOA** and place the downloaded executable (`ZOA.exe` for Windows, `ZOA-macOS.zip` for macOS) inside it.
-* **[Crucial Requirement]** The executable and the `.env` configuration file (created automatically on first launch) **must always reside in the same folder together.** If you move only the executable to another location (like your Desktop) or separate it from the `.env` file, ZOA will fail to detect your settings and won't run.
-* **[Windows SmartScreen Warning]** When launching `ZOA.exe` for the first time, Windows Defender may display a **"Windows protected your PC"** warning. This is a common warning for unsigned custom executables. You can safely ignore this by clicking **"More info"** and then clicking the **"Run anyway"** button to start the app.
-* **[macOS App Blocked Troubleshooting]** When launching ZOA on macOS for the first time, you may see a **"blocked because it is from an unidentified developer"** warning. You can easily allow the app via System Settings:
-  1. Click the Apple menu () in the top-left corner > **[System Settings]** (or System Preferences).
-  2. Navigate to **[Privacy & Security]**.
-  3. Scroll down to the **"Security"** section.
-  4. Click **[Open Anyway]** next to the blocked ZOA app.
-  5. Authenticate with your password or Touch ID and launch the app.
+Download the build for your OS: `ZOA.exe` (Windows) or `ZOA-macOS.zip` (macOS).
 
+### 2. Create a Dedicated Folder
 
-### 2. Obtain an API Key
-Get an API key from at least one of the following providers:
-* [Google AI Studio](https://aistudio.google.com/app/apikey) — Gemini
-* [Anthropic Console](https://console.anthropic.com/) — Claude
-* [OpenAI Platform](https://platform.openai.com/) — GPT
-* [DeepSeek Platform](https://platform.deepseek.com/) — DeepSeek
+Place the executable in its own dedicated folder (e.g., `ZOA/`). The `.env` config file is created automatically on first launch and **must remain in the same folder as the executable**.
 
-### 3. Run the Setup Wizard & Security Information
-Double-click the executable. On first launch, a Setup Wizard will guide you through entering your API key(s) and folder paths. All settings are saved locally to your `.env` file.
+> **Windows SmartScreen** — Click "More info" → "Run anyway" to bypass the unsigned app warning.
 
-> **⚠️ API Key Privacy & Security Guarantee**
-> The API keys stored in your `.env` file are kept strictly local to your machine. They are **never shared with or transmitted to anyone else.** You can use ZOA with complete peace of mind.
+> **macOS Gatekeeper** — If blocked on first launch, go to **System Settings → Privacy & Security → Security** and click **"Open Anyway"** next to ZOA. Authenticate with your password or Touch ID.
+
+### 3. Get an API Key
+
+Obtain a key from at least one provider:
+
+| Provider | Link |
+|----------|------|
+| Google Gemini | [Google AI Studio](https://aistudio.google.com/app/apikey) |
+| Anthropic Claude | [Anthropic Console](https://console.anthropic.com/) |
+| OpenAI | [OpenAI Platform](https://platform.openai.com/) |
+| DeepSeek | [DeepSeek Platform](https://platform.deepseek.com/) |
+
+### 4. Run the Setup Wizard
+
+Double-click the executable. On first launch, a Setup Wizard will guide you through entering your API key(s) and folder paths. All settings are saved locally to your `.env` file and can be reconfigured anytime via the **⚙ Settings** button.
+
+> **Security**: API keys are stored exclusively in your local `.env` file and are never transmitted to any third party.
 
 ---
 
 ## Features
 
-* **Setup Wizard**: A GUI-based first-run wizard lets beginners configure API keys and folder paths without manually editing any files.
-* **Multi-AI Support & Dynamic Model Switching**: Supports Google Gemini, Anthropic Claude, OpenAI, and DeepSeek. The model dropdown updates automatically when you switch providers.
-* **Multi-Collection Selection**: Browse and search your Zotero collection tree in real time; select multiple folders to summarize at once.
-* **Local DB Integration**: Queries your local `zotero.sqlite` directly — no sync delays, instant results.
-* **Intelligent PDF Matching & Full-Text Summarization**: Automatically matches PDFs using author name, year, and title keywords. When matched, up to 30 pages of PDF text are extracted for precise summarization; falls back to abstract-only mode if no PDF is found.
-* **Structured Academic Summary Format**: Every AI summary is organized into four clear sections — Research Objective, Methodology, Key Results, and Keywords. The number of keywords (1–10, default 5) can be configured directly in the app.
-* **Customizable AI Prompt**: Easily modify the AI summarization prompt template using the integrated collapsible text editor. Supports dynamic placeholder tags like `{title}`, `{content_source}`, `{keyword_count}`, and `{text}`. Custom templates are persistently saved locally in `prompt_template.txt`.
-* **Auto Wikilinks & Tag Linking**: Authors, journals, and tags in the summary are automatically converted to Obsidian `[[wikilinks]]` for knowledge graph integration.
-* **Filtering & Duplicate Handling**: Filter by papers added within the last N days; handle existing notes with Skip, Overwrite, or Update-if-newer modes.
+| Feature | Description |
+|---------|-------------|
+| **Multi-AI Support** | Google Gemini, Anthropic Claude, OpenAI, DeepSeek — switch providers and models from the Settings panel |
+| **Collection Picker** | Search and select multiple Zotero collections in real time |
+| **Full-Text PDF Summarization** | Automatically matches PDFs by author/year/title; extracts up to N pages (configurable) |
+| **Abstract Fallback** | Falls back to abstract-only mode when no PDF is found |
+| **Structured Output** | Every summary is organized into 4 sections: Research Objective, Methodology, Key Results, Keywords |
+| **Custom AI Prompt** | Edit the prompt template directly in the Settings panel; placeholders: `{title}`, `{content_source}`, `{keyword_count}`, `{text}` |
+| **Obsidian Wikilinks** | Authors, journals, and tags auto-converted to `[[wikilinks]]` |
+| **Flexible Filename Formats** | Choose from 4 naming styles (Classic, Title, Year-Author-Title, Author-Year-Title) |
+| **Duplicate Handling** | Overwrite, Skip, or Merge existing summary notes |
+| **Recent Papers Filter** | Process only papers added/modified within the last N days |
+| **⚙ Settings Panel** | Gear icon in the top-right — configure all preferences without touching any files |
 
 ---
 
 ## Output Markdown Structure
-
-Each summary saved to Obsidian follows this template:
 
 ```markdown
 ---
@@ -97,70 +97,42 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 - **Zotero Link**: [Open in Zotero](zotero://select/items/0_XXXXXXXX)
 - **PDF Status**: PDF Found
 - **Zotero Tags**: tag1, tag2
-- **URL**: https://...
 
 ## AI Summary (Full PDF Content)
 
 ### 1. Research Objective
-(Central research question and the population or context under study.)
-
 ### 2. Methodology
-(Data source(s) and sample, key variables, statistical models or analytic strategy.)
-
 ### 3. Key Results
-(Main findings, including direction and magnitude of effects where available.)
-
 ### 4. Keywords
-#Keyword1 #Keyword2 #Keyword3 #Keyword4 #Keyword5
+#Keyword1 #Keyword2 #Keyword3
 
 ---
 ## Original Abstract
-> (The original abstract from Zotero is preserved here.)
+> (Original abstract from Zotero)
 ```
 
 ---
 
 ## FAQ
 
-**Q. Is the Zotmoov plugin required?**  
-No. Even if you don't use Zotmoov, ZOA will work perfectly as long as you point the PDF Folder path in the options to your default Zotero storage folder (usually containing folders of individual items). ZOA recursively scans the directories to match PDFs with paper entries. If no matching PDF is found, ZOA automatically falls back to abstract-based summarization.
+**Q. Is Zotmoov required?**  
+No. Point the PDF Folder to Zotero's default `storage` folder. ZOA scans recursively and matches PDFs automatically.
+
+**Q. Where is my Zotero database?**  
+Leave the field blank in the Setup Wizard. ZOA auto-detects `zotero.sqlite` if Zotero is installed in its default location.
 
 **Q. Will I be charged for API usage?**  
-Charges depend on each provider's pricing policy (Google, Anthropic, OpenAI, DeepSeek). Some offer free tiers. Check each provider's official platform for details.
-
-**Q. I don't know where my Zotero database is. What do I do?**  
-Leave the field blank in the Setup Wizard. If Zotero is installed in its default location, ZOA will detect `zotero.sqlite` automatically.
+Depends on each provider's pricing. Some offer free tiers — check each provider's platform for details.
 
 ---
 
-## Privacy & Security
+## Bug Reports
 
-* **Local Storage Only**: Your API keys and configuration are never sent to any external server. They are stored exclusively in the `.env` file located next to the executable.
-* **Direct Communication**: Paper data and extracted PDF text are sent only to the official AI API endpoint you select (Google, Anthropic, OpenAI, or DeepSeek). No third-party servers are involved.
-
----
-
-## Version History
-
-* **v1.0-beta (Initial Beta Release)**
-  * Full rewrite of the GOZ pipeline with multi-provider API architecture
-  * Support for Google Gemini, Anthropic Claude, OpenAI, and DeepSeek
-  * Dynamic model combobox that updates when switching providers
-  * Lightweight REST client using Python's standard `urllib` library — no heavy SDK dependencies
-  * Structured academic AI prompt: 4-section output (Research Objective / Methodology / Key Results / Keywords)
-  * Keyword count setting added to UI (1–10, default 5)
-
----
-
-## Bug Reports & Feature Requests
-
-If you encounter a bug or have a feature suggestion, please open an issue:
-* **[Report an Issue (GitHub Issues)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/issues)**
-* Include a screenshot of the error and the contents of the **Execution Log** panel at the bottom of the app for faster resolution.
+**[→ Open an Issue on GitHub](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/issues)**  
+Please include a screenshot and the contents of the **Execution Log** panel.
 
 ---
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LICENSE) file for details.  
-Copyright (c) 2026 Heeyoung Lee. All rights reserved.
+[MIT License](LICENSE) — Copyright (c) 2026 Heeyoung Lee.
