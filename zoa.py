@@ -31,6 +31,23 @@ def get_resource_path(relative_path: str) -> Path:
         return Path(sys._MEIPASS) / relative_path
     return Path(__file__).parent / relative_path
 
+def apply_window_icon(window):
+    """Apply the high-resolution app icon to a window (Tk or Toplevel)."""
+    try:
+        icon_path = get_resource_path("app_icon.ico")
+        if icon_path.exists():
+            try:
+                from PIL import Image, ImageTk
+                img = Image.open(icon_path)
+                photo = ImageTk.PhotoImage(img)
+                window.iconphoto(True, photo)
+                window._icon_image = photo
+            except Exception:
+                window.iconbitmap(default=str(icon_path))
+    except Exception:
+        pass
+
+
 # ─────────────────────────────────────────────
 # Config / .env
 # ─────────────────────────────────────────────
@@ -745,6 +762,172 @@ class ModernRadiobutton(tk.Frame):
             self.canvas.delete("all")
             self.canvas.create_oval(1, 1, 17, 17, outline=BORDER_MID, width=1.5)
 
+class ModernScrollbar(tk.Canvas):
+    """A beautiful, premium, custom-colored scrollbar that works on all platforms."""
+    def __init__(self, parent, command=None, orient="vertical", thumb_color="#BABAB4", hover_color="#615478", trough_color=BG, width=10, on_scroll_start=None, **kwargs):
+        self.command = command
+        self.orient = orient
+        self.thumb_color = thumb_color
+        self.hover_color = hover_color
+        self.trough_color = trough_color
+        self.width = width
+        self.on_scroll_start = on_scroll_start
+        
+        super().__init__(parent, width=width if orient == "vertical" else None, 
+                         height=width if orient == "horizontal" else None,
+                         bg=trough_color, highlightthickness=0, bd=0, **kwargs)
+        
+        self.fraction_start = 0.0
+        self.fraction_end = 1.0
+        self._first_y = 0
+        self._first_x = 0
+        self._start_fraction = 0.0
+        self._hover_active = False
+        
+        self.bind("<Button-1>", self._on_trough_click)
+        self.bind("<B1-Motion>", self._on_drag)
+        self.bind("<Enter>", self._on_enter)
+        self.bind("<Leave>", self._on_leave)
+        self.bind("<Configure>", lambda e: self._draw())
+        
+    def set(self, start, end):
+        self.fraction_start = max(0.0, min(1.0, float(start)))
+        self.fraction_end = max(0.0, min(1.0, float(end)))
+        self._draw()
+        
+    def _draw(self):
+        self.delete("all")
+        w = self.winfo_width()
+        h = self.winfo_height()
+        
+        if self.orient == "vertical":
+            if h <= 1: return
+            y1 = int(self.fraction_start * h)
+            y2 = int(self.fraction_end * h)
+            if (y2 - y1) < 15:
+                y2 = y1 + 15
+                if y2 > h:
+                    y2 = h
+                    y1 = h - 15
+            
+            color = self.hover_color if self._hover_active else self.thumb_color
+            pad = 1
+            r = (w - 2 * pad) // 2
+            if r < 1: r = 1
+            
+            if (y2 - y1) >= (2 * r + 2 * pad):
+                self.create_oval(pad, y1 + pad, w - pad - 1, y1 + pad + 2 * r, fill=color, outline="")
+                self.create_rectangle(pad, y1 + pad + r, w - pad - 1, y2 - pad - r, fill=color, outline="")
+                self.create_oval(pad, y2 - pad - 2 * r, w - pad - 1, y2 - pad, fill=color, outline="")
+            else:
+                self.create_rectangle(pad, y1 + pad, w - pad - 1, y2 - pad, fill=color, outline="")
+        else:
+            if w <= 1: return
+            x1 = int(self.fraction_start * w)
+            x2 = int(self.fraction_end * w)
+            if (x2 - x1) < 15:
+                x2 = x1 + 15
+                if x2 > w:
+                    x2 = w
+                    x1 = w - 15
+            
+            color = self.hover_color if self._hover_active else self.thumb_color
+            pad = 1
+            r = (h - 2 * pad) // 2
+            if r < 1: r = 1
+            
+            if (x2 - x1) >= (2 * r + 2 * pad):
+                self.create_oval(x1 + pad, pad, x1 + pad + 2 * r, h - pad - 1, fill=color, outline="")
+                self.create_rectangle(x1 + pad + r, pad, x2 - pad - r, h - pad - 1, fill=color, outline="")
+                self.create_oval(x2 - pad - 2 * r, pad, x2 - pad, h - pad - 1, fill=color, outline="")
+            else:
+                self.create_rectangle(x1 + pad, pad, x2 - pad, h - pad - 1, fill=color, outline="")
+
+    def _on_enter(self, event=None):
+        self._hover_active = True
+        self._draw()
+        
+    def _on_leave(self, event=None):
+        self._hover_active = False
+        self._draw()
+        
+    def _on_trough_click(self, event):
+        if self.on_scroll_start:
+            self.on_scroll_start()
+            
+        h = self.winfo_height()
+        w = self.winfo_width()
+        
+        if self.orient == "vertical":
+            click_y = event.y
+            y1 = int(self.fraction_start * h)
+            y2 = int(self.fraction_end * h)
+            
+            if (y2 - y1) < 15:
+                y2 = y1 + 15
+                if y2 > h:
+                    y2 = h
+                    y1 = h - 15
+            
+            if click_y < y1:
+                if self.command:
+                    self.command("scroll", -1, "pages")
+                self._first_y = click_y
+                self._start_fraction = self.fraction_start
+            elif click_y > y2:
+                if self.command:
+                    self.command("scroll", 1, "pages")
+                self._first_y = click_y
+                self._start_fraction = self.fraction_start
+            else:
+                self._first_y = click_y
+                self._start_fraction = self.fraction_start
+        else:
+            click_x = event.x
+            x1 = int(self.fraction_start * w)
+            x2 = int(self.fraction_end * w)
+            
+            if (x2 - x1) < 15:
+                x2 = x1 + 15
+                if x2 > w:
+                    x2 = w
+                    x1 = w - 15
+            
+            if click_x < x1:
+                if self.command:
+                    self.command("scroll", -1, "pages")
+                self._first_x = click_x
+                self._start_fraction = self.fraction_start
+            elif click_x > x2:
+                if self.command:
+                    self.command("scroll", 1, "pages")
+                self._first_x = click_x
+                self._start_fraction = self.fraction_start
+            else:
+                self._first_x = click_x
+                self._start_fraction = self.fraction_start
+                
+    def _on_drag(self, event):
+        if self.on_scroll_start:
+            self.on_scroll_start()
+            
+        if self.orient == "vertical":
+            h = self.winfo_height()
+            if h <= 1: return
+            dy = event.y - self._first_y
+            fraction_diff = dy / h
+            new_start = max(0.0, min(1.0 - (self.fraction_end - self.fraction_start), self._start_fraction + fraction_diff))
+            if self.command:
+                self.command("moveto", new_start)
+        else:
+            w = self.winfo_width()
+            if w <= 1: return
+            dx = event.x - self._first_x
+            fraction_diff = dx / w
+            new_start = max(0.0, min(1.0 - (self.fraction_end - self.fraction_start), self._start_fraction + fraction_diff))
+            if self.command:
+                self.command("moveto", new_start)
+
 # ─────────────────────────────────────────────
 # Collection Picker Widget
 # ─────────────────────────────────────────────
@@ -786,16 +969,16 @@ class CollectionPicker(tk.Frame):
                               highlightthickness=1, highlightbackground=BORDER)
         list_outer.pack(fill="both", expand=True)
 
-        self._vsb = tk.Scrollbar(list_outer, orient="vertical",
-                                 bg=BG, troughcolor=BG,
-                                 width=8, bd=0, relief="flat")
+        self._vsb = ModernScrollbar(list_outer, command=None, orient="vertical",
+                                    thumb_color=BORDER_MID, hover_color=ACCENT,
+                                    trough_color=BG_CARD, width=8, on_scroll_start=self.stop_smooth_scroll)
         self._vsb.pack(side="right", fill="y", padx=(0, 2), pady=2)
 
         self._canvas = tk.Canvas(list_outer, bg=BG_CARD,
                                  highlightthickness=0,
                                  yscrollcommand=self._vsb.set)
         self._canvas.pack(side="left", fill="both", expand=True)
-        self._vsb.config(command=self._canvas.yview)
+        self._vsb.command = self._canvas.yview
 
         self._inner = tk.Frame(self._canvas, bg=BG_CARD)
         self._win   = self._canvas.create_window((0, 0), window=self._inner, anchor="nw")
@@ -830,12 +1013,50 @@ class CollectionPicker(tk.Frame):
                     c.bind("<MouseWheel>", self._on_mousewheel)
                 w._mw_bound = True
 
+    def stop_smooth_scroll(self):
+        self._scrolling_active = False
+
     def _on_mousewheel(self, event):
-        if sys.platform == 'darwin':
-            scroll_units = -1 * event.delta
-        else:
-            scroll_units = -1 * (event.delta // 120)
-        self._canvas.yview_scroll(scroll_units, "units")
+        if not hasattr(self, "_target_scroll"):
+            self._target_scroll = self._canvas.yview()[0]
+            self._scrolling_active = False
+
+        delta = event.delta
+        bbox = self._canvas.bbox("all")
+        if not bbox:
+            return
+        scroll_height = bbox[3] - bbox[1]
+        view_height = self._canvas.winfo_height()
+        if scroll_height <= view_height:
+            return
+            
+        pixel_step = 80 if sys.platform != 'darwin' else 20
+        multiplier = (delta / 120.0) if sys.platform != 'darwin' else (delta / 3.0)
+        
+        current_y = self._canvas.yview()[0]
+        if not self._scrolling_active:
+            self._target_scroll = current_y
+            
+        change_fraction = -(pixel_step * multiplier) / scroll_height
+        self._target_scroll = max(0.0, min(1.0, self._target_scroll + change_fraction))
+        
+        if not self._scrolling_active:
+            self._scrolling_active = True
+            self._animate_scroll()
+
+    def _animate_scroll(self):
+        if not self._scrolling_active:
+            return
+        current_y = self._canvas.yview()[0]
+        diff = self._target_scroll - current_y
+        if abs(diff) < 0.001:
+            self._canvas.yview_moveto(self._target_scroll)
+            self._scrolling_active = False
+            return
+        step = current_y + diff * 0.2
+        self._canvas.yview_moveto(step)
+        self.after(12, self._animate_scroll)
+
 
     def _on_search(self, *_):
         if not self._all_names: return
@@ -985,15 +1206,15 @@ class ZOAApp:
         outer = tk.Frame(self.root, bg=BG)
         outer.pack(fill="both", expand=True)
 
-        self._main_vsb = tk.Scrollbar(outer, orient="vertical",
-                                      bg=BG, troughcolor=BG,
-                                      width=16, bd=0, relief="flat")
+        self._main_vsb = ModernScrollbar(outer, command=None, orient="vertical",
+                                         thumb_color=BORDER_MID, hover_color=ACCENT,
+                                         trough_color=BG, width=10, on_scroll_start=self.stop_smooth_scroll)
         self._main_vsb.pack(side="right", fill="y")
 
         self._canvas = tk.Canvas(outer, bg=BG, highlightthickness=0,
                                  yscrollcommand=self._main_vsb.set)
         self._canvas.pack(side="left", fill="both", expand=True)
-        self._main_vsb.config(command=self._canvas.yview)
+        self._main_vsb.command = self._canvas.yview
 
         self.main = tk.Frame(self._canvas, bg=BG, padx=30, pady=22)
         self._wid = self._canvas.create_window((0, 0), window=self.main, anchor="nw")
@@ -1164,7 +1385,9 @@ class ZOAApp:
                             bd=1, relief="solid", highlightthickness=0)
         text_wrap.pack(fill="x", pady=4)
         
-        text_vsb = tk.Scrollbar(text_wrap, orient="vertical", width=8, bd=0)
+        text_vsb = ModernScrollbar(text_wrap, command=None, orient="vertical",
+                                   thumb_color=BORDER_MID, hover_color=ACCENT,
+                                   trough_color=BG_INPUT, width=8)
         text_vsb.pack(side="right", fill="y")
         
         self.prompt_text_box = tk.Text(text_wrap, height=12, font=FONT_ENTRY,
@@ -1172,7 +1395,7 @@ class ZOAApp:
                                        wrap="word", relief="flat", padx=10, pady=8,
                                        yscrollcommand=text_vsb.set)
         self.prompt_text_box.pack(side="left", fill="x", expand=True)
-        text_vsb.config(command=self.prompt_text_box.yview)
+        text_vsb.command = self.prompt_text_box.yview
         
         self.prompt_text_box.insert("1.0", load_prompt_template())
         
@@ -1224,8 +1447,9 @@ class ZOAApp:
                             highlightthickness=0)
         log_wrap.pack(fill="both", expand=True, pady=(0, 28))
 
-        vsb_log = tk.Scrollbar(log_wrap, bg=LOG_BG,
-                               troughcolor=LOG_BG, bd=0, width=8)
+        vsb_log = ModernScrollbar(log_wrap, command=None, orient="vertical",
+                                  thumb_color=BORDER_MID, hover_color=ACCENT,
+                                  trough_color=LOG_BG, width=8)
         vsb_log.pack(side="right", fill="y")
 
         self.log_box = tk.Text(log_wrap, height=14, font=FONT_LOG,
@@ -1236,7 +1460,7 @@ class ZOAApp:
                                yscrollcommand=vsb_log.set,
                                state="disabled")
         self.log_box.pack(side="left", fill="both", expand=True)
-        vsb_log.config(command=self.log_box.yview)
+        vsb_log.command = self.log_box.yview
 
         self.log_box.tag_config("ok",   foreground=LOG_OK)
         self.log_box.tag_config("info", foreground=LOG_FG)
@@ -1249,7 +1473,9 @@ class ZOAApp:
         self._log("ZOA initialized.", "ok")
         self._log("Load Zotero collections and configure paths to begin.", "info")
 
-    # ── Helpers ──────────────────────────────
+    def stop_smooth_scroll(self):
+        self._scrolling_active = False
+
     def _on_root_scroll(self, event):
         w = event.widget
         try:
@@ -1263,11 +1489,46 @@ class ZOAApp:
                 cur = cur.master
         except: pass
         
-        if sys.platform == 'darwin':
-            scroll_units = -1 * event.delta
-        else:
-            scroll_units = -1 * (event.delta // 120)
-        self._canvas.yview_scroll(scroll_units, "units")
+        if not hasattr(self, "_target_scroll"):
+            self._target_scroll = self._canvas.yview()[0]
+            self._scrolling_active = False
+
+        delta = event.delta
+        bbox = self._canvas.bbox("all")
+        if not bbox:
+            return
+        scroll_height = bbox[3] - bbox[1]
+        view_height = self._canvas.winfo_height()
+        if scroll_height <= view_height:
+            return
+            
+        pixel_step = 80 if sys.platform != 'darwin' else 20
+        multiplier = (delta / 120.0) if sys.platform != 'darwin' else (delta / 3.0)
+        
+        current_y = self._canvas.yview()[0]
+        if not self._scrolling_active:
+            self._target_scroll = current_y
+            
+        change_fraction = -(pixel_step * multiplier) / scroll_height
+        self._target_scroll = max(0.0, min(1.0, self._target_scroll + change_fraction))
+        
+        if not self._scrolling_active:
+            self._scrolling_active = True
+            self._animate_scroll()
+
+    def _animate_scroll(self):
+        if not self._scrolling_active:
+            return
+        current_y = self._canvas.yview()[0]
+        diff = self._target_scroll - current_y
+        if abs(diff) < 0.001:
+            self._canvas.yview_moveto(self._target_scroll)
+            self._scrolling_active = False
+            return
+        step = current_y + diff * 0.2
+        self._canvas.yview_moveto(step)
+        self.root.after(12, self._animate_scroll)
+
 
     def _toggle_chk(self, parent, text, var, command=None, pad_left=0):
         chk = ModernCheckbutton(parent, text=text, variable=var,
@@ -1771,6 +2032,8 @@ class SetupWizard(tk.Toplevel):
         super().__init__(parent)
         self.title("Setup — ZOA (Zotero-Obsidian-AI Summary)")
         self.geometry("560x580")
+        apply_window_icon(self)
+
         self.resizable(False, False)
         self.configure(bg=BG)
         self.grab_set()                 # modal
@@ -2074,24 +2337,8 @@ if __name__ == "__main__":
         pass
 
     root = tk.Tk()
-    
-    # Set default window and taskbar icon bitmap
-    try:
-        icon_path = get_resource_path("app_icon.ico")
-        if icon_path.exists():
-            # Use PIL to load high-resolution image to prevent pixelation/blurriness in the taskbar
-            try:
-                from PIL import Image, ImageTk
-                img = Image.open(icon_path)
-                photo = ImageTk.PhotoImage(img)
-                root.iconphoto(True, photo)
-                # Keep a reference to prevent garbage collection
-                root._icon_image = photo
-            except Exception:
-                # Fallback to standard iconbitmap if PIL loading fails
-                root.iconbitmap(default=str(icon_path))
-    except:
-        pass
+    apply_window_icon(root)
+
 
     root.withdraw()          # hide main window during setup
 
