@@ -14,13 +14,23 @@ from pathlib import Path
 # ─────────────────────────────────────────────
 # App directory & Resource Path — PyInstaller compatible
 # ─────────────────────────────────────────────
+_APP_DIR_CACHE: Path | None = None  # cached once per session to avoid path switching
+
 def get_app_dir() -> Path:
-    """Return the folder that contains the configuration."""
+    """Return the folder that contains the configuration.
+    Result is cached for the lifetime of the process so that save and load
+    always use the same directory regardless of transient write-test failures.
+    """
+    global _APP_DIR_CACHE
+    if _APP_DIR_CACHE is not None:
+        return _APP_DIR_CACHE
+
     # 1. On macOS, always use user's home directory (~/.zoa) to avoid read-only bundle/translocation errors
     if sys.platform == 'darwin':
         path = Path.home() / '.zoa'
         path.mkdir(parents=True, exist_ok=True)
-        return path
+        _APP_DIR_CACHE = path
+        return _APP_DIR_CACHE
 
     # 2. On Windows/Linux, prioritize executable/script directory (portable mode)
     if getattr(sys, 'frozen', False):
@@ -33,12 +43,14 @@ def get_app_dir() -> Path:
         test_file = local_path / '.zoa_write_test'
         test_file.touch()
         test_file.unlink()
-        return local_path
+        _APP_DIR_CACHE = local_path
     except (IOError, OSError):
         # Fallback to home directory if local path is not writable (e.g., Program Files, read-only drive)
         home_path = Path.home() / '.zoa'
         home_path.mkdir(parents=True, exist_ok=True)
-        return home_path
+        _APP_DIR_CACHE = home_path
+
+    return _APP_DIR_CACHE
 
 def get_resource_path(relative_path: str) -> Path:
     """Return the absolute path to a resource, compatible with PyInstaller's --onefile mode."""
@@ -2746,18 +2758,27 @@ class SetupWizard(tk.Toplevel):
             self._render_step()
 
     def _finish(self):
-        cfg = {field: self._values[field].get().strip() for field in self._values}
+        # Start from the existing config so we preserve all defaults (LIMIT, DUP_MODE, etc.)
+        cfg = load_config()
+
+        # Overlay with values entered in the wizard
+        for field, var in self._values.items():
+            v = var.get().strip()
+            if v:  # only overwrite if the user provided a value
+                cfg[field] = v
+
         cfg["API_PROVIDER"] = self._provider_var.get()
-        
-        # Default model name based on chosen default provider
+
+        # Set a sensible default model for the chosen provider (only when not already set)
         default_models = {
             "gemini": "gemini-2.5-flash",
             "claude": "claude-sonnet-4-6",
             "openai": "gpt-4o-mini",
             "deepseek": "deepseek-chat"
         }
-        cfg["MODEL_NAME"] = default_models.get(cfg["API_PROVIDER"], "gemini-2.5-flash")
-        
+        if not cfg.get("MODEL_NAME"):
+            cfg["MODEL_NAME"] = default_models.get(cfg["API_PROVIDER"], "gemini-2.5-flash")
+
         save_config(cfg)
         self._ok = True
         self.grab_release()
