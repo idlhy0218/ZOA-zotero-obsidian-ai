@@ -6,6 +6,7 @@ prompt_template.txt
 # Developer-only documentation
 README_DEV.md
 RULES.md
+palette.md
 
 # ── Build artifacts ───────────────────────
 # PyInstaller output
