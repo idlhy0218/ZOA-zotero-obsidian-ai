@@ -27,40 +27,41 @@ https://github.com/user-attachments/assets/ba92afdc-8fcd-4e8a-a1cc-d8e83f8473ff
 
 ## Installation & Setup
 
-### 1. Download
+Choose **one** of the two simple ways to get started:
 
-<div align="center">
+### Option A: Pre-compiled App (No Python Required - Recommended)
+1. **Download ZOA:**
+   - Go to [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases) and download **`ZOA.exe`** (Windows) or **`ZOA-macOS.zip`** (macOS).
+2. **Create a Dedicated Folder:**
+   - Create a dedicated folder (e.g., `ZOA/`) and place the downloaded executable inside.
+3. **Run the App:**
+   - Double-click the ZOA app icon to start.
+   - *Windows SmartScreen Bypass:* Click "More info" → "Run anyway".
+   - *macOS Gatekeeper Bypass:* Go to **System Settings → Privacy & Security → Security** and click **"Open Anyway"** under ZOA, then authenticate.
+4. **Complete Setup:**
+   - The Setup Wizard will automatically launch. Enter your settings and API keys. The configuration `.env` file will be created automatically in the same folder.
 
-[![Download ZOA](https://img.shields.io/badge/⬇%20Download%20ZOA-v1.0--beta-A40808?style=for-the-badge&logo=github&logoColor=white)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)
+---
 
-**`ZOA.exe`** for Windows &nbsp;|&nbsp; **`ZOA-macOS.zip`** for macOS
+### Option B: Run from Source Code (Python Installed)
+If you already have Python (3.11+) installed on your system, you can run from the source code:
+1. **Download Source Code:**
+   - Download the Source Code ZIP file from [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases), and extract it.
+2. **Install Dependencies:**
+   - Open your terminal in the extracted folder and run:
+     ```bash
+     pip install google-generativeai pypdf pillow
+     ```
+3. **Run ZOA:**
+   - Start the script by running:
+     ```bash
+     python zoa.py
+     ```
+   - On Windows, you can simply double-click the **`ZOA.bat`** file included in the folder.
+4. **Complete Setup:**
+   - The Setup Wizard will automatically launch. Enter your settings and API keys. The configuration `.env` file will be created automatically in the same folder.
 
-</div>
-
-### 2. Create a Dedicated Folder
-
-Place the executable in its own dedicated folder (e.g., `ZOA/`). The `.env` config file is created automatically on first launch and **must remain in the same folder as the executable**.
-
-> **Windows SmartScreen** — Click "More info" → "Run anyway" to bypass the unsigned app warning.
-
-> **macOS Gatekeeper** — If blocked on first launch, go to **System Settings → Privacy & Security → Security** and click **"Open Anyway"** next to ZOA. Authenticate with your password or Touch ID.
-
-### 3. Get an API Key
-
-Obtain a key from at least one provider:
-
-| Provider | Access & API Console |
-|----------|------|
-| ![Google Gemini](https://img.shields.io/badge/Google%20Gemini-615478?style=flat-square&logo=google&logoColor=white) | [Google AI Studio](https://aistudio.google.com/app/apikey) |
-| ![Anthropic Claude](https://img.shields.io/badge/Anthropic%20Claude-615478?style=flat-square&logo=anthropic&logoColor=white) | [Anthropic Console](https://console.anthropic.com/) |
-| ![OpenAI](https://img.shields.io/badge/OpenAI-615478?style=flat-square&logo=openai&logoColor=white) | [OpenAI Platform](https://platform.openai.com/) |
-| ![DeepSeek](https://img.shields.io/badge/DeepSeek-615478?style=flat-square) | [DeepSeek Platform](https://platform.deepseek.com/) |
-
-### 4. Run the Setup Wizard
-
-Double-click the executable. On first launch, a Setup Wizard will guide you through entering your API key(s) and folder paths. All settings are saved locally to your `.env` file and can be reconfigured anytime via the **⚙ Settings** button.
-
-> **Security**: API keys are stored exclusively in your local `.env` file and are never transmitted to any third party.
+> **Security Note**: All API keys are saved exclusively in your local `.env` file next to the app/script and are never transmitted to any third party.
 
 ---
 

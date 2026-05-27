@@ -25,40 +25,41 @@ https://github.com/user-attachments/assets/3697a18f-aa96-4cc1-a27d-a22d59f4feaa
 
 ## 설치 및 실행
 
-### 1. 다운로드
+아래 두 가지 방법 중 **하나**를 선택하여 쉽게 실행할 수 있습니다:
 
-<div align="center">
+### 방법 A: 빌드된 앱 실행하기 (파이썬 설치 필요 없음 - 추천)
+1. **앱 다운로드:**
+   - [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)로 이동하여 **`ZOA.exe`** (Windows) 또는 **`ZOA-macOS.zip`** (macOS)를 다운로드합니다.
+2. **전용 폴더 생성:**
+   - 별도의 전용 폴더(예: `ZOA/`)를 만들고 다운로드한 실행 파일을 그 안에 넣습니다.
+3. **앱 실행:**
+   - 앱 아이콘을 더블클릭하여 실행합니다.
+   - *Windows 스마트스크린:* 경고창이 뜨면 "추가 정보" → "실행"을 클릭하여 진행합니다.
+   - *macOS Gatekeeper:* 최초 실행 시 차단 메시지가 뜨면 **시스템 설정 → 개인정보 보호 및 보안 → 보안** 섹션에서 ZOA 옆의 **"확인 없이 열기"** 버튼을 클릭하고 비밀번호 또는 Touch ID로 인증합니다.
+4. **설정 마법사 진행:**
+   - 최초 실행 시 자동으로 설정 마법사 화면이 나타납니다. 안내에 따라 키와 폴더 경로를 입력하면, 해당 폴더 안에 설정 파일(`.env`)이 자동으로 안전하게 생성됩니다.
 
-[![ZOA 다운로드](https://img.shields.io/badge/⬇%20ZOA%20다운로드-v1.0--beta-A40808?style=for-the-badge&logo=github&logoColor=white)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)
+---
 
-**`ZOA.exe`** (Windows) &nbsp;|&nbsp; **`ZOA-macOS.zip`** (macOS)
+### 방법 B: 소스 코드로 실행하기 (파이썬 설치용)
+파이썬(3.11 이상)이 이미 설치되어 있다면, 소스 코드를 직접 다운로드하여 간편하게 실행할 수 있습니다:
+1. **소스 코드 다운로드:**
+   - 본 저장소의 소스 코드 압축파일(ZIP)을 받아 압축을 해제합니다.
+2. **필수 라이브러리 설치:**
+   - 압축을 해제한 폴더에서 터미널을 열고 다음 명령어를 실행합니다:
+     ```bash
+     pip install google-generativeai pypdf pillow
+     ```
+3. **프로그램 실행:**
+   - 아래 명령어로 파이썬 코드를 실행합니다:
+     ```bash
+     python zoa.py
+     ```
+   - 윈도우(Windows) 사용자는 폴더 안에 포함된 **`ZOA.bat`** 파일을 더블클릭하여 더욱 간편하게 실행할 수도 있습니다.
+4. **설정 마법사 진행:**
+   - 실행 시 자동으로 설정 마법사 화면으로 연결됩니다. 안내에 따라 설정을 입력하면 해당 폴더 안에 설정 파일(`.env`)이 자동으로 안전하게 생성됩니다.
 
-</div>
-
-### 2. 전용 폴더 생성
-
-별도의 전용 폴더(예: `ZOA/`)를 만들고 실행 파일을 그 안에 넣어줍니다. 최초 실행 시 자동 생성되는 `.env` 설정 파일은 **반드시 실행 파일과 같은 폴더에 위치**해야 합니다.
-
-> **Windows 스마트스크린** — 경고창이 뜨면 "추가 정보" → "실행"을 클릭하여 진행합니다.
-
-> **macOS Gatekeeper** — 최초 실행 시 차단 메시지가 뜨면 **시스템 설정 → 개인정보 보호 및 보안 → 보안** 섹션에서 ZOA 옆의 **"확인 없이 열기"** 버튼을 클릭하고 비밀번호 또는 Touch ID로 인증합니다.
-
-### 3. API Key 발급
-
-아래 제공사 중 최소 하나에서 API Key를 발급받습니다:
-
-| 제공사 | API 발급 링크 |
-|--------|------|
-| ![Google Gemini](https://img.shields.io/badge/Google%20Gemini-615478?style=flat-square&logo=google&logoColor=white) | [Google AI Studio](https://aistudio.google.com/app/apikey) |
-| ![Anthropic Claude](https://img.shields.io/badge/Anthropic%20Claude-615478?style=flat-square&logo=anthropic&logoColor=white) | [Anthropic Console](https://console.anthropic.com/) |
-| ![OpenAI](https://img.shields.io/badge/OpenAI-615478?style=flat-square&logo=openai&logoColor=white) | [OpenAI Platform](https://platform.openai.com/) |
-| ![DeepSeek](https://img.shields.io/badge/DeepSeek-615478?style=flat-square) | [DeepSeek Platform](https://platform.deepseek.com/) |
-
-### 4. 설정 마법사 진행
-
-실행 파일을 더블클릭하면 최초 실행 시 설정 마법사가 나타납니다. 안내에 따라 API Key와 폴더 경로를 입력하면 설정이 완료됩니다. 이후에는 우측 상단 **⚙ Settings** 버튼으로 언제든 설정을 변경할 수 있습니다.
-
-> **보안**: API Key는 로컬 `.env` 파일에만 저장되며 외부로 전송되지 않습니다.
+> **보안 안내**: 모든 API Key는 외부로 절대 전송되지 않으며, 앱/스크립트와 같은 폴더 내에 생성되는 로컬 `.env` 파일에만 안전하게 저장됩니다.
 
 ---
 
