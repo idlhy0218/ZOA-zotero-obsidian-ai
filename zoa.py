@@ -512,8 +512,10 @@ Summarize the provided {content_source} of the research paper titled: "{title}".
 State the central research question and the population or context under study.
 
 ### 2. Methodology
-Specify: (a) data source(s) and sample, (b) key variables, \
-(c) statistical models or analytic strategy.
+Specify:
+- (a) data source(s) and sample
+- (b) key variables
+- (c) statistical models or analytic strategy.
 
 ### 3. Key Results
 Report the main findings, including direction and magnitude of effects where available. \
@@ -523,7 +525,10 @@ Prioritize statistically significant results.
 Provide exactly {keyword_count} keywords using # prefix. Apply these rules in order:
 - Include at least 2 methodology keywords (e.g., #DiD, #Fixed-Effects, #Multilevel-Model).
 - Use umbrella/concept terms for substantive topics (e.g., #Substance-Use, not #Opioids).
-- Capitalize the first letter of each word; hyphenate multi-word terms."""
+- Capitalize the first letter of each word; hyphenate multi-word terms.
+
+## Source Text ({content_source})
+{text}"""
 
 def load_prompt_template() -> str:
     path = get_app_dir() / 'prompt_template.txt'
@@ -1667,37 +1672,24 @@ class SettingsDialog(tk.Toplevel):
         self._save_settings(show_msg=False)
 
     def _save_settings(self, show_msg=True):
-        try:
-            limit = int(self._limit_var.get().strip())
-            if limit <= 0: raise ValueError()
-        except ValueError:
-            if show_msg:
-                messagebox.showerror("Validation Error", "Max Papers Limit must be a positive integer.", parent=self)
-            return False
-            
-        try:
-            kw_count = int(self._keyword_count_var.get().strip())
-            if kw_count <= 0: raise ValueError()
-        except ValueError:
-            if show_msg:
-                messagebox.showerror("Validation Error", "Keywords to Extract must be a positive integer.", parent=self)
-            return False
-            
-        try:
-            pages = int(self._pdf_pages_var.get().strip())
-            if pages <= 0: raise ValueError()
-        except ValueError:
-            if show_msg:
-                messagebox.showerror("Validation Error", "Maximum PDF Pages must be a positive integer.", parent=self)
-            return False
-            
-        try:
-            recent_days = int(self._recent_days_var.get().strip())
-            if recent_days <= 0: raise ValueError()
-        except ValueError:
-            if show_msg:
-                messagebox.showerror("Validation Error", "Recent Days Limit must be a positive integer.", parent=self)
-            return False
+        def _val_int(var, name):
+            try:
+                val = int(var.get().strip())
+                if val <= 0: raise ValueError()
+                return val
+            except ValueError:
+                if show_msg:
+                    messagebox.showerror("Validation Error", f"{name} must be a positive integer.", parent=self)
+                return None
+
+        limit = _val_int(self._limit_var, "Max Papers Limit")
+        if limit is None: return False
+        kw_count = _val_int(self._keyword_count_var, "Keywords to Extract")
+        if kw_count is None: return False
+        pages = _val_int(self._pdf_pages_var, "Maximum PDF Pages")
+        if pages is None: return False
+        recent_days = _val_int(self._recent_days_var, "Recent Days Limit")
+        if recent_days is None: return False
 
         if self._custom_prompt_var.get():
             prompt_content = self.prompt_text_box.get("1.0", "end-1c").strip()
@@ -2349,33 +2341,23 @@ class ZOAApp:
                         keyword_count=keyword_count,
                         text=final_text[:50000]
                     )
-                try:
-                    if active_provider == 'gemini':
-                        summary_text = model.generate_content(prompt).text
-                    elif active_provider == 'claude':
-                        summary_text = call_claude_api(active_key, active_model, prompt)
-                    elif active_provider == 'openai':
-                        url = "https://api.openai.com/v1/chat/completions"
-                        summary_text = call_openai_compatible_api(url, active_key, active_model, prompt)
-                    elif active_provider == 'deepseek':
-                        url = "https://api.deepseek.com/v1/chat/completions"
-                        summary_text = call_openai_compatible_api(url, active_key, active_model, prompt)
-                except Exception as e:
-                    self._log(f"       ⚠  Error: {e}. Retrying in 5s…", "warn")
-                    time.sleep(5)
+                summary_text = None
+                for attempt in range(2):
                     try:
                         if active_provider == 'gemini':
                             summary_text = model.generate_content(prompt).text
                         elif active_provider == 'claude':
                             summary_text = call_claude_api(active_key, active_model, prompt)
-                        elif active_provider == 'openai':
-                            url = "https://api.openai.com/v1/chat/completions"
+                        elif active_provider in ('openai', 'deepseek'):
+                            url = f"https://api.{active_provider}.com/v1/chat/completions"
                             summary_text = call_openai_compatible_api(url, active_key, active_model, prompt)
-                        elif active_provider == 'deepseek':
-                            url = "https://api.deepseek.com/v1/chat/completions"
-                            summary_text = call_openai_compatible_api(url, active_key, active_model, prompt)
-                    except Exception as e2:
-                        summary_text = f"Summary Failed: {e2}"
+                        break
+                    except Exception as e:
+                        if attempt == 0:
+                            self._log(f"       ⚠  Error: {e}. Retrying in 5s…", "warn")
+                            time.sleep(5)
+                        else:
+                            summary_text = f"Summary Failed: {e}"
 
                 if use_wiki:
                     kws          = extract_keywords_from_summary(summary_text)
