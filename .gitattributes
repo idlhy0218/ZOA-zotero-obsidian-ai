@@ -3,7 +3,6 @@
 .gitignore export-ignore
 .gitattributes export-ignore
 .env export-ignore
-.env.template export-ignore
 README_DEV.md export-ignore
 RULES.md export-ignore
 image/ export-ignore
@@ -12,4 +11,3 @@ __pycache__/ export-ignore
 palette.md export-ignore
 prompt_template.txt export-ignore
 app_icon* export-ignore
-LICENSE export-ignore
