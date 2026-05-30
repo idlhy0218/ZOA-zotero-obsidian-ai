@@ -2,7 +2,7 @@
 ZOA (Zotero-Obsidian-AI Summary) — v1.0-beta
 
 Copyright (c) 2026 Heeyoung Lee. All rights reserved.
-Licensed under the MIT License. See LICENSE file in the project root for details.
+Licensed under the Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0) License. See LICENSE file in the project root for details.
 """
 
 import tkinter as tk
@@ -1805,7 +1805,7 @@ class ZOAApp:
         right_h = tk.Frame(inner_h, bg=BG_CARD)
         right_h.pack(side="right", fill="y", anchor="se")
         
-        tk.Label(right_h, text="MIT License",
+        tk.Label(right_h, text="CC BY-NC 4.0",
                  font=FONT_VER, fg=FG_LIGHT, bg=BG_CARD).pack(side="left", anchor="center", padx=(0, 15))
                  
         self.settings_btn = ModernButton(right_h, text="⚙ Settings", command=self._open_settings,
