@@ -18,7 +18,7 @@ https://github.com/user-attachments/assets/e27cc9a9-26a7-4494-83bb-c08af3ae6aa0
 | ---------- | ------------------------------------------------------------- |
 | Zotero     | Academic library management (queries `zotero.sqlite` locally) |
 | Obsidian   | Storing and managing summary Markdown notes                   |
-| AI API Key | Generating summaries — at least one key required              |
+| AI API Key | Generating summaries — at least one key required (Stored strictly in local `.env`, never transmitted) |
 | PDF Folder | Zotero's PDF storage folder (scanned recursively)             |
 
 ---
@@ -136,6 +136,9 @@ Leave the field blank in the Setup Wizard. ZOA auto-detects `zotero.sqlite` if Z
 
 **Q. Will I be charged for API usage?**  
 Depends on each provider's pricing. Some offer free tiers — check each provider's platform for details.
+
+**Q. Are my API keys secure?**  
+Yes. All API keys are stored strictly in your local `.env` file (or `~/.zoa/.env` on macOS) on your own machine. They are never transmitted or leaked to any third-party servers.
 
 ---
 

@@ -16,7 +16,7 @@ https://github.com/user-attachments/assets/fe30c80c-78e3-46b9-9714-18456d1b109a
 | ------------- | ---------------------------------------------------------- |
 | Zotero        | 학술 논문 라이브러리 관리 (`zotero.sqlite` 로컬 직접 조회) |
 | Obsidian      | 요약 마크다운 문서 저장 및 관리                            |
-| AI API Key    | 논문 요약 생성 — 최소 하나의 키 필요                       |
+| AI API Key    | 논문 요약 생성 — 최소 하나의 키 필요 (로컬 `.env`에만 저장되며 절대 유출되지 않음) |
 | PDF 파일 폴더 | Zotero PDF 저장 폴더 (하위 폴더 포함 재귀 탐색)            |
 
 ---
@@ -131,6 +131,9 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 
 **Q. API 호출 요금이 발생하나요?**  
 각 제공사(Google, Anthropic, OpenAI, DeepSeek)의 과금 정책에 따라 다릅니다. 일부는 무료 한도를 제공하므로 각 플랫폼을 확인하세요.
+
+**Q. 입력한 API Key가 외부로 유출될 위험이 있나요?**  
+아니요. 모든 API Key는 외부 서버로 절대 전송되지 않으며, 사용자 PC 내부의 로컬 `.env` 파일(macOS의 경우 `~/.zoa/.env`)에만 안전하게 저장됩니다. 안심하고 사용하셔도 됩니다.
 
 ---
 
