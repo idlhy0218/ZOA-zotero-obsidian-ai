@@ -130,7 +130,12 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 설정 마법사의 해당 항목을 빈칸으로 두고 진행하세요. Zotero가 기본 경로에 설치되어 있으면 자동으로 감지됩니다.
 
 **Q. API 호출 요금이 발생하나요?**  
-각 제공사(Google, Anthropic, OpenAI, DeepSeek)의 과금 정책에 따라 다릅니다. 일부는 무료 한도를 제공하므로 각 플랫폼을 확인하세요.
+네, 하지만 비용이 극도로 저렴합니다. 일반적인 **30페이지 분량의 학술 논문 (~25,000 토큰)** 기준, 각 제공사별 엔트리(최저가) 모델의 1회 요약 예상 비용은 다음과 같습니다.
+*   **Google Gemini** (Gemini 2.0/2.5 Flash): **무료** (Google AI Studio Free Tier 활용 시) 또는 **약 4원** ($0.003)
+*   **DeepSeek** (DeepSeek-V3): **약 5원** ($0.0037)
+*   **OpenAI** (gpt-4o-mini): **약 6원** ($0.004)
+*   **Anthropic Claude** (Claude 3.5/4.5 Haiku): **약 30원** ($0.02)
+*(2026년 기준. Claude 4.6 Sonnet 이나 GPT-4o 같은 고성능 플래그십 모델은 1회당 약 90원~110원 수준입니다.)*
 
 **Q. 입력한 API Key가 외부로 유출될 위험이 있나요?**  
 아니요. 모든 API Key는 외부 서버로 절대 전송되지 않으며, 사용자 PC 내부의 로컬 `.env` 파일(macOS의 경우 `~/.zoa/.env`)에만 안전하게 저장됩니다. 안심하고 사용하셔도 됩니다.

@@ -135,7 +135,12 @@ No. Point the PDF Folder to Zotero's default `storage` folder. ZOA scans recursi
 Leave the field blank in the Setup Wizard. ZOA auto-detects `zotero.sqlite` if Zotero is installed in its default location.
 
 **Q. Will I be charged for API usage?**  
-Depends on each provider's pricing. Some offer free tiers — check each provider's platform for details.
+Yes, but it is extremely cheap. For a standard **30-page academic paper (~25,000 tokens)**, the estimated cost per summary using each provider's lowest (entry-level) model is:
+*   **Google Gemini** (Gemini 2.0/2.5 Flash): **Free** (via Google AI Studio Free Tier) or **~$0.003** (~4 KRW)
+*   **DeepSeek** (DeepSeek-V3): **~$0.004** (~5 KRW)
+*   **OpenAI** (gpt-4o-mini): **~$0.004** (~6 KRW)
+*   **Anthropic Claude** (Claude 3.5/4.5 Haiku): **~$0.02** (~30 KRW)
+*(Calculated as of 2026. Higher-end models like Claude 4.6 Sonnet or GPT-4o cost about $0.07 to $0.09 per summary).*
 
 **Q. Are my API keys secure?**  
 Yes. All API keys are stored strictly in your local `.env` file (or `~/.zoa/.env` on macOS) on your own machine. They are never transmitted or leaked to any third-party servers.
