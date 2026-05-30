@@ -148,4 +148,4 @@ Please include a screenshot and the contents of the **Execution Log** panel.
 
 ## License
 
-[MIT License](LICENSE) — Copyright (c) 2026 Heeyoung Lee.
+[CC BY-NC 4.0 License](LICENSE) — Copyright (c) 2026 Heeyoung Lee.

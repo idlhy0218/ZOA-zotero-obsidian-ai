@@ -143,4 +143,4 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 
 ## 라이선스
 
-[MIT 라이선스](LICENSE) — Copyright (c) 2026 Heeyoung Lee.
+[CC BY-NC 4.0 라이선스](LICENSE) — Copyright (c) 2026 Heeyoung Lee.
