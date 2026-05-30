@@ -25,3 +25,18 @@ __pycache__/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# ── IDEs & Editors ────────────────────────
+.vscode/
+.idea/
+*.swp
+
+# ── Python Virtual Environments ──────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Design Assets ─────────────────────────
+# (Note: Excluding image/ from Git tracking)
+image/
