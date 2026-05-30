@@ -25,7 +25,7 @@ https://github.com/user-attachments/assets/fe30c80c-78e3-46b9-9714-18456d1b109a
 
 [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)에서 원하는 형식을 다운로드하거나 아래 방식들을 통해 시작해 보세요.
 
-### 1. AI 코딩 에이전트 자동 설치 (Claude Code, Antigravity 등 - 추천 🚀)
+### 1. AI 코딩 에이전트 자동 설치 (Claude Code, Antigravity 등)
 1. **에이전트에 지시**: 사용 중인 AI 에이전트 채팅창에 본 저장소 링크를 주며 설치 및 구동을 명령합니다:
    > "https://github.com/idlhy0218/ZOA-zotero-obsidian-ai 이 프로젝트 내 PC에 설치하고 실행 환경 세팅해줘."
 2. **자동 구성**: 에이전트가 알아서 저장소 복제(Clone), 가상환경 구성 및 파이썬 패키지 설치를 마칩니다.
