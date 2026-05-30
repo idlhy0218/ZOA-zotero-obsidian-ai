@@ -27,7 +27,7 @@ https://github.com/user-attachments/assets/e27cc9a9-26a7-4494-83bb-c08af3ae6aa0
 
 Go to [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases), choose your preferred format, or get started using one of the methods below.
 
-### 1. Auto-Setup via AI Coding Agent (Claude Code, Antigravity, etc. - Recommended 🚀)
+### 1. Auto-Setup via AI Coding Agent (Claude Code, Antigravity, etc.)
 1. **Command the Agent**: In your AI agent's chat, paste this repository link and ask it to install the project:
    > "Please install and setup https://github.com/idlhy0218/ZOA-zotero-obsidian-ai on my system and run it."
 2. **Automatic Setup**: The agent will automatically clone the repository, build a virtual environment, and install all required python libraries.
