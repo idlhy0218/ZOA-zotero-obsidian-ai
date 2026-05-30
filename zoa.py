@@ -2678,6 +2678,23 @@ class SetupWizard(tk.Toplevel):
             self._skip_btn.config(state="disabled")
 
         elif s.get("type") == "provider":
+            # Automatically detect entered keys and intelligently switch default provider
+            gem = self._saved_data.get("GEMINI_KEY", "").strip()
+            cld = self._saved_data.get("CLAUDE_KEY", "").strip()
+            opn = self._saved_data.get("OPENAI_KEY", "").strip()
+            dps = self._saved_data.get("DEEPSEEK_KEY", "").strip()
+            
+            active_providers = []
+            if gem: active_providers.append("gemini")
+            if cld: active_providers.append("claude")
+            if opn: active_providers.append("openai")
+            if dps: active_providers.append("deepseek")
+            
+            # If only one provider key is supplied, auto-select it as the default choice
+            if len(active_providers) == 1:
+                self._provider_var.set(active_providers[0])
+                self._saved_data["API_PROVIDER"] = active_providers[0]
+
             # Icon + title
             tk.Label(self._content, text=s["icon"], font=("Segoe UI", 32), bg=BG).pack(anchor="w")
             tk.Label(self._content, text=s["title"], font=FONT_H1, fg=FG, bg=BG).pack(anchor="w", pady=(4, 0))
@@ -2827,14 +2844,26 @@ class SetupWizard(tk.Toplevel):
 
         cfg["API_PROVIDER"] = self._saved_data["API_PROVIDER"]
 
-        # Set a sensible default model for the chosen provider (only when not already set)
+        # Set a sensible default model for the chosen provider (only when not already custom set in .env)
         default_models = {
             "gemini": "gemini-2.5-flash",
             "claude": "claude-sonnet-4-6",
             "openai": "gpt-4o-mini",
             "deepseek": "deepseek-chat"
         }
-        if not cfg.get("MODEL_NAME"):
+        
+        has_custom_model = False
+        env_path = get_app_dir() / '.env'
+        if env_path.exists():
+            try:
+                with open(env_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    if "MODEL_NAME=" in content:
+                        has_custom_model = True
+            except:
+                pass
+
+        if not has_custom_model:
             cfg["MODEL_NAME"] = default_models.get(cfg["API_PROVIDER"], "gemini-2.5-flash")
 
         save_config(cfg)
