@@ -7,7 +7,9 @@ An automated academic paper summarization pipeline that integrates Zotero, Obsid
 > ## [Download Latest Release (ZOA.exe / ZOA-macOS.zip)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases/latest)
 
 ---
+
 https://github.com/user-attachments/assets/e27cc9a9-26a7-4494-83bb-c08af3ae6aa0
+
 ---
 
 ## Requirements
