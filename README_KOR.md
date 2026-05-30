@@ -1,14 +1,12 @@
 # ZOA (Zotero-Obsidian-AI Summary) v1.0-beta
 
-Zotero, Obsidian, 그리고 다중 AI(Gemini, Claude, OpenAI, DeepSeek)를 연동하는 학술 논문 자동 요약 파이프라인입니다. 로컬 Zotero 라이브러리에서 논문 정보를 조회하고 PDF 본문을 추출하여, 선택한 AI 모델로 구조화된 요약 마크다운 문서를 생성한 후 Obsidian 보관소에 자동 저장합니다.
+> ## [최신 버전 다운로드 (ZOA.exe / ZOA-macOS.zip)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases/latest)
 
-> ### [최신 버전 다운로드 (ZOA.exe / ZOA-macOS.zip)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases/latest)
->
-> English README: [README.md](README.md)
+Zotero, Obsidian, 그리고 다중 AI(Gemini, Claude, OpenAI, DeepSeek)를 연동하는 학술 논문 자동 요약 파이프라인입니다. 로컬 Zotero 라이브러리에서 논문 정보를 조회하고 PDF 본문을 추출하여, 선택한 AI 모델로 구조화된 요약 마크다운 문서를 생성한 후 Obsidian 보관소에 자동 저장합니다.
 
 ---
 
-https://github.com/user-attachments/assets/3697a18f-aa96-4cc1-a27d-a22d59f4feaa
+https://github.com/user-attachments/assets/fe30c80c-78e3-46b9-9714-18456d1b109a
 
 ---
 
