@@ -1,13 +1,8 @@
 # ZOA (Zotero-Obsidian-AI Summary) v1.0-beta
 
-![Downloads](https://img.shields.io/github/downloads/idlhy0218/ZOA-zotero-obsidian-ai/total?style=flat-square&color=615478)
-[![Supported Platforms](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-A40808?style=flat-square)](#installation--setup)
-[![Python Version](https://img.shields.io/badge/Python-3.11+-615478?style=flat-square)](#installation--setup)
-[![Download Latest Release](https://img.shields.io/badge/Download-Latest%20Release-615478?style=for-the-badge&logo=github)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases/latest)
-
 An automated academic paper summarization pipeline that integrates Zotero, Obsidian, and multiple AI providers. ZOA reads your local Zotero library, extracts PDF content, generates structured AI summaries, and saves them as Markdown notes directly into your Obsidian vault.
 
-> ### 🚀 [Download Latest Release (ZOA.exe / ZOA-macOS.zip)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases/latest)
+> ### [Download Latest Release (ZOA.exe / ZOA-macOS.zip)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases/latest)
 >
 > 한국어 설명서: [README_KOR.md](README_KOR.md)
 
@@ -19,12 +14,12 @@ https://github.com/user-attachments/assets/ba92afdc-8fcd-4e8a-a1cc-d8e83f8473ff
 
 ## Requirements
 
-| Tool | Purpose |
-|------|---------|
-| Zotero | Academic library management (queries `zotero.sqlite` locally) |
-| Obsidian | Storing and managing summary Markdown notes |
-| AI API Key | Generating summaries — at least one key required |
-| PDF Folder | Zotero's PDF storage folder (scanned recursively) |
+| Tool       | Purpose                                                       |
+| ---------- | ------------------------------------------------------------- |
+| Zotero     | Academic library management (queries `zotero.sqlite` locally) |
+| Obsidian   | Storing and managing summary Markdown notes                   |
+| AI API Key | Generating summaries — at least one key required              |
+| PDF Folder | Zotero's PDF storage folder (scanned recursively)             |
 
 ---
 
@@ -33,6 +28,7 @@ https://github.com/user-attachments/assets/ba92afdc-8fcd-4e8a-a1cc-d8e83f8473ff
 Go to [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases), choose your preferred format, and follow the simple steps below.
 
 ### 1. Windows Executable (`ZOA.exe` - Recommended)
+
 1. **Download & Place**: Download `ZOA.exe`, create a dedicated folder (e.g., `ZOA/`), and place the file inside.
 2. **Run ZOA**: Double-click `ZOA.exe` to launch. (If Windows SmartScreen warns you, click "More info" → "Run anyway").
 3. **Setup Wizard**: Follow the auto-launched setup wizard to input your API keys and folder paths.
@@ -40,6 +36,7 @@ Go to [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/rele
 ---
 
 ### 2. macOS App Bundle (`ZOA-macOS.zip`)
+
 1. **Extract**: Download `ZOA-macOS.zip`, extract it, and place `ZOA.app` into a dedicated folder.
 2. **Bypass Gatekeeper**: On first launch, if macOS blocks the app, go to **System Settings → Privacy & Security → Security** and click **"Open Anyway"** under ZOA, then authenticate.
 3. **Setup Wizard**: Complete the setup wizard. Your configuration is safely kept in `~/.zoa/.env`.
@@ -47,6 +44,7 @@ Go to [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/rele
 ---
 
 ### 3. Run from Source (`Source code.zip` - Python 3.11+)
+
 1. **Extract**: Download `Source code.zip` and extract it into a folder.
 2. **Install Dependencies**: Open your terminal in the extracted folder and run:
    ```bash
@@ -63,19 +61,19 @@ Go to [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/rele
 
 ## Features
 
-| Feature | Description |
-|---------|-------------|
-| **Multi-AI Support** | Google Gemini, Anthropic Claude, OpenAI, DeepSeek — switch providers and models from the Settings panel |
-| **Collection Picker** | Search and select multiple Zotero collections in real time |
-| **Full-Text PDF Summarization** | Automatically matches PDFs by author/year/title; extracts up to N pages (configurable) |
-| **Abstract Fallback** | Falls back to abstract-only mode when no PDF is found |
-| **Structured Output** | Every summary is organized into 4 sections: Research Objective, Methodology, Key Results, Keywords |
-| **Custom AI Prompt** | Edit the prompt template directly in the Settings panel; placeholders: `{title}`, `{content_source}`, `{keyword_count}`, `{text}` |
-| **Obsidian Wikilinks** | Authors, journals, and tags auto-converted to `[[wikilinks]]` |
-| **Flexible Filename Formats** | Choose from 4 naming styles (Classic, Title, Year-Author-Title, Author-Year-Title) |
-| **Duplicate Handling** | Overwrite, Skip, or Merge existing summary notes |
-| **Recent Papers Filter** | Process only papers added/modified within the last N days |
-| **⚙ Settings Panel** | Gear icon in the top-right — configure all preferences without touching any files |
+| Feature                         | Description                                                                                                                       |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Multi-AI Support**            | Google Gemini, Anthropic Claude, OpenAI, DeepSeek — switch providers and models from the Settings panel                           |
+| **Collection Picker**           | Search and select multiple Zotero collections in real time                                                                        |
+| **Full-Text PDF Summarization** | Automatically matches PDFs by author/year/title; extracts up to N pages (configurable)                                            |
+| **Abstract Fallback**           | Falls back to abstract-only mode when no PDF is found                                                                             |
+| **Structured Output**           | Every summary is organized into 4 sections: Research Objective, Methodology, Key Results, Keywords                                |
+| **Custom AI Prompt**            | Edit the prompt template directly in the Settings panel; placeholders: `{title}`, `{content_source}`, `{keyword_count}`, `{text}` |
+| **Obsidian Wikilinks**          | Authors, journals, and tags auto-converted to `[[wikilinks]]`                                                                     |
+| **Flexible Filename Formats**   | Choose from 4 naming styles (Classic, Title, Year-Author-Title, Author-Year-Title)                                                |
+| **Duplicate Handling**          | Overwrite, Skip, or Merge existing summary notes                                                                                  |
+| **Recent Papers Filter**        | Process only papers added/modified within the last N days                                                                         |
+| **⚙ Settings Panel**            | Gear icon in the top-right — configure all preferences without touching any files                                                 |
 
 ---
 
@@ -94,6 +92,7 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 # Paper Title
 
 ## Bibliographic Info
+
 - **Authors**: Last, First
 - **Journal**: Journal Name
 - **Date**: 2026
@@ -104,13 +103,19 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 ## AI Summary (Full PDF Content)
 
 ### 1. Research Objective
+
 ### 2. Methodology
+
 ### 3. Key Results
+
 ### 4. Keywords
+
 #Keyword1 #Keyword2 #Keyword3
 
 ---
+
 ## Original Abstract
+
 > (Original abstract from Zotero)
 ```
 
