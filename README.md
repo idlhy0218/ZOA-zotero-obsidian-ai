@@ -25,10 +25,9 @@ https://github.com/user-attachments/assets/ba92afdc-8fcd-4e8a-a1cc-d8e83f8473ff
 
 ## Installation & Setup
 
-Go to [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases), choose your preferred format, and follow the simple steps below.
+Go to [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases), choose your preferred format, or get started using one of the methods below.
 
 ### 1. Windows Executable (`ZOA.exe` - Recommended)
-
 1. **Download & Place**: Download `ZOA.exe`, create a dedicated folder (e.g., `ZOA/`), and place the file inside.
 2. **Run ZOA**: Double-click `ZOA.exe` to launch. (If Windows SmartScreen warns you, click "More info" → "Run anyway").
 3. **Setup Wizard**: Follow the auto-launched setup wizard to input your API keys and folder paths.
@@ -36,15 +35,21 @@ Go to [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/rele
 ---
 
 ### 2. macOS App Bundle (`ZOA-macOS.zip`)
-
 1. **Extract**: Download `ZOA-macOS.zip`, extract it, and place `ZOA.app` into a dedicated folder.
 2. **Bypass Gatekeeper**: On first launch, if macOS blocks the app, go to **System Settings → Privacy & Security → Security** and click **"Open Anyway"** under ZOA, then authenticate.
 3. **Setup Wizard**: Complete the setup wizard. Your configuration is safely kept in `~/.zoa/.env`.
 
 ---
 
-### 3. Run from Source (`Source code.zip` - Python 3.11+)
+### 3. Auto-Setup via AI Coding Agent (Claude Code, Antigravity, etc. - Easiest)
+1. **Command the Agent**: In your AI agent's chat, paste this repository link and ask it to install the project:
+   > "Please install and setup https://github.com/idlhy0218/ZOA-zotero-obsidian-ai on my system and run it."
+2. **Automatic Setup**: The agent will automatically clone the repository, build a virtual environment, and install all required python libraries.
+3. **Answer Prompts**: Answer any questions the agent asks about your API keys or Obsidian paths. The agent will build your `.env` and launch ZOA for you.
 
+---
+
+### 4. Run from Source (`Source code.zip` - Python 3.11+)
 1. **Extract**: Download `Source code.zip` and extract it into a folder.
 2. **Install Dependencies**: Open your terminal in the extracted folder and run:
    ```bash
