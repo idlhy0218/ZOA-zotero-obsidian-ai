@@ -1749,7 +1749,17 @@ class SettingsDialog(tk.Toplevel):
         
     def _dialog_scroll(self, event):
         delta = event.delta
-        scroll_units = -1 * (delta // 120) if sys.platform != 'darwin' else -1 * delta
+        if sys.platform != 'darwin':
+            scroll_units = -1 * (delta // 120)
+        else:
+            # macOS trackpad/Magic Mouse triggers high frequency small deltas.
+            # Scale down the delta by 3 to prevent rapid scrolling, maintaining direction.
+            if delta > 0:
+                scroll_units = -1 * max(1, delta // 3)
+            elif delta < 0:
+                scroll_units = -1 * min(-1, -(-delta // 3))
+            else:
+                scroll_units = 0
         self._canvas.yview_scroll(scroll_units, "units")
 
     def _bind_mousewheel(self, widget, callback):

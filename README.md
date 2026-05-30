@@ -3,9 +3,12 @@
 ![Downloads](https://img.shields.io/github/downloads/idlhy0218/ZOA-zotero-obsidian-ai/total?style=flat-square&color=615478)
 [![Supported Platforms](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-A40808?style=flat-square)](#installation--setup)
 [![Python Version](https://img.shields.io/badge/Python-3.11+-615478?style=flat-square)](#installation--setup)
+[![Download Latest Release](https://img.shields.io/badge/Download-Latest%20Release-615478?style=for-the-badge&logo=github)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases/latest)
 
 An automated academic paper summarization pipeline that integrates Zotero, Obsidian, and multiple AI providers. ZOA reads your local Zotero library, extracts PDF content, generates structured AI summaries, and saves them as Markdown notes directly into your Obsidian vault.
 
+> ### 🚀 [Download Latest Release (ZOA.exe / ZOA-macOS.zip)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases/latest)
+>
 > 한국어 설명서: [README_KOR.md](README_KOR.md)
 
 ---
@@ -27,41 +30,34 @@ https://github.com/user-attachments/assets/ba92afdc-8fcd-4e8a-a1cc-d8e83f8473ff
 
 ## Installation & Setup
 
-Choose **one** of the two simple ways to get started:
+Go to [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases), choose your preferred format, and follow the simple steps below.
 
-### Option A: Pre-compiled App (No Python Required - Recommended)
-1. **Download ZOA:**
-   - Go to [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases) and download **`ZOA.exe`** (Windows) or **`ZOA-macOS.zip`** (macOS).
-2. **Create a Dedicated Folder:**
-   - Create a dedicated folder (e.g., `ZOA/`) and place the downloaded executable inside.
-3. **Run the App:**
-   - Double-click the ZOA app icon to start.
-   - *Windows SmartScreen Bypass:* Click "More info" → "Run anyway".
-   - *macOS Gatekeeper Bypass:* Go to **System Settings → Privacy & Security → Security** and click **"Open Anyway"** under ZOA, then authenticate.
-4. **Complete Setup:**
-   - The Setup Wizard will automatically launch. Enter your settings and API keys. The configuration `.env` file will be created automatically in the same folder.
+### 1. Windows Executable (`ZOA.exe` - Recommended)
+1. **Download & Place**: Download `ZOA.exe`, create a dedicated folder (e.g., `ZOA/`), and place the file inside.
+2. **Run ZOA**: Double-click `ZOA.exe` to launch. (If Windows SmartScreen warns you, click "More info" → "Run anyway").
+3. **Setup Wizard**: Follow the auto-launched setup wizard to input your API keys and folder paths.
 
 ---
 
-### Option B: Run from Source Code (Python Installed)
-If you already have Python (3.11+) installed on your system, you can run from the source code:
-1. **Download Source Code:**
-   - Download the Source Code ZIP file from [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases), and extract it.
-2. **Install Dependencies:**
-   - Open your terminal in the extracted folder and run:
-     ```bash
-     pip install google-generativeai pypdf pillow
-     ```
-3. **Run ZOA:**
-   - Start the script by running:
-     ```bash
-     python zoa.py
-     ```
-   - On Windows, you can simply double-click the **`ZOA.bat`** file included in the folder.
-4. **Complete Setup:**
-   - The Setup Wizard will automatically launch. Enter your settings and API keys. The configuration `.env` file will be created automatically in the same folder.
+### 2. macOS App Bundle (`ZOA-macOS.zip`)
+1. **Extract**: Download `ZOA-macOS.zip`, extract it, and place `ZOA.app` into a dedicated folder.
+2. **Bypass Gatekeeper**: On first launch, if macOS blocks the app, go to **System Settings → Privacy & Security → Security** and click **"Open Anyway"** under ZOA, then authenticate.
+3. **Setup Wizard**: Complete the setup wizard. Your configuration is safely kept in `~/.zoa/.env`.
 
-> **Security Note**: All API keys are saved exclusively in your local `.env` file next to the app/script and are never transmitted to any third party.
+---
+
+### 3. Run from Source (`Source code.zip` - Python 3.11+)
+1. **Extract**: Download `Source code.zip` and extract it into a folder.
+2. **Install Dependencies**: Open your terminal in the extracted folder and run:
+   ```bash
+   pip install google-generativeai pypdf pillow
+   ```
+3. **Run ZOA**: On Windows, double-click **`ZOA.bat`**. On macOS/Linux, run:
+   ```bash
+   python zoa.py
+   ```
+
+> **Security Note**: All API keys are saved exclusively in your local `.env` file (or `~/.zoa/.env` on macOS) and are never transmitted to any third party.
 
 ---
 

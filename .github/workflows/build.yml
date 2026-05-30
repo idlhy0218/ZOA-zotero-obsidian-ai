@@ -71,7 +71,6 @@ jobs:
             --exclude-module pandas \
             --exclude-module scipy \
             --exclude-module unittest \
-            --exclude-module email \
             --exclude-module xmlrpc \
             --exclude-module pydoc \
             --exclude-module doctest \
