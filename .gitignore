@@ -38,5 +38,6 @@ env/
 ENV/
 
 # ── Design Assets ─────────────────────────
-# (Note: Excluding image/ from Git tracking)
+# (Note: Excluding image/ from Git tracking, except for logo.png needed for macOS build)
 image/
+!image/logo.png
