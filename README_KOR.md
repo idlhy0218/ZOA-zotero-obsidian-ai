@@ -1,4 +1,7 @@
 # ZOA (Zotero-Obsidian-AI Summary) v1.0-beta
+<p align="center" bgcolor="white">
+<img width="512" height="512" alt="zoa icon" src="https://github.com/user-attachments/assets/0da8034d-abfb-4371-b023-69b32679e996" />
+</p>
 
 > ## [최신 버전 다운로드 (ZOA.exe / ZOA-macOS.zip)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases/latest)
 
