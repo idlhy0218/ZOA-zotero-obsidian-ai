@@ -1,6 +1,6 @@
 # ZOA (Zotero-Obsidian-AI Summary) v1.0.3
 
-<img width="1971" height="1977" alt="logo" src="https://github.com/user-attachments/assets/c40341ec-86b4-4ef8-be44-1e35ae5032a7" />
+<img width="512" height="512" alt="logo" src="https://github.com/user-attachments/assets/c40341ec-86b4-4ef8-be44-1e35ae5032a7" />
 
 
 > 한국어 설명서: [README_KOR.md](README_KOR.md)
