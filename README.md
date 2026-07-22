@@ -1,4 +1,4 @@
-# ZOA (Zotero-Obsidian-AI Summary) v1.0.1
+# ZOA (Zotero-Obsidian-AI Summary) v1.0.2
 <p align="center" bgcolor="white">
 <img width="512" height="512" alt="zoa icon" src="https://github.com/user-attachments/assets/0da8034d-abfb-4371-b023-69b32679e996" />
 </p>
