@@ -3,8 +3,6 @@
 <img width="512" height="512" alt="zoa icon" src="https://github.com/user-attachments/assets/0da8034d-abfb-4371-b023-69b32679e996" />
 </p>
 
-> ## [최신 버전 다운로드 (ZOA.exe / ZOA-macOS.zip)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases/latest)
-
 Zotero, Obsidian, 그리고 다중 AI(Gemini, Claude, OpenAI, DeepSeek)를 연동하는 학술 논문 자동 요약 파이프라인입니다. 로컬 Zotero 라이브러리에서 논문 정보를 조회하고 PDF 본문을 추출하여, 선택한 AI 모델로 구조화된 요약 마크다운 문서를 생성한 후 Obsidian 보관소에 자동 저장합니다.
 
 ---
@@ -26,9 +24,9 @@ https://github.com/user-attachments/assets/fe30c80c-78e3-46b9-9714-18456d1b109a
 
 ## 설치 및 실행
 
-[GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases)에서 원하는 형식을 다운로드하거나 아래 방식들을 통해 시작해 보세요.
+아래 두 가지 방법 중 하나를 선택하여 ZOA를 설치하고 실행할 수 있습니다.
 
-### 1. AI 코딩 에이전트 자동 설치 (Claude Code, Antigravity 등)
+### 1. AI 코딩 에이전트 자동 설치 (Claude Code, Antigravity, Cursor 등)
 1. **에이전트에 지시**: 사용 중인 AI 에이전트 채팅창에 본 저장소 링크를 주며 설치 및 구동을 명령합니다:
    > "https://github.com/idlhy0218/ZOA-zotero-obsidian-ai 이 프로젝트 내 PC에 설치하고 실행 환경 세팅해줘."
 2. **자동 구성**: 에이전트가 알아서 저장소 복제(Clone), 가상환경 구성 및 파이썬 패키지 설치를 마칩니다.
@@ -36,32 +34,22 @@ https://github.com/user-attachments/assets/fe30c80c-78e3-46b9-9714-18456d1b109a
 
 ---
 
-### 2. Windows 실행 파일 (`ZOA.exe` - 무설치 완제품)
-1. **다운로드 및 배치**: `ZOA.exe`를 다운로드하여 전용 폴더(예: `ZOA/`)를 생성한 뒤 그 안에 넣습니다.
-2. **앱 실행**: `ZOA.exe`를 더블클릭하여 시작합니다. (스마트스크린 경고 시 '추가 정보' → '실행' 클릭)
-3. **설정 완료**: 실행 시 자동으로 나타나는 설정 마법사에 따라 API 키와 경로를 등록하면 실행 준비가 끝납니다.
+### 2. 직접 클론 및 수동 설치 (Python 3.9+ 환경)
 
----
-
-### 3. macOS 실행 파일 (`ZOA-macOS.zip` - 무설치 완제품)
-1. **압축 해제**: `ZOA-macOS.zip`을 다운로드하고 압축을 풀어 `ZOA.app`을 전용 폴더에 넣습니다.
-2. **보안 예외 허용**: 최초 실행 시 Gatekeeper 차단 메시지가 뜨면 **시스템 설정 → 개인정보 보호 및 보안 → 보안** 섹션에서 ZOA 옆의 **"확인 없이 열기"**를 클릭하고 인증합니다.
-3. **설정 완료**: 실행 후 나타나는 설정 마법사에 설정을 입력하면 홈 경로(`~/.zoa/.env`)에 환경설정이 안전하게 저장됩니다.
-
----
-
-### 4. 소스 코드 직접 실행 (`Source code.zip` - 파이썬 3.11+ 환경)
-1. **압축 해제**: `Source code.zip`을 다운로드받아 원하는 경로에 압축을 풉니다.
-2. **의존 라이브러리 설치**: 터미널을 열고 다음 명령어를 실행합니다:
+1. **저장소 클론**:
    ```bash
-   pip install google-generativeai pypdf pillow
+   git clone https://github.com/idlhy0218/ZOA-zotero-obsidian-ai.git
+   cd ZOA-zotero-obsidian-ai
    ```
-3. **프로그램 구동**: 윈도우는 `ZOA.bat`를 더블클릭하고, macOS는 `ZOA.command`를 더블클릭하거나 터미널에서 아래 명령어로 실행합니다:
+
+2. **의존 라이브러리 설치**:
    ```bash
-   chmod +x ZOA.command
-   ./ZOA.command
+   pip install -r requirements.txt
    ```
-   *(또는 터미널에서 `python3 zoa.py` 실행. macOS 시스템 기본 파이썬 실행 중 Tcl/Tk 버전 에러 발생 시 `brew install python python-tk`로 설치 권장)*
+
+3. **프로그램 구동**:
+   - **Windows**: **`ZOA.bat`**를 더블클릭 (또는 터미널에서 `python zoa.py` 실행).
+   - **macOS**: **`ZOA.command`**를 더블클릭 (또는 터미널에서 `./ZOA.command` / `python3 zoa.py` 실행).
 
 > **보안 안내**: 모든 API Key는 외부로 절대 전송되지 않으며, 앱/스크립트가 위치한 폴더 내 로컬 `.env` 파일(macOS는 `~/.zoa/.env`)에만 안전하게 저장됩니다.
 

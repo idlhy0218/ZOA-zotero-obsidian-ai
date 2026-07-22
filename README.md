@@ -7,63 +7,34 @@
 
 An automated academic paper summarization pipeline that integrates Zotero, Obsidian, and multiple AI providers. ZOA reads your local Zotero library, extracts PDF content, generates structured AI summaries, and saves them as Markdown notes directly into your Obsidian vault.
 
-> ## [Download Latest Release (ZOA.exe / ZOA-macOS.zip)](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases/latest)
-
----
-
-https://github.com/user-attachments/assets/e27cc9a9-26a7-4494-83bb-c08af3ae6aa0
-
----
-
-## Requirements
-
-| Tool       | Purpose                                                       |
-| ---------- | ------------------------------------------------------------- |
-| Zotero     | Academic library management (queries `zotero.sqlite` locally) |
-| Obsidian   | Storing and managing summary Markdown notes                   |
-| AI API Key | Generating summaries — at least one key required (Stored strictly in local `.env`, never transmitted) |
-| PDF Folder | Zotero's PDF storage folder (scanned recursively)             |
-
----
-
 ## Installation & Setup
 
-Go to [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/releases), choose your preferred format, or get started using one of the methods below.
+Choose one of the two methods below to install and run ZOA.
 
-### 1. Auto-Setup via AI Coding Agent (Claude Code, Antigravity, etc.)
+### 1. Auto-Setup via AI Coding Agent (Claude Code, Antigravity, Cursor, etc.)
 1. **Command the Agent**: In your AI agent's chat, paste this repository link and ask it to install the project:
    > "Please install and setup https://github.com/idlhy0218/ZOA-zotero-obsidian-ai on my system and run it."
-2. **Automatic Setup**: The agent will automatically clone the repository, build a virtual environment, and install all required python libraries.
+2. **Automatic Setup**: The agent will automatically clone the repository, set up a environment, and install all required python libraries.
 3. **Answer Prompts**: Answer any questions the agent asks about your API keys or Obsidian paths. The agent will build your `.env` and launch ZOA for you.
 
 ---
 
-### 2. Windows Executable (`ZOA.exe` - Portable)
-1. **Download & Place**: Download `ZOA.exe`, create a dedicated folder (e.g., `ZOA/`), and place the file inside.
-2. **Run ZOA**: Double-click `ZOA.exe` to launch. (If Windows SmartScreen warns you, click "More info" → "Run anyway").
-3. **Setup Wizard**: Follow the auto-launched setup wizard to input your API keys and folder paths.
+### 2. Direct Clone & Manual Setup (Python 3.9+)
 
----
-
-### 3. macOS App Bundle (`ZOA-macOS.zip` - Portable)
-1. **Extract**: Download `ZOA-macOS.zip`, extract it, and place `ZOA.app` into a dedicated folder.
-2. **Bypass Gatekeeper**: On first launch, if macOS blocks the app, go to **System Settings → Privacy & Security → Security** and click **"Open Anyway"** under ZOA, then authenticate.
-3. **Setup Wizard**: Complete the setup wizard. Your configuration is safely kept in `~/.zoa/.env`.
-
----
-
-### 4. Run from Source (`Source code.zip` - Python 3.11+)
-1. **Extract**: Download `Source code.zip` and extract it into a folder.
-2. **Install Dependencies**: Open your terminal in the extracted folder and run:
+1. **Clone Repository**:
    ```bash
-   pip install google-generativeai pypdf pillow
+   git clone https://github.com/idlhy0218/ZOA-zotero-obsidian-ai.git
+   cd ZOA-zotero-obsidian-ai
    ```
-3. **Run ZOA**: On Windows, double-click **`ZOA.bat`**. On macOS, double-click **`ZOA.command`** or run:
+
+2. **Install Dependencies**:
    ```bash
-   chmod +x ZOA.command
-   ./ZOA.command
+   pip install -r requirements.txt
    ```
-   *(Or run `python3 zoa.py` in terminal. If macOS Tcl/Tk version error occurs with system Python, install Homebrew Python via `brew install python python-tk`)*
+
+3. **Run ZOA**:
+   - **Windows**: Double-click **`ZOA.bat`** (or run `python zoa.py` in terminal).
+   - **macOS**: Double-click **`ZOA.command`** (or run `./ZOA.command` / `python3 zoa.py` in terminal).
 
 > **Security Note**: All API keys are saved exclusively in your local `.env` file (or `~/.zoa/.env` on macOS) and are never transmitted to any third party.
 
