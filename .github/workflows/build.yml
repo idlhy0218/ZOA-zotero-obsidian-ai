@@ -70,7 +70,6 @@ jobs:
             --exclude-module numpy \
             --exclude-module pandas \
             --exclude-module scipy \
-            --exclude-module unittest \
             --exclude-module xmlrpc \
             --exclude-module pydoc \
             --exclude-module doctest \
