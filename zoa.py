@@ -5,39 +5,45 @@ Copyright (c) 2026 Heeyoung Lee. All rights reserved.
 Licensed under the Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0) License. See LICENSE file in the project root for details.
 """
 
+from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import threading, os, re, time, unicodedata, sys
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Optional
 
 # ─────────────────────────────────────────────
 # App directory & Resource Path — PyInstaller compatible
 # ─────────────────────────────────────────────
-_APP_DIR_CACHE: Path | None = None  # cached once per session to avoid path switching
+_APP_DIR_CACHE: Optional[Path] = None  # cached once per session to avoid path switching
 
 def get_app_dir() -> Path:
     """Return the folder that contains the configuration.
     Result is cached for the lifetime of the process.
-    On macOS, always use user's home directory (~/.zoa) to avoid read-only bundle/translocation errors.
-    On Windows/Linux, always use the executable/script directory (portable mode) as explicitly requested.
+    If a local .env file exists in the executable/script directory, prioritize local directory.
+    Otherwise, on macOS fall back to user's home directory (~/.zoa) to avoid read-only bundle errors.
     """
     global _APP_DIR_CACHE
     if _APP_DIR_CACHE is not None:
         return _APP_DIR_CACHE
 
-    # 1. On macOS, always use user's home directory (~/.zoa)
+    if getattr(sys, 'frozen', False):
+        local_path = Path(sys.executable).resolve().parent
+    else:
+        local_path = Path(__file__).resolve().parent
+
+    # Prioritize local directory if .env exists
+    if (local_path / '.env').exists():
+        _APP_DIR_CACHE = local_path
+        return _APP_DIR_CACHE
+
+    # On macOS fallback to home directory (~/.zoa)
     if sys.platform == 'darwin':
         path = Path.home() / '.zoa'
         path.mkdir(parents=True, exist_ok=True)
         _APP_DIR_CACHE = path
         return _APP_DIR_CACHE
-
-    # 2. On Windows/Linux, prioritize executable/script directory (portable mode)
-    if getattr(sys, 'frozen', False):
-        local_path = Path(sys.executable).resolve().parent
-    else:
-        local_path = Path(__file__).resolve().parent
 
     _APP_DIR_CACHE = local_path
     return _APP_DIR_CACHE
@@ -2892,7 +2898,15 @@ if __name__ == "__main__":
     except:
         pass
 
-    root = tk.Tk()
+    try:
+        root = tk.Tk(className='ZOA')
+        root.title("ZOA")
+    except Exception as e:
+        if "macOS" in str(e) or "Tcl" in str(e) or "16 (1603)" in str(e):
+            print("\n[ERROR] Tcl/Tk version incompatibility detected on macOS.")
+            print("Please install Homebrew Python & Tkinter by running:")
+            print("    brew install python python-tk\n")
+        raise e
     apply_window_icon(root)
 
 

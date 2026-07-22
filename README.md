@@ -58,10 +58,12 @@ Go to [GitHub Releases](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/rele
    ```bash
    pip install google-generativeai pypdf pillow
    ```
-3. **Run ZOA**: On Windows, double-click **`ZOA.bat`**. On macOS/Linux, run:
+3. **Run ZOA**: On Windows, double-click **`ZOA.bat`**. On macOS, double-click **`ZOA.command`** or run:
    ```bash
-   python zoa.py
+   chmod +x ZOA.command
+   ./ZOA.command
    ```
+   *(Or run `python3 zoa.py` in terminal. If macOS Tcl/Tk version error occurs with system Python, install Homebrew Python via `brew install python python-tk`)*
 
 > **Security Note**: All API keys are saved exclusively in your local `.env` file (or `~/.zoa/.env` on macOS) and are never transmitted to any third party.
 

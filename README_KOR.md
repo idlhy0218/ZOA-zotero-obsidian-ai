@@ -56,7 +56,12 @@ https://github.com/user-attachments/assets/fe30c80c-78e3-46b9-9714-18456d1b109a
    ```bash
    pip install google-generativeai pypdf pillow
    ```
-3. **프로그램 구동**: 윈도우는 `ZOA.bat`를 더블클릭하고, macOS/Linux는 `python zoa.py` 명령어로 실행합니다.
+3. **프로그램 구동**: 윈도우는 `ZOA.bat`를 더블클릭하고, macOS는 `ZOA.command`를 더블클릭하거나 터미널에서 아래 명령어로 실행합니다:
+   ```bash
+   chmod +x ZOA.command
+   ./ZOA.command
+   ```
+   *(또는 터미널에서 `python3 zoa.py` 실행. macOS 시스템 기본 파이썬 실행 중 Tcl/Tk 버전 에러 발생 시 `brew install python python-tk`로 설치 권장)*
 
 > **보안 안내**: 모든 API Key는 외부로 절대 전송되지 않으며, 앱/스크립트가 위치한 폴더 내 로컬 `.env` 파일(macOS는 `~/.zoa/.env`)에만 안전하게 저장됩니다.
 
