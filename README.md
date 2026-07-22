@@ -13,10 +13,10 @@ An automated academic paper summarization pipeline that integrates Zotero, Obsid
 Choose one of the two methods below to install and run ZOA.
 
 ### 1. Auto-Setup via AI Coding Agent (Claude Code, Antigravity, Cursor, etc.)
-1. **Command the Agent**: In your AI agent's chat, paste this repository link and ask it to install the project:
-   > "Please install and setup https://github.com/idlhy0218/ZOA-zotero-obsidian-ai on my system and run it."
-2. **Automatic Setup**: The agent will automatically clone the repository, set up a environment, and install all required python libraries.
-3. **Answer Prompts**: Answer any questions the agent asks about your API keys or Obsidian paths. The agent will build your `.env` and launch ZOA for you.
+1. **Command the Agent**: In your AI agent's chat, paste this repository link and ask it to clone and launch the project:
+   > "Please clone and run https://github.com/idlhy0218/ZOA-zotero-obsidian-ai on my system. Do not create a `.env` file or ask for API keys. I will configure the settings directly in the app's GUI Setup Wizard."
+2. **Automatic Setup**: The agent will automatically clone the repository, set up an environment, and install all required Python libraries.
+3. **GUI Configuration**: Once the agent launches ZOA, the Setup Wizard will appear in the GUI. Enter your API keys and folder paths securely there.
 
 ---
 
