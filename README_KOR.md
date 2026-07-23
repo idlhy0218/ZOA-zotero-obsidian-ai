@@ -128,7 +128,7 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 
 **Q. API 호출 요금이 발생하나요?**  
 네, 하지만 비용이 극도로 저렴합니다. 일반적인 **30페이지 분량의 학술 논문 (~25,000 토큰)** 기준, 각 제공사별 엔트리(최저가) 모델의 1회 요약 예상 비용은 다음과 같습니다.
-*   **Google Gemini** (Gemini 2.0/2.5 Flash): **무료** (Google AI Studio Free Tier 활용 시) 또는 **약 4원** ($0.003)
+*   **Google Gemini** (Gemini 2.0/2.5/3.5/3.6 Flash): **무료** (Google AI Studio Free Tier 활용 시) 또는 **약 4원** ($0.003)
 *   **DeepSeek** (DeepSeek-V3): **약 5원** ($0.0037)
 *   **OpenAI** (gpt-4o-mini): **약 6원** ($0.004)
 *   **Anthropic Claude** (Claude 3.5/4.5 Haiku): **약 30원** ($0.02)
@@ -143,6 +143,17 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 
 **[→ GitHub Issues에서 제보하기](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/issues)**  
 스크린샷과 앱 하단 **Execution Log**의 내용을 함께 첨부해 주시면 빠른 해결이 가능합니다.
+
+---
+
+## 주요 업데이트 내역 (Major Updates)
+
+- **최신 AI 모델 API 지원 추가 (2026-07-23)**: 주요 AI 제공사의 신규 모델 API 지원 업데이트:
+  - **Google Gemini**: `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-pro-preview`, `gemini-3.1-flash-live-preview` 등 추가
+  - **Anthropic Claude**: `claude-fable-5`, `claude-opus-4-8`, `claude-opus-4-7`, `claude-sonnet-5`, `claude-sonnet-4-6`, `claude-haiku-4-5-20251001` 추가
+  - **OpenAI**: `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-4.5`, `o3`, `o3-pro`, `o4-mini` 추가
+  - **DeepSeek**: `deepseek-v4-pro`, `deepseek-v4-flash` 추가
+  - **스마트 기본 모델 선택**: 제공사 변경 시 성능과 비용 밸런스를 고려한 중간급 모델(Mid-tier power model)이 기본으로 선택되도록 자동 설정.
 
 ---
 

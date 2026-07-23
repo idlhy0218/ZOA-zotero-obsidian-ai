@@ -84,7 +84,7 @@ def load_config():
         'PDF_PATH': '',
         'OBS_PATH': '',
         'ZOTERO_DB': '',
-        'MODEL_NAME': 'gemini-2.5-flash',
+        'MODEL_NAME': 'gemini-3.5-flash',
         'FILENAME_FMT': 'default',
         'PDF_MAX_PAGES': '30',
         'SKIP_EMPTY_ABS': 'False',
@@ -124,7 +124,7 @@ def save_config(cfg: dict):
             f"PDF_PATH={cfg.get('PDF_PATH', '')}",
             f"OBS_PATH={cfg.get('OBS_PATH', '')}",
             f"ZOTERO_DB={cfg.get('ZOTERO_DB', '')}",
-            f"MODEL_NAME={cfg.get('MODEL_NAME', 'gemini-2.5-flash')}",
+            f"MODEL_NAME={cfg.get('MODEL_NAME', 'gemini-3.5-flash')}",
             f"FILENAME_FMT={cfg.get('FILENAME_FMT', 'default')}",
             f"PDF_MAX_PAGES={cfg.get('PDF_MAX_PAGES', '30')}",
             f"SKIP_EMPTY_ABS={cfg.get('SKIP_EMPTY_ABS', 'False')}",
@@ -160,33 +160,51 @@ API_PROVIDER = CONFIG.get('API_PROVIDER', 'gemini')
 PDF_PATH     = CONFIG.get('PDF_PATH', '')
 OBS_PATH     = CONFIG.get('OBS_PATH', '')
 ZOTERO_DB    = CONFIG.get('ZOTERO_DB', '')
-MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-2.5-flash')
+MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-3.5-flash')
+
+# Check Available Model here:
+# Gemini - https://ai.google.dev/gemini-api/docs/models
+# Cluade - https://platform.claude.com/docs/en/about-claude/pricing
+# OpenAI - https://developers.openai.com/api/docs/models/all
+# DeepSeek - https://api-docs.deepseek.com/quick_start/pricing
 
 PROVIDER_MODELS = {
-    "Google Gemini": [
-        "gemini-3.5-flash",
-        "gemini-3.1-pro",
-        "gemini-3.0-flash",
-        "gemini-2.5-flash",
-        "gemini-2.5-pro",
-        "gemini-2.0-flash"
-    ],
-    "Anthropic Claude": [
-        "claude-opus-4-7",
-        "claude-sonnet-4-6",
-        "claude-haiku-4-5-20251001"
-    ],
-    "OpenAI": [
-        "gpt-5.5",
-        "gpt-5",
-        "gpt-4.1",
-        "gpt-4o",
-        "gpt-4o-mini"
-    ],
-    "DeepSeek": [
-        "deepseek-chat",
-        "deepseek-reasoner"
-    ]
+        "Google Gemini": [
+            "gemini-3.6-flash",
+            "gemini-3.5-flash",
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-pro-preview",
+            "gemini-3.1-flash-live-preview",
+            "gemini-3.1-flash-image",
+            "gemini-3-pro-image",
+            "gemini-2.5-pro",
+            "gemini-2.5-flash",
+            "gemini-2.5-flash-lite"
+            ],
+        "Anthropic Claude": [
+            "claude-fable-5",
+            "claude-opus-4-8",
+            "claude-opus-4-7",
+            "claude-sonnet-5",
+            "claude-sonnet-4-6",
+            "claude-haiku-4-5-20251001"
+        ],
+        "OpenAI": [
+            "gpt-5.6-sol",
+            "gpt-5.6-terra",
+            "gpt-5.6-luna",
+            "gpt-5.5",
+            "gpt-5.4",
+            "gpt-5.4-mini",
+            "gpt-4.5",
+            "o3",
+            "o3-pro",
+            "o4-mini"
+        ],
+        "DeepSeek": [
+            "deepseek-v4-pro",
+            "deepseek-v4-flash"
+        ]
 }
 
 PROVIDER_KEYS = {
@@ -1558,7 +1576,7 @@ class SettingsDialog(tk.Toplevel):
                 "  PDF_PATH       (Zotero PDF storage folder)\n"
                 "  OBS_PATH       (Obsidian vault output folder)\n"
                 "  ZOTERO_DB      (path to Zotero SQLite database)\n"
-                "  MODEL_NAME     (e.g. gemini-2.5-flash, gpt-4o)")
+                "  MODEL_NAME     (e.g. gemini-3.6-flash, gpt-4o)")
 
         c6 = card(inner_f)
         c6.pack(fill="x", pady=(0, 15))
@@ -1599,8 +1617,9 @@ class SettingsDialog(tk.Toplevel):
         models = PROVIDER_MODELS.get(prov_name, [])
         self.model_cb.config(values=models)
         if models:
-            self.model_cb.set(models[0])
-            self._model_var.set(models[0])
+            mid_idx = len(models) // 2
+            self.model_cb.set(models[mid_idx])
+            self._model_var.set(models[mid_idx])
             
     def _on_model_changed(self, event=None):
         pass
@@ -1670,7 +1689,7 @@ class SettingsDialog(tk.Toplevel):
             PDF_PATH     = CONFIG.get('PDF_PATH', '')
             OBS_PATH     = CONFIG.get('OBS_PATH', '')
             ZOTERO_DB    = CONFIG.get('ZOTERO_DB', '')
-            MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-2.5-flash')
+            MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-3.5-flash')
             
             self.app._check_env()
             
@@ -1733,7 +1752,7 @@ class SettingsDialog(tk.Toplevel):
         OPENAI_KEY   = CONFIG.get('OPENAI_KEY', '')
         DEEPSEEK_KEY = CONFIG.get('DEEPSEEK_KEY', '')
         API_PROVIDER = CONFIG.get('API_PROVIDER', 'gemini')
-        MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-2.5-flash')
+        MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-3.5-flash')
         
         self.app._check_env()
         
@@ -2156,7 +2175,7 @@ class ZOAApp:
             "deepseek": "DeepSeek"
         }
         prov_name = prov_map_rev.get(prov_code, "Google Gemini")
-        model_name = CONFIG.get('MODEL_NAME', 'gemini-2.5-flash')
+        model_name = CONFIG.get('MODEL_NAME', 'gemini-3.5-flash')
 
         threading.Thread(
             target=self._run_pipeline,
@@ -2850,13 +2869,17 @@ class SetupWizard(tk.Toplevel):
 
         cfg["API_PROVIDER"] = self._saved_data["API_PROVIDER"]
 
-        # Set a sensible default model for the chosen provider (only when not already custom set in .env)
-        default_models = {
-            "gemini": "gemini-2.5-flash",
-            "claude": "claude-sonnet-4-6",
-            "openai": "gpt-4o-mini",
-            "deepseek": "deepseek-chat"
+        # Set the middle-power model for the chosen provider as default
+        provider_display = {
+            "gemini": "Google Gemini",
+            "claude": "Anthropic Claude",
+            "openai": "OpenAI",
+            "deepseek": "DeepSeek"
         }
+        prov_name_display = provider_display.get(cfg["API_PROVIDER"], "Google Gemini")
+        prov_models = PROVIDER_MODELS.get(prov_name_display, [])
+        mid_idx = len(prov_models) // 2 if prov_models else 0
+        middle_model = prov_models[mid_idx] if prov_models else "gemini-3.5-flash"
         
         has_custom_model = False
         env_path = get_app_dir() / '.env'
@@ -2870,7 +2893,7 @@ class SetupWizard(tk.Toplevel):
                 pass
 
         if not has_custom_model:
-            cfg["MODEL_NAME"] = default_models.get(cfg["API_PROVIDER"], "gemini-2.5-flash")
+            cfg["MODEL_NAME"] = middle_model
 
         save_config(cfg)
         self._ok = True
@@ -2926,7 +2949,7 @@ if __name__ == "__main__":
         PDF_PATH     = CONFIG.get('PDF_PATH', '')
         OBS_PATH     = CONFIG.get('OBS_PATH', '')
         ZOTERO_DB    = CONFIG.get('ZOTERO_DB', '')
-        MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-2.5-flash')
+        MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-3.5-flash')
 
     root.deiconify()         # show main window
     ZOAApp(root)

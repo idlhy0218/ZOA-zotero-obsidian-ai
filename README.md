@@ -113,7 +113,7 @@ Leave the field blank in the Setup Wizard. ZOA auto-detects `zotero.sqlite` if Z
 
 **Q. Will I be charged for API usage?**  
 Yes, but it is extremely cheap. For a standard **30-page academic paper (~25,000 tokens)**, the estimated cost per summary using each provider's lowest (entry-level) model is:
-*   **Google Gemini** (Gemini 2.0/2.5 Flash): **Free** (via Google AI Studio Free Tier) or **~$0.003** (~4 KRW)
+*   **Google Gemini** (Gemini 2.0/2.5/3.5/3.6 Flash): **Free** (via Google AI Studio Free Tier) or **~$0.003** (~4 KRW)
 *   **DeepSeek** (DeepSeek-V3): **~$0.004** (~5 KRW)
 *   **OpenAI** (gpt-4o-mini): **~$0.004** (~6 KRW)
 *   **Anthropic Claude** (Claude 3.5/4.5 Haiku): **~$0.02** (~30 KRW)
@@ -128,6 +128,17 @@ Yes. All API keys are stored strictly in your local `.env` file (or `~/.zoa/.env
 
 **[→ Open an Issue on GitHub](https://github.com/idlhy0218/ZOA-zotero-obsidian-ai/issues)**  
 Please include a screenshot and the contents of the **Execution Log** panel.
+
+---
+
+## Major Updates
+
+- **Latest Model APIs Support (2026-07-23)**: Comprehensive support for newly released AI model APIs across providers:
+  - **Google Gemini**: Added `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-pro-preview`, `gemini-3.1-flash-live-preview`, etc.
+  - **Anthropic Claude**: Added `claude-fable-5`, `claude-opus-4-8`, `claude-opus-4-7`, `claude-sonnet-5`, `claude-sonnet-4-6`, `claude-haiku-4-5-20251001`.
+  - **OpenAI**: Added `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-4.5`, `o3`, `o3-pro`, `o4-mini`.
+  - **DeepSeek**: Added `deepseek-v4-pro`, `deepseek-v4-flash`.
+  - **Balanced Mid-Tier Model Defaults**: Provider switching dynamically selects the middle-power model by default to optimize cost and performance balance.
 
 ---
 
