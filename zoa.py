@@ -1225,6 +1225,7 @@ class CollectionPicker(tk.Frame):
         self._count_lbl = tk.Label(tags_outer, text="",
                                    font=FONT_MONO, fg=FG_DIM, bg=BG)
         self._count_lbl.pack(side="right", padx=(0, 2))
+        self._render_rows()
 
     def _on_inner_configure(self, e):
         self._canvas.configure(scrollregion=self._canvas.bbox("all"))
@@ -1340,10 +1341,19 @@ class CollectionPicker(tk.Frame):
             self._row_frames.append((name, row, lbl))
 
         if not self._filtered:
-            tk.Label(self._inner,
-                     text="No collections found." if self._search_var.get()
-                          else "Click 'Load' to fetch collections.",
-                     font=FONT_SMALL, fg=FG_DIM, bg=BG_CARD, pady=18).pack()
+            empty_f = tk.Frame(self._inner, bg=BG_CARD, pady=38)
+            empty_f.pack(fill="both", expand=True)
+            if self._search_var.get():
+                q = self._search_var.get().strip()
+                tk.Label(empty_f, text="No Matching Collections", font=FONT_LABEL_B,
+                         fg=FG_MID, bg=BG_CARD).pack()
+                tk.Label(empty_f, text=f"No collections match '{q}'.",
+                         font=FONT_SMALL, fg=FG_LIGHT, bg=BG_CARD, pady=4).pack()
+            else:
+                tk.Label(empty_f, text="No Collections Loaded", font=FONT_LABEL_B,
+                         fg=FG_MID, bg=BG_CARD).pack()
+                tk.Label(empty_f, text="Click 'Load Collections' above or select 'Entire Library'.",
+                         font=FONT_SMALL, fg=FG_LIGHT, bg=BG_CARD, pady=4).pack()
 
         self._inner.update_idletasks()
         self._canvas.configure(scrollregion=self._canvas.bbox("all"))
@@ -1357,6 +1367,16 @@ class CollectionPicker(tk.Frame):
     def _refresh_tags(self):
         for w in self._tags_frame.winfo_children():
             w.destroy()
+
+        if getattr(self, '_is_disabled', False):
+            tag_f = tk.Frame(self._tags_frame, bg=TAG_BG,
+                             bd=1, relief="solid",
+                             highlightthickness=0)
+            tag_f.pack(side="left", padx=(0, 5), pady=1)
+            tk.Label(tag_f, text="★ Entire Library (All Papers)", font=FONT_TAG,
+                     fg=TAG_FG, bg=TAG_BG, padx=8, pady=3).pack(side="left")
+            self._count_lbl.config(text="All items")
+            return
 
         if not self._checked:
             tk.Label(self._tags_frame, text="None",
@@ -1384,8 +1404,10 @@ class CollectionPicker(tk.Frame):
         return list(self._checked)
 
     def set_disabled(self, disabled):
+        self._is_disabled = disabled
         self._canvas.config(state="disabled" if disabled else "normal")
         self._search_var.set("")
+        self._refresh_tags()
 
 
 # ─────────────────────────────────────────────
@@ -1676,7 +1698,8 @@ class SettingsDialog(tk.Toplevel):
         
         self._zotero_note_chk = chk_with_tooltip(
             c2, "Save Summary to Zotero Child Note", self._add_zotero_note_var,
-            "Automatically attach the AI summary as a child note to the paper item in Zotero via Web API.",
+            "Automatically attach the AI summary as a child note to the paper item in Zotero via Web API.\n"
+            "Note: Click Sync (Ctrl+Shift+S) in Zotero Desktop to see notes locally. If sync takes long, restart Zotero.",
             command=lambda: [self._on_zotero_note_toggled(), self._auto_save()]
         )
         
@@ -1901,6 +1924,7 @@ class SettingsDialog(tk.Toplevel):
             MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-3.5-flash')
             
             self.app._check_env()
+            self.app._refresh_status_badges()
             
     def _auto_save(self, event=None):
         self._save_settings(show_msg=False)
@@ -1971,6 +1995,7 @@ class SettingsDialog(tk.Toplevel):
         ZOTERO_USER_ID  = CONFIG.get('ZOTERO_USER_ID', '')
         
         self.app._check_env()
+        self.app._refresh_status_badges()
         
         if show_msg:
             self.destroy()
@@ -2025,6 +2050,8 @@ class ZOAApp:
         self._build_ui()
         self._check_deps()
         self._check_env()
+        self._refresh_status_badges()
+        self._try_autoload_collections()
 
     def _build_ui(self):
         # ── Header
@@ -2053,6 +2080,20 @@ class ZOAApp:
                                          bg=BG_CARD, fg=FG_MID, font=FONT_SUBNAME,
                                          hover_bg=BG_HOVER, border_color=BORDER, padx=8, pady=4)
         self.settings_btn.pack(side="left", anchor="center")
+
+        # ── Active Configuration Bar
+        self.status_bar_f = tk.Frame(self.root, bg=BG_INPUT, bd=0,
+                                     highlightthickness=1, highlightbackground=BORDER)
+        self.status_bar_f.pack(fill="x")
+
+        status_inner = tk.Frame(self.status_bar_f, bg=BG_INPUT, padx=32, pady=7)
+        status_inner.pack(fill="x")
+
+        tk.Label(status_inner, text="ACTIVE PROFILE", font=("Segoe UI", 9, "bold"),
+                 fg=FG_DIM, bg=BG_INPUT).pack(side="left", padx=(0, 10))
+
+        self.badge_container = tk.Frame(status_inner, bg=BG_INPUT)
+        self.badge_container.pack(side="left", fill="x", expand=True)
 
         # ── Scroll canvas
         outer = tk.Frame(self.root, bg=BG)
@@ -2134,6 +2175,30 @@ class ZOAApp:
                                         orient="horizontal", mode="determinate")
         self.progress.pack(fill="x")
 
+        # Active processing details panel
+        self.live_info_wrap = tk.Frame(c4, bg=BG_INPUT, bd=1, relief="solid", highlightthickness=0)
+        self.live_info_wrap.pack(fill="x", pady=(12, 4))
+
+        info_inner = tk.Frame(self.live_info_wrap, bg=BG_INPUT, padx=12, pady=9)
+        info_inner.pack(fill="x")
+
+        # Row 1: Active item title & author
+        r1 = tk.Frame(info_inner, bg=BG_INPUT)
+        r1.pack(fill="x")
+        tk.Label(r1, text="CURRENT ITEM", font=("Segoe UI", 9, "bold"), fg=ACCENT, bg=BG_INPUT).pack(side="left")
+        self.active_item_lbl = tk.Label(r1, text="Idle (Awaiting run)", font=FONT_LABEL, fg=FG, bg=BG_INPUT, anchor="w")
+        self.active_item_lbl.pack(side="left", padx=(10, 0), fill="x", expand=True)
+
+        # Row 2: Current stage / phase description and mini stats counter
+        r2 = tk.Frame(info_inner, bg=BG_INPUT)
+        r2.pack(fill="x", pady=(4, 0))
+        self.active_phase_lbl = tk.Label(r2, text="Press ▶ Run to start processing selected collections.",
+                                         font=FONT_SMALL, fg=FG_DIM, bg=BG_INPUT, anchor="w")
+        self.active_phase_lbl.pack(side="left", fill="x", expand=True)
+
+        self.stats_counter_lbl = tk.Label(r2, text="Saved: 0  |  Skipped: 0", font=FONT_MONO, fg=FG_MID, bg=BG_INPUT)
+        self.stats_counter_lbl.pack(side="right")
+
         # ─── Run / Stop ───────────────────────
         tk.Frame(M, bg=BORDER, height=1).pack(fill="x", pady=(20, 14))
         btn_row = tk.Frame(M, bg=BG); btn_row.pack(fill="x")
@@ -2185,6 +2250,7 @@ class ZOAApp:
     def _open_settings(self):
         dialog = SettingsDialog(self.root, self)
         self.root.wait_window(dialog)
+        self._refresh_status_badges()
 
     def _on_root_scroll(self, event):
         w = event.widget
@@ -2283,24 +2349,98 @@ class ZOAApp:
 
 
 
-    def _load_collections(self):
-        self._log("Loading collections from local Zotero DB…", "info")
+    def _load_collections(self, silent=False):
+        if not silent:
+            self._log("Loading collections from local Zotero DB…", "info")
         self._load_btn.config(state="disabled")
         def _fetch():
             try:
                 db = get_zotero_db()
                 names = sqlite_get_collection_names(db)
                 db.close()
-                self.root.after(0, lambda: self._set_collections(names))
+                self.root.after(0, lambda: self._set_collections(names, silent=silent))
             except Exception as e:
-                self.root.after(0, lambda: self._log(f"Error: {e}", "err"))
+                if not silent:
+                    self.root.after(0, lambda: self._log(f"Error: {e}", "err"))
             finally:
                 self.root.after(0, lambda: self._load_btn.config(state="normal"))
         threading.Thread(target=_fetch, daemon=True).start()
 
-    def _set_collections(self, names):
+    def _set_collections(self, names, silent=False):
         self._picker.load(names)
-        self._log(f"✓  {len(names)} collections loaded.", "ok")
+        if not silent:
+            self._log(f"✓  {len(names)} collections loaded.", "ok")
+        else:
+            self._log(f"✓  Auto-loaded {len(names)} Zotero collections.", "ok")
+
+    def _try_autoload_collections(self):
+        try:
+            db_path = ZOTERO_DB or str(Path.home() / 'Zotero' / 'zotero.sqlite')
+            if os.path.exists(db_path):
+                self._load_collections(silent=True)
+        except Exception:
+            pass
+
+    def _refresh_status_badges(self):
+        try:
+            for w in self.badge_container.winfo_children():
+                w.destroy()
+
+            cfg = load_config()
+            prov = cfg.get('API_PROVIDER', 'gemini')
+            model = cfg.get('MODEL_NAME', 'gemini-3.5-flash')
+            full_pdf = cfg.get('FULL_PDF', 'True') == 'True'
+            dup_mode = cfg.get('DUP_MODE', 'overwrite').capitalize()
+            wiki = cfg.get('USE_WIKILINKS', 'True') == 'True'
+            zot_note = cfg.get('ADD_ZOTERO_NOTE', 'False') == 'True'
+
+            prov_display = {
+                'gemini': 'Google Gemini',
+                'claude': 'Anthropic Claude',
+                'openai': 'OpenAI',
+                'deepseek': 'DeepSeek'
+            }.get(prov.lower(), prov.title())
+
+            badges = [
+                (f"⚡ {prov_display}: {model}", f"Active AI Provider ({prov_display}) and Model ({model})"),
+                ("📄 Full PDF" if full_pdf else "📄 Abstract Only", "Content extraction source mode"),
+                (f"🔄 Duplicates: {dup_mode}", "Policy when output file already exists"),
+            ]
+            if wiki:
+                badges.append(("🔗 WikiLinks", "Auto-convert authors, journals, and keywords to [[WikiLinks]]"))
+            if zot_note:
+                badges.append(("📝 Zotero Note Sync", "Web API sync to create child notes in Zotero"))
+
+            for text, tip in badges:
+                tag_f = tk.Frame(self.badge_container, bg=TAG_BG,
+                                 bd=1, relief="solid", highlightthickness=0)
+                tag_f.pack(side="left", padx=(0, 6))
+                lbl = tk.Label(tag_f, text=text, font=("Segoe UI", 10),
+                               fg=TAG_FG, bg=TAG_BG, padx=8, pady=2)
+                lbl.pack(side="left")
+                ToolTip(lbl, tip)
+                ToolTip(tag_f, tip)
+        except Exception:
+            pass
+
+    def _update_active_info(self, item_text, phase_text, saved=None, skipped=None, total=None):
+        try:
+            self.active_item_lbl.config(text=item_text)
+            self.active_phase_lbl.config(text=phase_text)
+            if saved is not None and skipped is not None and total is not None:
+                remaining = max(0, total - (saved + skipped))
+                self.stats_counter_lbl.config(text=f"Saved: {saved}  |  Skipped: {skipped}  |  Remaining: {remaining}")
+            elif saved is not None and skipped is not None:
+                self.stats_counter_lbl.config(text=f"Saved: {saved}  |  Skipped: {skipped}")
+        except Exception:
+            pass
+
+    def _update_stats(self, saved, skipped, total):
+        try:
+            remaining = max(0, total - (saved + skipped))
+            self.stats_counter_lbl.config(text=f"Saved: {saved}  |  Skipped: {skipped}  |  Remaining: {remaining}")
+        except Exception:
+            pass
 
     def _check_env(self):
         env_path = get_app_dir() / '.env'
@@ -2375,6 +2515,7 @@ class ZOAApp:
         self.run_btn.config(state="disabled")
         self.stop_btn.config(state="normal", fg=FG)
         self._set_status("Running…")
+        self._update_active_info("Initializing…", "Connecting to database and verifying paths…", 0, 0, 0)
         self.progress['value'] = 0
         self.prog_label.config(text="Starting…")
         self.prog_count.config(text="")
@@ -2404,6 +2545,7 @@ class ZOAApp:
         self.running = False
         self._set_status("Stopping…")
         self._log("Stop requested.", "warn")
+        self.root.after(0, lambda: self.active_phase_lbl.config(text="Stop requested by user. Finishing current operation…"))
 
     def _run_pipeline(self, col_names, pdf_path, obs_path, read_full,
                       limit, prov_name, active_model, dup_mode, use_wiki, use_recent, recent_days, keyword_count=5):
@@ -2435,6 +2577,7 @@ class ZOAApp:
                     self._log("⚠  Zotero note sync enabled, but ZOTERO_API_KEY is not set in Settings.", "warn")
                 else:
                     self._log("✓  Zotero child note sync enabled (Web API).", "ok")
+                    self._log("   (Notes upload to Zotero Cloud; sync Zotero or restart to view locally)", "info")
 
             self._log("Opening local Zotero database…", "info")
             db = get_zotero_db()
@@ -2472,6 +2615,11 @@ class ZOAApp:
             total = len(row_items)
             self._log(f"✓  {total} items to process.\n" + "─" * 50, "ok")
             self.root.after(0, lambda: self._set_progress(0, total))
+            self.root.after(0, lambda t=total: self._update_active_info(
+                f"Starting pipeline ({t} items)…",
+                "Initializing document scanner and checking output directories…",
+                0, 0, t
+            ))
             if not os.path.exists(obs_path): os.makedirs(obs_path)
             success = skip_count = 0
 
@@ -2526,25 +2674,39 @@ class ZOAApp:
                 zotero_link = f"zotero://select/items/0_{item_key}"
                 pg          = f"[{idx:>3}/{total}]"
 
+                title_clean = (title[:55] + "…") if len(title) > 58 else title
+                item_display = f"{author_for_file} ({year}) — \"{title_clean}\""
+                self.root.after(0, lambda d=item_display, i=idx, t=total, s=success, k=skip_count:
+                    self._update_active_info(f"[{i}/{t}] {d}", "Scanning local storage for PDF…", s, k, t))
+
                 # Check for empty abstract skip setting
                 if CONFIG.get('SKIP_EMPTY_ABS', 'False') == 'True' and not abstract.strip():
                     self._log(f"{pg}  skip (empty abstract)  {title}", "skip")
                     skip_count += 1
-                    self.root.after(0, lambda i=idx: self._set_progress(i, total))
+                    self.root.after(0, lambda i=idx, s=success, k=skip_count, t=total: (
+                        self._set_progress(i, t),
+                        self._update_stats(s, k, t)
+                    ))
                     continue
 
                 if os.path.exists(full_path):
                     if dup_mode == "skip":
                         self._log(f"{pg}  skip  {filename}", "skip")
                         skip_count += 1
-                        self.root.after(0, lambda i=idx: self._set_progress(i, total))
+                        self.root.after(0, lambda i=idx, s=success, k=skip_count, t=total: (
+                            self._set_progress(i, t),
+                            self._update_stats(s, k, t)
+                        ))
                         continue
                     elif dup_mode == "update":
                         mtime = datetime.fromtimestamp(os.path.getmtime(full_path))
                         if self._parse_date(date_added) <= mtime:
                             self._log(f"{pg}  up-to-date  {filename}", "skip")
                             skip_count += 1
-                            self.root.after(0, lambda i=idx: self._set_progress(i, total))
+                            self.root.after(0, lambda i=idx, s=success, k=skip_count, t=total: (
+                                self._set_progress(i, t),
+                                self._update_stats(s, k, t)
+                            ))
                             continue
                         else:
                             self._log(f"{pg}  updating  {filename}", "warn")
@@ -2557,6 +2719,9 @@ class ZOAApp:
                     matched = find_best_pdf_match(fields, creators_raw, pdf_index)
                     if matched:
                         try:
+                            fn_base = os.path.basename(matched)
+                            self.root.after(0, lambda d=item_display, i=idx, t=total, fn=fn_base, s=success, k=skip_count:
+                                self._update_active_info(f"[{i}/{t}] {d}", f"Extracting PDF text from {fn}…", s, k, t))
                             from pypdf import PdfReader
                             reader = PdfReader(matched)
                             max_pages_cfg = CONFIG.get('PDF_MAX_PAGES', '30')
@@ -2578,7 +2743,11 @@ class ZOAApp:
 
                 if not final_text or not final_text.strip():
                     self._log("       ✗  No abstract or PDF text content. Skipping.", "warn")
-                    self.root.after(0, lambda i=idx: self._set_progress(i, total))
+                    skip_count += 1
+                    self.root.after(0, lambda i=idx, s=success, k=skip_count, t=total: (
+                        self._set_progress(i, t),
+                        self._update_stats(s, k, t)
+                    ))
                     continue
 
                 try:
@@ -2601,6 +2770,8 @@ class ZOAApp:
                         keyword_count=keyword_count,
                         text=final_text[:50000]
                     )
+                self.root.after(0, lambda d=item_display, i=idx, t=total, p=prov_name, m=active_model, s=success, k=skip_count:
+                    self._update_active_info(f"[{i}/{t}] {d}", f"Generating AI summary via {p} ({m})…", s, k, t))
                 summary_text = None
                 for attempt in range(2):
                     try:
@@ -2660,11 +2831,15 @@ zotero_link: {zotero_link}
 ## Original Abstract
 {sanitize_abstract(abstract)}
 """
+                self.root.after(0, lambda d=item_display, i=idx, t=total, s=success, k=skip_count:
+                    self._update_active_info(f"[{i}/{t}] {d}", "Saving note to Obsidian vault…", s, k, t))
                 with open(full_path, 'w', encoding='utf-8') as f:
                     f.write(md_content)
                 self._log("       ✓  Saved.", "ok")
 
                 if add_zotero_note and zotero_api_key and item_key:
+                    self.root.after(0, lambda d=item_display, i=idx, t=total, s=success, k=skip_count:
+                        self._update_active_info(f"[{i}/{t}] {d}", "Syncing child note via Zotero Web API…", s, k, t))
                     clean_summary = re.sub(r'\[\[(.*?)\]\]', r'\1', summary_text)
                     note_body = markdown_to_zotero_html(clean_summary)
                     note_html = f"<h2>AI Summary ({content_source})</h2>\n" + note_body
@@ -2675,13 +2850,28 @@ zotero_link: {zotero_link}
                         self._log(f"       ⚠  Zotero note error: {msg}", "warn")
 
                 success += 1
-                self.root.after(0, lambda i=idx: self._set_progress(i, total))
+                self.root.after(0, lambda i=idx, s=success, k=skip_count, t=total: (
+                    self._set_progress(i, t),
+                    self._update_stats(s, k, t)
+                ))
                 time.sleep(1)
 
             self._log("\n" + "─" * 50, "ok")
             self._log(f"Done.  {success} saved  |  {skip_count} skipped.", "done")
+            if add_zotero_note and zotero_api_key and success > 0:
+                self._log("ℹ  Zotero Note Sync Notice:", "ok")
+                self._log("   • Summaries were safely uploaded to Zotero Cloud via Web API.", "info")
+                self._log("   • In Zotero Desktop, press Ctrl+Shift+S (or click the green Sync icon) to view them.", "info")
+                self._log("   • If sync takes long or notes do not appear immediately, please restart Zotero.", "warn")
             self._set_status(f"Done — {success} processed, {skip_count} skipped.")
             self.root.after(0, lambda: self._set_progress(total, total))
+            phase_msg = (
+                f"Completed: {success} saved. Sync Zotero (Ctrl+Shift+S) or restart Zotero if slow."
+                if (add_zotero_note and zotero_api_key and success > 0)
+                else f"Completed: {success} saved, {skip_count} skipped."
+            )
+            self.root.after(0, lambda s=success, k=skip_count, t=total, m=phase_msg:
+                self._update_active_info("Processing Complete", m, s, k, t))
 
         except Exception as e:
             import traceback
