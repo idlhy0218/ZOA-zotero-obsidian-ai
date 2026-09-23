@@ -134,7 +134,7 @@ Please include a screenshot and the contents of the **Execution Log** panel.
 
 ## Major Updates
 
-- **UI/UX Enhancement, Real-Time Progress Card & Zotero Sync Guidance (2026-09-23)**:
+- **v1.0.4: UI/UX Enhancement, Real-Time Progress Card & Zotero Sync Guidance (2026-09-23)**:
   - **Active Configuration Status Badges**: Added intuitive status badge bar in the top header displaying the active AI provider, model, and Zotero sync status at a glance.
   - **Collection Auto-Load & Empty State**: Automatically scans and populates collections on startup when a valid Zotero directory exists, featuring a clean empty-state placeholder card.
   - **Dynamic Real-Time Processing Card**: Integrated live processing feedback in Section 03 tracking current paper title, pipeline stage (Extracting / Prompting / Writing / Syncing), and live count metrics (Saved / Skipped / Remaining).
