@@ -1,7 +1,7 @@
-# ZOA (Zotero-Obsidian-AI Summary) v1.0.3
+# ZOA (Zotero-Obsidian-AI Summary) v1.0.4
 
 <p align="center" bgcolor="white">
-<img width="480" height="480" alt="zoa icon github readme" src="https://github.com/user-attachments/assets/753965f8-e1fb-4a41-8b4b-97b96cc807bc" />   
+<img width="2000" height="1990" alt="zoa icon github readme" src="https://github.com/user-attachments/assets/5d79fdfa-0dd3-4d62-88c2-be76b7e6da5b" />
 </p>
 
 Zotero, Obsidian, 그리고 다중 AI(Gemini, Claude, OpenAI, DeepSeek)를 연동하는 학술 논문 자동 요약 파이프라인입니다. 로컬 Zotero 라이브러리에서 논문 정보를 조회하고 PDF 본문을 추출하여, 선택한 AI 모델로 구조화된 요약 마크다운 문서를 생성한 후 Obsidian 보관소에 자동 저장합니다.
