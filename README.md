@@ -1,7 +1,7 @@
 # ZOA (Zotero-Obsidian-AI Summary) v1.0.3
 
 <p align="center" bgcolor="white">
-<img width="480" height="480" alt="zoa icon github readme" src="https://github.com/user-attachments/assets/753965f8-e1fb-4a41-8b4b-97b96cc807bc" />   
+   <img width="2000" height="1990" alt="zoa icon github readme" src="https://github.com/user-attachments/assets/9b49e4ac-c1cb-44a3-b82c-45a38fde4398" />
 </p>
 
 > 한국어 설명서: [README_KOR.md](README_KOR.md)
