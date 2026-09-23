@@ -55,6 +55,7 @@ Choose one of the two methods below to install and run ZOA.
 | **Flexible Filename Formats**   | Choose from 4 naming styles (Classic, Title, Year-Author-Title, Author-Year-Title)                                                |
 | **Duplicate Handling**          | Overwrite, Skip, or Merge existing summary notes                                                                                  |
 | **Recent Papers Filter**        | Process only papers added/modified within the last N days                                                                         |
+| **Zotero Child Note Sync**      | Automatically attach AI summaries as child notes in Zotero via official Web API                                                   |
 | **⚙ Settings Panel**            | Gear icon in the top-right — configure all preferences without touching any files                                                 |
 
 ---
@@ -133,9 +134,20 @@ Please include a screenshot and the contents of the **Execution Log** panel.
 
 ## Major Updates
 
+- **Zotero Web API Child Note Sync, Latest AI Models & ASD-STE100 Prompt Overhaul (2026-09-22)**:
+  - **Zotero Child Note Auto-Add**: Automatically attaches generated AI summaries as child notes under corresponding items in Zotero via the official Zotero Web API simultaneously with Obsidian note creation (`Settings` toggle, lightweight zero-dependency standard library implementation).
+  - **2026-09 Latest Model Lineups**:
+    - **Google Gemini**: Added latest flagships `gemini-3.8-flash` and `gemini-3.7-flash`.
+    - **Anthropic Claude**: Added 5th-gen flagships `claude-opus-5-5` and `claude-fable-5-1`.
+    - **OpenAI**: Added next-gen flagships `gpt-6-astra`, `gpt-6-sol`, and `gpt-6-luna`.
+    - **DeepSeek**: Added official standard high-speed model `deepseek-flash`.
+  - **ASD-STE100 Simplified Technical English Prompt Overhaul**:
+    - Strict 20–25 words sentence limits, prioritization of active voice and simple tenses, elimination of academic filler and ambiguous noun clusters.
+    - Standardized extraction guidelines for Research Objectives, Methodology (treatments, outcomes, identification strategies), and Key Results (effect directions, magnitudes, statistical significance).
+
 - **Latest Model APIs Support (2026-07-23)**: Comprehensive support for newly released AI model APIs across providers:
   - **Google Gemini**: Added `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-pro-preview`, `gemini-3.1-flash-live-preview`, etc.
-  - **Anthropic Claude**: Added `claude-fable-5`, `claude-opus-4-8`, `claude-opus-4-7`, `claude-sonnet-5`, `claude-sonnet-4-6`, `claude-haiku-4-5-20251001`.
+  - **Anthropic Claude**: Added `claude-fable-5`, `claude-sonnet-5`, `claude-sonnet-4-6`, `claude-haiku-4-5-20251001`.
   - **OpenAI**: Added `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-4.5`, `o3`, `o3-pro`, `o4-mini`.
   - **DeepSeek**: Added `deepseek-v4-pro`, `deepseek-v4-flash`.
   - **Balanced Mid-Tier Model Defaults**: Provider switching dynamically selects the middle-power model by default to optimize cost and performance balance.

@@ -70,6 +70,7 @@ https://github.com/user-attachments/assets/fe30c80c-78e3-46b9-9714-18456d1b109a
 | **파일명 포맷 선택**   | 4가지 방식 중 선택 (Classic, Title, Year-Author-Title, Author-Year-Title)                                                 |
 | **중복 문서 처리**     | 기존 요약 노트에 대해 덮어쓰기, 건너뛰기, 병합 중 선택                                                                    |
 | **최근 논문 필터**     | 최근 N일 이내 추가/수정된 논문만 처리                                                                                     |
+| **Zotero 노트 동기화** | Zotero 공식 Web API를 통해 각 논문 아이템 아래에 생성된 AI 요약을 하위 노트(Child Note)로 자동 추가                       |
 | **⚙ Settings 패널**    | 우측 상단 톱니바퀴 아이콘 — 파일 직접 수정 없이 모든 설정을 GUI에서 관리                                                  |
 
 ---
@@ -148,9 +149,20 @@ zotero_link: zotero://select/items/0_XXXXXXXX
 
 ## 주요 업데이트 내역 (Major Updates)
 
+- **Zotero Web API 하위 노트 동기화, 최신 AI 모델 및 ASD-STE100 프롬프트 개편 (2026-09-22)**:
+  - **Zotero 하위 노트 자동 추가**: Obsidian 마크다운 저장과 동시에 Zotero 공식 Web API를 통해 해당 논문 아이템의 하위 노트(Child Note)로 AI 요약을 자동 등록 (`Settings`에서 온/오프 가능, 외부 의존성 없는 초경량 표준 라이브러리 구현).
+  - **2026-09 최신 AI 모델 라인업 지원**:
+    - **Google Gemini**: 최신 플래그십 `gemini-3.8-flash`, `gemini-3.7-flash` 추가.
+    - **Anthropic Claude**: 최신 5세대 플래그십 `claude-opus-5-5`, `claude-fable-5-1` 추가.
+    - **OpenAI**: 차세대 주력 플래그십 `gpt-6-astra`, `gpt-6-sol`, `gpt-6-luna` 추가.
+    - **DeepSeek**: 공식 표준 초고속 모델 `deepseek-flash` 추가.
+  - **ASD-STE100 간결 기술 영어(Simplified Technical English) 원칙 기반 프롬프트 개편**:
+    - 문장당 20~25단어 엄격 제한, 능동태 및 단순 시제 우선, 학술 미사여구(filler) 및 불필요한 명사 나열 배제.
+    - 연구 목적, 방법론(처치 및 결과 변수, 식별 전략), 핵심 결과(효과 방향 및 통계적 유의성) 추출 지침 표준화로 가독성과 학술 요약 정확도 대폭 개선.
+
 - **최신 AI 모델 API 지원 추가 (2026-07-23)**: 주요 AI 제공사의 신규 모델 API 지원 업데이트:
   - **Google Gemini**: `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-pro-preview`, `gemini-3.1-flash-live-preview` 등 추가
-  - **Anthropic Claude**: `claude-fable-5`, `claude-opus-4-8`, `claude-opus-4-7`, `claude-sonnet-5`, `claude-sonnet-4-6`, `claude-haiku-4-5-20251001` 추가
+  - **Anthropic Claude**: `claude-fable-5`, `claude-sonnet-5`, `claude-sonnet-4-6`, `claude-haiku-4-5-20251001` 추가
   - **OpenAI**: `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-4.5`, `o3`, `o3-pro`, `o4-mini` 추가
   - **DeepSeek**: `deepseek-v4-pro`, `deepseek-v4-flash` 추가
   - **스마트 기본 모델 선택**: 제공사 변경 시 성능과 비용 밸런스를 고려한 중간급 모델(Mid-tier power model)이 기본으로 선택되도록 자동 설정.

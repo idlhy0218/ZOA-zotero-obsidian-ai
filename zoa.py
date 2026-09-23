@@ -95,7 +95,10 @@ def load_config():
         'DUP_MODE': 'overwrite',
         'LIMIT': '500',
         'KEYWORD_COUNT': '5',
-        'CUSTOM_PROMPT': 'False'
+        'CUSTOM_PROMPT': 'False',
+        'ADD_ZOTERO_NOTE': 'False',
+        'ZOTERO_API_KEY': '',
+        'ZOTERO_USER_ID': ''
     }
     env_path = get_app_dir() / '.env'
     if env_path.exists():
@@ -136,6 +139,9 @@ def save_config(cfg: dict):
             f"LIMIT={cfg.get('LIMIT', '500')}",
             f"KEYWORD_COUNT={cfg.get('KEYWORD_COUNT', '5')}",
             f"CUSTOM_PROMPT={cfg.get('CUSTOM_PROMPT', 'False')}",
+            f"ADD_ZOTERO_NOTE={cfg.get('ADD_ZOTERO_NOTE', 'False')}",
+            f"ZOTERO_API_KEY={cfg.get('ZOTERO_API_KEY', '')}",
+            f"ZOTERO_USER_ID={cfg.get('ZOTERO_USER_ID', '')}",
         ]
         with open(env_path, 'w', encoding='utf-8') as f:
             f.write('\n'.join(lines) + '\n')
@@ -151,16 +157,19 @@ def config_is_complete(cfg: dict) -> bool:
         cfg.get('DEEPSEEK_KEY', '').strip()
     )
 
-CONFIG       = load_config()
-GEMINI_KEY   = CONFIG.get('GEMINI_KEY', '')
-CLAUDE_KEY   = CONFIG.get('CLAUDE_KEY', '')
-OPENAI_KEY   = CONFIG.get('OPENAI_KEY', '')
-DEEPSEEK_KEY = CONFIG.get('DEEPSEEK_KEY', '')
-API_PROVIDER = CONFIG.get('API_PROVIDER', 'gemini')
-PDF_PATH     = CONFIG.get('PDF_PATH', '')
-OBS_PATH     = CONFIG.get('OBS_PATH', '')
-ZOTERO_DB    = CONFIG.get('ZOTERO_DB', '')
-MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-3.5-flash')
+CONFIG          = load_config()
+GEMINI_KEY      = CONFIG.get('GEMINI_KEY', '')
+CLAUDE_KEY      = CONFIG.get('CLAUDE_KEY', '')
+OPENAI_KEY      = CONFIG.get('OPENAI_KEY', '')
+DEEPSEEK_KEY    = CONFIG.get('DEEPSEEK_KEY', '')
+API_PROVIDER    = CONFIG.get('API_PROVIDER', 'gemini')
+PDF_PATH        = CONFIG.get('PDF_PATH', '')
+OBS_PATH        = CONFIG.get('OBS_PATH', '')
+ZOTERO_DB       = CONFIG.get('ZOTERO_DB', '')
+MODEL_NAME      = CONFIG.get('MODEL_NAME', 'gemini-3.5-flash')
+ADD_ZOTERO_NOTE = CONFIG.get('ADD_ZOTERO_NOTE', 'False')
+ZOTERO_API_KEY  = CONFIG.get('ZOTERO_API_KEY', '')
+ZOTERO_USER_ID  = CONFIG.get('ZOTERO_USER_ID', '')
 
 # Check Available Model here:
 # Gemini - https://ai.google.dev/gemini-api/docs/models
@@ -170,6 +179,8 @@ MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-3.5-flash')
 
 PROVIDER_MODELS = {
         "Google Gemini": [
+            "gemini-3.8-flash",
+            "gemini-3.7-flash",
             "gemini-3.6-flash",
             "gemini-3.5-flash",
             "gemini-3.5-flash-lite",
@@ -180,16 +191,19 @@ PROVIDER_MODELS = {
             "gemini-2.5-pro",
             "gemini-2.5-flash",
             "gemini-2.5-flash-lite"
-            ],
+        ],
         "Anthropic Claude": [
+            "claude-opus-5-5",
+            "claude-fable-5-1",
             "claude-fable-5",
-            "claude-opus-4-8",
-            "claude-opus-4-7",
             "claude-sonnet-5",
             "claude-sonnet-4-6",
             "claude-haiku-4-5-20251001"
         ],
         "OpenAI": [
+            "gpt-6-astra",
+            "gpt-6-sol",
+            "gpt-6-luna",
             "gpt-5.6-sol",
             "gpt-5.6-terra",
             "gpt-5.6-luna",
@@ -197,12 +211,13 @@ PROVIDER_MODELS = {
             "gpt-5.4",
             "gpt-5.4-mini",
             "gpt-4.5",
+            "o4-mini",
             "o3",
-            "o3-pro",
-            "o4-mini"
+            "o3-pro"
         ],
         "DeepSeek": [
             "deepseek-v4-pro",
+            "deepseek-flash",
             "deepseek-v4-flash"
         ]
 }
@@ -282,6 +297,143 @@ def call_openai_compatible_api(url, api_key, model, prompt):
         if "choices" in res_data and len(res_data["choices"]) > 0:
             return res_data["choices"][0]["message"]["content"]
         raise ValueError(f"Unexpected response payload: {res_data}")
+
+# ─────────────────────────────────────────────
+# Zotero Web API Client Helpers & Formatters
+# ─────────────────────────────────────────────
+_CACHED_ZOTERO_USER_ID: Optional[str] = None
+
+def get_zotero_user_id(api_key: str) -> Optional[str]:
+    """Fetch the numeric userID associated with the Zotero API key."""
+    global _CACHED_ZOTERO_USER_ID
+    if _CACHED_ZOTERO_USER_ID:
+        return _CACHED_ZOTERO_USER_ID
+
+    import urllib.request
+    import json
+    url = "https://api.zotero.org/keys/current"
+    req = urllib.request.Request(
+        url,
+        headers={
+            "Zotero-API-Key": api_key.strip(),
+            "Zotero-API-Version": "3"
+        }
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            uid = str(data.get("userID", "")).strip()
+            if uid:
+                _CACHED_ZOTERO_USER_ID = uid
+                return uid
+    except Exception:
+        pass
+    return None
+
+def call_zotero_add_note(api_key: str, user_id: str, parent_item_key: str, note_html: str, tags: list = None) -> tuple[bool, str]:
+    """Create a child note under the specified parent item via Zotero Web API."""
+    import urllib.request
+    import urllib.error
+    import json
+
+    api_key = (api_key or '').strip()
+    user_id = (user_id or '').strip()
+    if not api_key:
+        return False, "Missing Zotero API Key"
+
+    if not user_id:
+        user_id = get_zotero_user_id(api_key) or ''
+        if not user_id:
+            return False, "Could not determine Zotero User ID (check API key permissions)"
+        try:
+            CONFIG['ZOTERO_USER_ID'] = user_id
+            save_config(CONFIG)
+        except Exception:
+            pass
+
+    url = f"https://api.zotero.org/users/{user_id}/items"
+    headers = {
+        "Zotero-API-Key": api_key,
+        "Zotero-API-Version": "3",
+        "Content-Type": "application/json"
+    }
+    note_item = {
+        "itemType": "note",
+        "parentItem": parent_item_key,
+        "note": note_html,
+        "tags": [{"tag": t} for t in (tags or ["ai-summary"])]
+    }
+    payload = json.dumps([note_item]).encode("utf-8")
+    req = urllib.request.Request(url, data=payload, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            if isinstance(data, dict):
+                if data.get("failed"):
+                    first_err = next(iter(data["failed"].values()), {})
+                    return False, first_err.get("message", "API write failed")
+            return True, "Success"
+    except urllib.error.HTTPError as e:
+        try:
+            err_body = e.read().decode('utf-8')
+        except Exception:
+            err_body = str(e)
+        return False, f"HTTP {e.code}: {err_body[:100]}"
+    except Exception as e:
+        return False, str(e)
+
+def markdown_to_zotero_html(summary_text: str) -> str:
+    """Convert markdown summary into clean HTML suitable for Zotero notes."""
+    import html
+    lines = summary_text.strip().splitlines()
+    html_lines = []
+    in_list = False
+
+    for line in lines:
+        raw_line = line.strip()
+        if not raw_line:
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            continue
+
+        if raw_line.startswith("### "):
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            title = html.escape(raw_line[4:])
+            html_lines.append(f"<h3>{title}</h3>")
+        elif raw_line.startswith("## "):
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            title = html.escape(raw_line[3:])
+            html_lines.append(f"<h2>{title}</h2>")
+        elif raw_line.startswith("# "):
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            title = html.escape(raw_line[2:])
+            html_lines.append(f"<h1>{title}</h1>")
+        elif raw_line.startswith("- ") or raw_line.startswith("* "):
+            if not in_list:
+                html_lines.append("<ul>")
+                in_list = True
+            content = html.escape(raw_line[2:])
+            content = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', content)
+            html_lines.append(f"<li>{content}</li>")
+        else:
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            content = html.escape(raw_line)
+            content = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', content)
+            html_lines.append(f"<p>{content}</p>")
+
+    if in_list:
+        html_lines.append("</ul>")
+
+    return "\n".join(html_lines)
 
 # ─────────────────────────────────────────────
 # Utilities
@@ -518,38 +670,40 @@ FONT_MONO    = ("Consolas",     11)
 # ─────────────────────────────────────────────
 # Prompt Templates and Helpers
 # ─────────────────────────────────────────────
-DEFAULT_PROMPT_TEMPLATE = """You are an expert academic research analyst specializing in summarizing \
-peer-reviewed academic literature. Your summaries are precise, jargon-aware, \
-and strictly grounded in the provided text.
+DEFAULT_PROMPT_TEMPLATE = """You are an expert academic research analyst specializing in synthesizing peer-reviewed literature.
+You write strictly grounded, unambiguous summaries using principles from ASD-STE100 Simplified Technical English:
+1. Write short, clear sentences (maximum 20–25 words per sentence).
+2. Use active voice and simple tenses whenever possible.
+3. Eliminate redundant academic filler, ambiguous idioms, and unnecessary noun clusters.
+4. Keep one central idea per sentence.
 
 ## Task
 Summarize the provided {content_source} of the research paper titled: "{title}".
 
 ## Critical Constraints
-- Base your summary on the provided text. Synthesize the context logically to provide a useful summary even if some specific details are not explicitly spelled out.
-- If specific details (like precise sample sizes or statistical models) are not mentioned, summarize the conceptual goals, qualitative approaches, or overall trends instead. Avoid generic "not reported" statements unless the text provides absolutely zero context.
-- Use clear academic English. Be concise: each section should be 1–3 sentences maximum.
+- Base your summary strictly on the provided text. Synthesize logically without extrapolating ungrounded claims.
+- If specific details (e.g., sample size, exact model) are omitted in the source, summarize the conceptual objective or qualitative trend. Never output generic "not reported" statements unless the text has zero relevant context.
+- Keep each section concise (maximum 4–5 sentences).
 
-## Output Format (Markdown)
+## Required Output Format (Markdown)
 
 ### 1. Research Objective
-State the central research question and the population or context under study.
+State the primary research question, target population, and theoretical or empirical context.
 
 ### 2. Methodology
 Specify:
-- (a) data source(s) and sample
-- (b) key variables
-- (c) statistical models or analytic strategy.
+- (a) data source(s) and sample criteria
+- (b) primary variables (treatments/exposures and outcomes)
+- (c) research design, statistical models, or identification strategy.
 
 ### 3. Key Results
-Report the main findings, including direction and magnitude of effects where available. \
-Prioritize statistically significant results.
+State the main empirical findings with effect direction and magnitude where available. Prioritize statistically significant results.
 
 ### 4. Keywords
-Provide exactly {keyword_count} keywords using # prefix. Apply these rules in order:
-- Include at least 2 methodology keywords (e.g., #DiD, #Fixed-Effects, #Multilevel-Model).
-- Use umbrella/concept terms for substantive topics (e.g., #Substance-Use, not #Opioids).
-- Capitalize the first letter of each word; hyphenate multi-word terms.
+Provide exactly {keyword_count} keywords with the # prefix. Rules:
+- Include at least 2 methodology keywords (e.g., #DiD, #Fixed-Effects, #RCT).
+- Use standardized umbrella terms for topics (e.g., #Substance-Use, not #Opioids).
+- Capitalize each word; hyphenate compound terms.
 
 ## Source Text ({content_source})
 {text}"""
@@ -1279,6 +1433,25 @@ def entry_row_with_tooltip(parent, label_text, variable, suffix, tooltip_text):
         
     return entry
 
+def text_entry_row_with_tooltip(parent, label_text, variable, tooltip_text, width=32):
+    row = tk.Frame(parent, bg=BG_CARD)
+    row.pack(fill="x", pady=4)
+    
+    lbl_row = tk.Frame(row, bg=BG_CARD)
+    lbl_row.pack(anchor="w", pady=(0, 2))
+    
+    lbl = tk.Label(lbl_row, text=label_text, font=FONT_SMALL, fg=FG_DIM, bg=BG_CARD)
+    lbl.pack(side="left")
+    
+    if tooltip_text:
+        info = CircledExclamation(lbl_row, BG_CARD)
+        info.pack(side="left", padx=(5, 0))
+        ToolTip(info, tooltip_text)
+        
+    entry = make_entry(row, variable, width=width)
+    entry.pack(fill="x", ipady=3)
+    return entry
+
 
 class SettingsDialog(tk.Toplevel):
     def __init__(self, parent, app):
@@ -1321,6 +1494,10 @@ class SettingsDialog(tk.Toplevel):
         self._recent_days_var = tk.StringVar(value=CONFIG.get('RECENT_DAYS', '7'))
         
         self._filename_var = tk.StringVar(value=CONFIG.get('FILENAME_FMT', 'default'))
+        
+        self._add_zotero_note_var = tk.BooleanVar(value=CONFIG.get('ADD_ZOTERO_NOTE', 'False') == 'True')
+        self._zotero_key_var = tk.StringVar(value=CONFIG.get('ZOTERO_API_KEY', ''))
+        self._zotero_uid_var = tk.StringVar(value=CONFIG.get('ZOTERO_USER_ID', ''))
         
         self._build_ui()
         
@@ -1495,6 +1672,28 @@ class SettingsDialog(tk.Toplevel):
             command=self._auto_save
         )
         
+        thin_divider(c2, pady=(10, 10))
+        
+        self._zotero_note_chk = chk_with_tooltip(
+            c2, "Save Summary to Zotero Child Note", self._add_zotero_note_var,
+            "Automatically attach the AI summary as a child note to the paper item in Zotero via Web API.",
+            command=lambda: [self._on_zotero_note_toggled(), self._auto_save()]
+        )
+        
+        self.zotero_note_frame = tk.Frame(c2, bg=BG_CARD)
+        
+        self._zotero_key_entry = text_entry_row_with_tooltip(
+            self.zotero_note_frame, "Zotero Web API Key", self._zotero_key_var,
+            "API key with write permission from https://www.zotero.org/settings/keys"
+        )
+        self._zotero_key_entry.bind("<FocusOut>", self._auto_save)
+        
+        self._zotero_uid_entry = text_entry_row_with_tooltip(
+            self.zotero_note_frame, "Zotero User ID (Optional)", self._zotero_uid_var,
+            "Your numeric User ID from zotero.org/settings/keys. If left blank, ZOA auto-resolves it."
+        )
+        self._zotero_uid_entry.bind("<FocusOut>", self._auto_save)
+        
         # ── 03. Text Extraction Options Card
         make_section_label(inner_f, "03  Text Extraction Options")
         c3 = card(inner_f)
@@ -1572,6 +1771,7 @@ class SettingsDialog(tk.Toplevel):
                 "Open AI Prompt File    →  prompt_template.txt (system prompt)\n\n"
                 "Keys editable in .env:\n"
                 "  GEMINI_KEY / CLAUDE_KEY / OPENAI_KEY / DEEPSEEK_KEY\n"
+                "  ZOTERO_API_KEY / ZOTERO_USER_ID / ADD_ZOTERO_NOTE\n"
                 "  API_PROVIDER   (gemini | claude | openai | deepseek)\n"
                 "  PDF_PATH       (Zotero PDF storage folder)\n"
                 "  OBS_PATH       (Obsidian vault output folder)\n"
@@ -1608,6 +1808,7 @@ class SettingsDialog(tk.Toplevel):
         self._toggle_prompt_editor()
         self._on_full_pdf_toggled()
         self._on_use_recent_toggled()
+        self._on_zotero_note_toggled()
         
         # Bind mousewheel scrolling dynamically to all widgets
         self._bind_mousewheel(self, self._dialog_scroll)
@@ -1639,6 +1840,14 @@ class SettingsDialog(tk.Toplevel):
     def _on_use_recent_toggled(self):
         state = "normal" if self._use_recent_var.get() else "disabled"
         self._recent_days_entry.config(state=state, bg=BG_INPUT if state == "normal" else BORDER)
+
+    def _on_zotero_note_toggled(self):
+        if self._add_zotero_note_var.get():
+            self.zotero_note_frame.pack(fill="x", pady=(4, 0))
+        else:
+            self.zotero_note_frame.pack_forget()
+        self._inner.update_idletasks()
+        self._canvas.configure(scrollregion=self._canvas.bbox("all"))
         
     def _reset_custom_prompt(self):
         self.prompt_text_box.delete("1.0", "end")
@@ -1744,15 +1953,22 @@ class SettingsDialog(tk.Toplevel):
         
         CONFIG['FILENAME_FMT'] = self._filename_var.get()
         
+        CONFIG['ADD_ZOTERO_NOTE'] = "True" if self._add_zotero_note_var.get() else "False"
+        CONFIG['ZOTERO_API_KEY'] = self._zotero_key_var.get().strip()
+        CONFIG['ZOTERO_USER_ID'] = self._zotero_uid_var.get().strip()
+        
         save_config(CONFIG)
         
-        global GEMINI_KEY, CLAUDE_KEY, OPENAI_KEY, DEEPSEEK_KEY, API_PROVIDER, MODEL_NAME
-        GEMINI_KEY   = CONFIG.get('GEMINI_KEY', '')
-        CLAUDE_KEY   = CONFIG.get('CLAUDE_KEY', '')
-        OPENAI_KEY   = CONFIG.get('OPENAI_KEY', '')
-        DEEPSEEK_KEY = CONFIG.get('DEEPSEEK_KEY', '')
-        API_PROVIDER = CONFIG.get('API_PROVIDER', 'gemini')
-        MODEL_NAME   = CONFIG.get('MODEL_NAME', 'gemini-3.5-flash')
+        global GEMINI_KEY, CLAUDE_KEY, OPENAI_KEY, DEEPSEEK_KEY, API_PROVIDER, MODEL_NAME, ADD_ZOTERO_NOTE, ZOTERO_API_KEY, ZOTERO_USER_ID
+        GEMINI_KEY      = CONFIG.get('GEMINI_KEY', '')
+        CLAUDE_KEY      = CONFIG.get('CLAUDE_KEY', '')
+        OPENAI_KEY      = CONFIG.get('OPENAI_KEY', '')
+        DEEPSEEK_KEY    = CONFIG.get('DEEPSEEK_KEY', '')
+        API_PROVIDER    = CONFIG.get('API_PROVIDER', 'gemini')
+        MODEL_NAME      = CONFIG.get('MODEL_NAME', 'gemini-3.5-flash')
+        ADD_ZOTERO_NOTE = CONFIG.get('ADD_ZOTERO_NOTE', 'False')
+        ZOTERO_API_KEY  = CONFIG.get('ZOTERO_API_KEY', '')
+        ZOTERO_USER_ID  = CONFIG.get('ZOTERO_USER_ID', '')
         
         self.app._check_env()
         
@@ -2211,6 +2427,15 @@ class ZOAApp:
             else:
                 self._log(f"✓  {prov_name} (using {active_model}) initialized.", "ok")
 
+            add_zotero_note = _cfg.get('ADD_ZOTERO_NOTE', 'False') == 'True'
+            zotero_api_key  = _cfg.get('ZOTERO_API_KEY', '').strip()
+            zotero_user_id  = _cfg.get('ZOTERO_USER_ID', '').strip()
+            if add_zotero_note:
+                if not zotero_api_key:
+                    self._log("⚠  Zotero note sync enabled, but ZOTERO_API_KEY is not set in Settings.", "warn")
+                else:
+                    self._log("✓  Zotero child note sync enabled (Web API).", "ok")
+
             self._log("Opening local Zotero database…", "info")
             db = get_zotero_db()
             self._log("✓  Zotero DB connected.", "ok")
@@ -2438,6 +2663,17 @@ zotero_link: {zotero_link}
                 with open(full_path, 'w', encoding='utf-8') as f:
                     f.write(md_content)
                 self._log("       ✓  Saved.", "ok")
+
+                if add_zotero_note and zotero_api_key and item_key:
+                    clean_summary = re.sub(r'\[\[(.*?)\]\]', r'\1', summary_text)
+                    note_body = markdown_to_zotero_html(clean_summary)
+                    note_html = f"<h2>AI Summary ({content_source})</h2>\n" + note_body
+                    ok, msg = call_zotero_add_note(zotero_api_key, zotero_user_id, item_key, note_html)
+                    if ok:
+                        self._log("       ✓  Zotero child note added.", "ok")
+                    else:
+                        self._log(f"       ⚠  Zotero note error: {msg}", "warn")
+
                 success += 1
                 self.root.after(0, lambda i=idx: self._set_progress(i, total))
                 time.sleep(1)
